@@ -54,7 +54,7 @@ function StripedPanel({
 export default function HomePage() {
   return (
     <main className="flex h-screen w-full">
-      <StripedPanel className="h-full w-40 shrink-0" borderSide="right" />
+      <StripedPanel className="h-full w-20 2xl:w-40 shrink-0" borderSide="right" />
 
       <div className="flex h-full w-full">
         <div className="flex hid den h-full w-1/2 flex-col items-start justify-end">

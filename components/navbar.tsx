@@ -19,12 +19,12 @@ export function Navbar() {
     <header
       id="nd-nav"
       className={cn(
-        "fixed top-0 z-40 h-14 w-full px-40",
+        "fixed top-0 z-40 h-14 w-full px-20 2xl:px-40",
         "bg-transparent",
         "*:mx-au to *:max-w-(--fd-layout-width)",
       )}
     >
-      <nav className="flex h-14 w-[calc(50%+80px)] items-center justify-between gap-6 px-6">
+      <nav className="flex h-14 w-[calc(50%+40px)] 2xl:w-[calc(50%+80px)] items-center justify-between gap-6 px-6">
         {/* Logo / title */}
         <Link
           href="/"
