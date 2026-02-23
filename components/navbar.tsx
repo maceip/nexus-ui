@@ -99,7 +99,7 @@ export function Navbar() {
           type="button"
           className={cn(
             buttonVariants({ variant: "ghost", size: "icon" }),
-            "lg:hidden",
+            "sm:hidden",
           )}
           aria-label="Toggle Menu"
           // onClick={() => setOpenMenu(true)}

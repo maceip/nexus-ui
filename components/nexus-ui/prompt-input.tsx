@@ -10,7 +10,7 @@ const PromptInput = () => {
       <ScrollArea className="max-h-40 rounded-t-[28px]">
         <ScrollViewport>
           <Textarea
-            className="min-h-16 w-full resize-none rounded-t-[28px] rounded-b-none border-0 bg-transparent! px-6 py-4 text-base leading-6 font-normal text-[#171717] shadow-none outline-none placeholder:text-[#737373] focus-visible:ring-0 focus-visible:ring-offset-0"
+            className="min-h-16 w-full resize-none rounded-t-[28px] rounded-b-none border-0 bg-transparent! px-6 py-4 text-base leading-6 font-normal text-[#171717] dark:text-white shadow-none outline-none placeholder:text-[#737373] focus-visible:ring-0 focus-visible:ring-offset-0"
             placeholder="Ask anything"
           />
         </ScrollViewport>
