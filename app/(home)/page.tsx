@@ -66,42 +66,64 @@ function StripedPanel({
       <div
         className={`absolute inset-0 dark:hidden ${borderClass} border-transparent`}
         style={{ ...lightStripes, ...borderImageStyle }}
-      >
-        {children}
-      </div>
+        aria-hidden
+      />
       {/* Dark mode */}
       <div
         className={`absolute inset-0 hidden dark:block ${borderClass} border-transparent`}
         style={{ ...darkStripes, ...borderImageStyle }}
-      >
-        {children}
-      </div>
+        aria-hidden
+      />
+      <div className="relative h-full w-full">{children}</div>
     </div>
   );
 }
 
 export default function HomePage() {
-  const code = `import {
-  PromptInput,
-  PromptInputTextarea,
-  PromptInputAction,
-} from '@/components/ui/prompt-input';
+  const code = `import * as React from "react";
 
-function PromptInputBasic() {
+import { Button } from "@/components/ui/button";
+import PromptInput, {
+  PromptInputActions,
+  PromptInputAction,
+  PromptInputActionGroup,
+  PromptInputTextarea,
+} from "@/components/nexus-ui/prompt-input";
+import { AudioLines, Globe, Paperclip } from "lucide-react";
+
+const ChatgptInput = () => {
   return (
     <PromptInput>
-      <PromptInputTextarea placeholder='Ask prompt-kit' />
+      <PromptInputTextarea placeholder="Ask anything" />
       <PromptInputActions>
-        <PromptInputAction tooltip='Upload File'>
-          <Button>Upload File</Button>
-        </PromptInputAction>
-        <PromptInputAction tooltip='Send'>
-          <Button>Send</Button>
-        </PromptInputAction>
+        <PromptInputActionGroup>
+          <PromptInputAction asChild>
+            <Button className="w-9 sm:w-fit cursor-pointer gap-1 rounded-full border border-border-primary bg-transparent text-[13px] leading-6 font-normal text-[#5D5D5D] hover:bg-[#E5E5E5] dark:bg-[#404040] dark:text-white">
+              <Paperclip className="size-4 text-[#5D5D5D]" />
+              <span className="hidden sm:inline">Attach</span>
+            </Button>
+          </PromptInputAction>
+          <PromptInputAction asChild>
+            <Button className="w-9 sm:w-fit cursor-pointer gap-1 rounded-full border border-border-primary bg-transparent text-[13px] leading-6 font-normal text-[#5D5D5D] hover:bg-[#E5E5E5] dark:bg-[#404040] dark:text-white">
+              <Globe className="size-4 text-[#5D5D5D]" />
+              <span className="hidden sm:inline">Search</span>
+            </Button>
+          </PromptInputAction>
+        </PromptInputActionGroup>
+        <PromptInputActionGroup>
+          <PromptInputAction asChild>
+            <Button className="w-9 sm:w-fit cursor-pointer gap-1 rounded-full bg-[#E5E5E5] text-[13px] leading-6 font-normal text-[#171717] hover:bg-[#E5E5E5] dark:bg-[#404040] dark:text-white">
+              <AudioLines className="size-4" />
+              <span className="hidden sm:inline">Voice</span>
+            </Button>
+          </PromptInputAction>
+        </PromptInputActionGroup>
       </PromptInputActions>
     </PromptInput>
   );
-}`;
+};
+
+export default ChatgptInput;`;
 
   const [checked, setChecked] = useState(false);
 
@@ -119,7 +141,7 @@ function PromptInputBasic() {
         borderSide="right"
       />
 
-      <div className="flex w-full flex-col lg:h-full lg:flex-row">
+      <div className="flex w-full flex-col lg:h-full lg:w-[calc(100%-80px)] lg:flex-row 2xl:w-[calc(100%-160px)]">
         <div className="flex h-auto w-full flex-col items-center justify-center lg:h-full lg:w-1/2 lg:items-start lg:justify-end">
           <div className="px-auto flex w-fit flex-col items-center gap-4 py-15 lg:items-start lg:p-10">
             <div className="flex flex-col items-center gap-1 lg:items-start">
@@ -164,7 +186,7 @@ function PromptInputBasic() {
               </Button>
             </div>
 
-            <div className="[300px] relative w-full rounded-t-[40px] border-x border-t border-[#E5E5E5] bg-white lg:h-31/51 dark:border-white/10 dark:bg-background [&_.fd-scroll-container]:max-h-none! [&_.lucide-clipboard]:hidden [&_pre]:text-sm [&_pre]:leading-6 [&>figure]:h-full [&>figure]:rounded-none [&>figure]:border-none [&>figure]:bg-transparent [&>figure]:px-7 [&>figure]:py-3.5 [&>figure]:shadow-none">
+            <div className="relative w-full rounded-t-[40px] border-x border-t border-[#E5E5E5] bg-white lg:h-31/51 dark:border-white/10 dark:bg-background [&_.fd-scroll-container]:max-h-none! lg:[&_.fd-scroll-container]:max-h-full [&_.lucide-clipboard]:hidden [&_pre]:text-sm [&_pre]:leading-6 [&>figure]:h-full [&>figure]:rounded-none [&>figure]:border-none [&>figure]:bg-transparent [&>figure]:py-3.5 [&>figure]:pr-3.5 [&>figure]:pl-7 [&>figure]:shadow-none">
               <DynamicCodeBlock lang="ts" code={code} />
 
               <button
