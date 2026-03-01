@@ -10,7 +10,7 @@ import {
   GeminiPageInfo,
   GeminiMic,
   GeminiCaret,
-} from "@/components/layout/svgs/gemini-icons";
+} from "@/components/svgs/gemini-icons";
 
 const GeminiInput = () => {
   return (

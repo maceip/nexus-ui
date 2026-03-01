@@ -1,13 +1,13 @@
-import NexusIcon from "@/components/layout/svgs/nexus";
-import ChatgptIcon from "@/components/layout/svgs/chatgpt";
-import ClaudeIcon from "@/components/layout/svgs/claude";
-import GeminiIcon from "@/components/layout/svgs/gemini";
+import NexusIcon from "@/components/svgs/nexus";
+import ChatgptIcon from "@/components/svgs/chatgpt";
+import ClaudeIcon from "@/components/svgs/claude";
+import GeminiIcon from "@/components/svgs/gemini";
 import ChatgptInput from "@/components/nexus-ui/examples/chatgpt-input";
 import NexusInput from "@/components/nexus-ui/examples/nexus-input";
 import ClaudeInput from "@/components/nexus-ui/examples/claude-input";
 import GeminiInput from "@/components/nexus-ui/examples/gemini-input";
 import V0Input from "@/components/nexus-ui/examples/v0-input";
-import V0Icon from "@/components/layout/svgs/v0";
+import V0Icon from "@/components/svgs/v0";
 
 export type TabKey = "nexus" | "gemini" | "chatgpt" | "claude" | "v0";
 
@@ -163,8 +163,8 @@ const ChatgptInput = () => {
 };
 
 export default ChatgptInput;`,
-  
-    claude: `import * as React from "react";
+
+  claude: `import * as React from "react";
 
   import { Button } from "@/components/ui/button";
   import PromptInput, {
