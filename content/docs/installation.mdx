@@ -13,34 +13,50 @@ Make sure your project has the following:
 - [Tailwind CSS v4](https://tailwindcss.com)
 - [TypeScript](https://typescriptlang.org)
 
-Nexus UI also depends on a few shared utilities from [shadcn/ui](https://ui.shadcn.com). If you don't have shadcn set up yet, initialize it first:
+Nexus UI also depends on shared utilities from [shadcn/ui](https://ui.shadcn.com). If you don't have shadcn set up yet, initialize it first:
 
 ```bash
 npx shadcn@latest init
 ```
 
-## Add components
+## Add the registry
 
-Use the CLI to add components to your project:
+Add the Nexus UI registry to your `components.json`:
 
-```bash
-npx nexus-ui@latest add prompt-input
+```json title="components.json"
+{
+  "registries": {
+    "@nexus-ui": "https://nexus-ui.dev/r/{name}.json"
+  }
+}
 ```
 
-This copies the component source into `components/nexus-ui/prompt-input.tsx`. You own the file and can modify it freely.
+## Add components
+
+Use the shadcn CLI to add Nexus UI components:
+
+```bash
+npx shadcn@latest add @nexus-ui/prompt-input
+```
+
+This installs the component along with any required dependencies (like `textarea` and `scroll-area`) automatically.
+
+### Install via URL
+
+You can also install directly via URL without configuring the registry:
+
+```bash
+npx shadcn@latest add https://nexus-ui.dev/r/prompt-input.json
+```
 
 ## Manual installation
 
 If you prefer to install manually, copy the component source from the docs page directly into your project.
 
-Each component page includes the full source code. Copy it into your `components` directory and adjust imports as needed.
-
-## Dependencies
-
-Some components require additional dependencies. These are noted on each component's page. Common ones include:
+Each component page includes the full source code. Copy it into your `components/nexus-ui` directory and install the required dependencies:
 
 ```bash
-npm install radix-ui class-variance-authority tailwind-merge lucide-react
+npm install @radix-ui/react-slot
 ```
 
 ## Project structure

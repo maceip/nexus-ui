@@ -31,14 +31,32 @@ Copy-paste components into your project. You own the code.
 
 ## Quick Start
 
+Make sure you have [shadcn/ui](https://ui.shadcn.com) initialized in your project:
+
 ```bash
-npx nexus-ui@latest init
+npx shadcn@latest init
 ```
 
-Add components:
+Add the Nexus UI registry to your `components.json`:
+
+```json
+{
+  "registries": {
+    "@nexus-ui": "https://nexus-ui.dev/r/{name}.json"
+  }
+}
+```
+
+Then add components:
 
 ```bash
-npx nexus-ui@latest add prompt-input
+npx shadcn@latest add @nexus-ui/prompt-input
+```
+
+Or install directly via URL without any config:
+
+```bash
+npx shadcn@latest add https://nexus-ui.dev/r/prompt-input.json
 ```
 
 ## Usage
@@ -77,9 +95,6 @@ const ChatInput = () => {
     </PromptInput>
   );
 };
-
-export default NexusInput;
-
 ```
 
 ## Tech Stack
@@ -95,7 +110,7 @@ export default NexusInput;
 
 ```bash
 npm install
-npm dev
+npm run dev
 ```
 
 ## License

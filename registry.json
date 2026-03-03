@@ -13,7 +13,8 @@
       "files": [
         {
           "path": "registry/new-york/prompt-input/prompt-input.tsx",
-          "type": "registry:ui"
+          "type": "registry:file",
+          "target": "~/components/nexus-ui/prompt-input.tsx"
         }
       ]
     }
