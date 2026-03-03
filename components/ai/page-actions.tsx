@@ -46,7 +46,7 @@ export function LLMCopyButton({
         buttonVariants({
           color: 'secondary',
           size: 'sm',
-          className: 'gap-2 [&_svg]:size-3.5 [&_svg]:text-fd-muted-foreground',
+          className: 'gap-2 rounded-full px-3 [&_svg]:size-3.5 [&_svg]:text-fd-muted-foregroundn bg-gray-100 border-none',
         }),
       )}
       onClick={onClick}
@@ -213,7 +213,7 @@ export function ViewOptions({
           buttonVariants({
             color: 'secondary',
             size: 'sm',
-            className: 'gap-2',
+            className: 'gap-2 rounded-full px-3 bg-gray-100 border-none',
           }),
         )}
       >

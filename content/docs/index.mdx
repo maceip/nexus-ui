@@ -5,9 +5,135 @@ description: Get started with Nexus UI
 
 Welcome to the docs! You can start writing documents in `/content/docs`.
 
-## What is Next?
+**Nexus UI** is a component library built on top of shadcn/ui, purpose-designed for AI interfaces. Rather than retrofitting general-purpose components, every primitive is crafted around the patterns AI products demand — streaming states, conversational flows, confidence indicators, and dynamic content rendering. Composable, themeable, and production-ready, Nexus UI gives you the building blocks to ship polished AI experiences without reinventing the foundation.
+
+## Headings
+
+Welcome to the docs! You can start writing documents in `/content/docs`. Welcome to the docs! You can start writing documents in `/content/docs`. Welcome to the docs! You can start writing documents in `/content/docs`. Welcome to the docs! You can start writing documents in `/content/docs`. Welcome to the docs! You can start writing documents in `/content/docs`.
+
+Welcome to the docs! You can start writing documents in `/content/docs`. Welcome to the docs! You can start writing documents in `/content/docs`.
+
+### This is an h3
+
+#### This is an h4
+
+##### This is an h5
+
+###### This is an h6
+
+## Links
+
+Check out [Next.js](https://nextjs.org/docs) and [Fumadocs](https://fumadocs.dev) for more info.
+
+## Cards
 
 <Cards>
   <Card title="Learn more about Next.js" href="https://nextjs.org/docs" />
   <Card title="Learn more about Fumadocs" href="https://fumadocs.dev" />
 </Cards>
+
+## Callouts
+
+<Callout>
+  This is a default callout with some useful information.
+</Callout>
+
+<Callout type="info">
+  This is an info callout.
+</Callout>
+
+<Callout type="warn">
+  This is a warning callout. Be careful!
+</Callout>
+
+<Callout type="error">
+  This is an error callout. Something went wrong.
+</Callout>
+
+## Code Blocks
+
+Inline code: `const x = 42;`
+
+```js
+function greet(name) {
+  console.log(`Hello, ${name}!`);
+}
+
+greet('Nexus UI');
+```
+
+```ts
+interface User {
+  id: string;
+  name: string;
+  email: string;
+}
+
+function getUser(id: string): User {
+  return { id, name: 'Jane', email: 'jane@example.com' };
+}
+```
+
+## Code Block Tabs
+
+<CodeBlockTabs>
+  <CodeBlockTabsList>
+    <CodeBlockTabsTrigger value="npm">npm</CodeBlockTabsTrigger>
+    <CodeBlockTabsTrigger value="pnpm">pnpm</CodeBlockTabsTrigger>
+    <CodeBlockTabsTrigger value="yarn">yarn</CodeBlockTabsTrigger>
+  </CodeBlockTabsList>
+  <CodeBlockTab value="npm">
+    ```bash
+    npm install nexus-ui
+    ```
+  </CodeBlockTab>
+  <CodeBlockTab value="pnpm">
+    ```bash
+    pnpm add nexus-ui
+    ```
+  </CodeBlockTab>
+  <CodeBlockTab value="yarn">
+    ```bash
+    yarn add nexus-ui
+    ```
+  </CodeBlockTab>
+</CodeBlockTabs>
+
+## Table
+
+| Component | Description | Status |
+|-----------|-------------|--------|
+| Message | Chat message display | Stable |
+| Chat Input | Text input for composing | Stable |
+| Streaming Text | Animated text streaming | Beta |
+| File | File attachment display | Beta |
+
+## Image
+
+![Placeholder](https://placehold.co/800x400/111/333.png?text=Nexus+UI)
+
+## Lists
+
+### Unordered
+
+- First item
+- Second item
+  - Nested item
+  - Another nested item
+- Third item
+
+### Ordered
+
+1. Step one
+2. Step two
+3. Step three
+
+## Blockquote
+
+> Nexus UI provides flexible, customizable components for modern AI experiences.
+
+## Horizontal Rule
+
+---
+
+That's all the built-in MDX components!

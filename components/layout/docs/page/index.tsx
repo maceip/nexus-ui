@@ -3,6 +3,7 @@ import { cn } from '../../../../lib/cn';
 import { buttonVariants } from '../../../ui/button';
 import { Edit, Text } from 'lucide-react';
 import { I18nLabel } from 'fumadocs-ui/contexts/i18n';
+import { Prose } from '../../../ui/prose';
 import {
   type BreadcrumbProps,
   type FooterProps,
@@ -137,8 +138,8 @@ export function DocsPage({
         id="nd-page"
         data-full={full}
         className={cn(
-          'flex flex-col w-full max-w-[900px] mx-auto [grid-area:main] px-4 py-6 gap-4 md:px-6 md:pt-8 xl:px-8 xl:pt-14',
-          full ? 'max-w-[1168px]' : 'xl:layout:[--fd-toc-width:268px]',
+          'flex flex-col w-full max-w-[700px] mx-auto [grid-area:main] px-4 py-6 gap-4 md:px-6 md:pt-8 xl:px-8 xl:pt-10',
+          full ? 'max-w-[1168px]' : 'xl:layout:[--fd-toc-width:222px]',
           className,
         )}
       >
@@ -150,15 +151,15 @@ export function DocsPage({
         (tocReplace ?? (
           <div
             id="nd-toc"
-            className="sticky top-(--fd-docs-row-1) h-[calc(var(--fd-docs-height)-var(--fd-docs-row-1))] flex flex-col [grid-area:toc] w-(--fd-toc-width) pt-12 pe-4 pb-2 max-xl:hidden ms-auto"
+            className="sticky top-(--fd-docs-row-1) h-(--fd-docs-height) flex flex-col [grid-area:toc] w-(--fd-toc-width) pt-5 pe-5 pb-2 max-xl:hidden ms-auto"
           >
             {tocOptions.header}
             <h3
               id="toc-title"
               className="inline-flex items-center gap-1.5 text-sm text-fd-muted-foreground"
             >
-              <Text className="size-4" />
-              <I18nLabel label="toc" />
+              <Text className="size-4 text-gray-400" />
+              <span className="text-xs leading-4 text-gray-400">On this page</span>
             </h3>
             <TOCScrollArea>
               {tocOptions.style === 'clerk' ? <TocClerk.TOCItems /> : <TocDefault.TOCItems />}
@@ -200,9 +201,9 @@ export function EditOnGitHub(props: ComponentProps<'a'>) {
  */
 export function DocsBody({ children, className, ...props }: ComponentProps<'div'>) {
   return (
-    <div {...props} className={cn('prose flex-1', className)}>
+    <Prose className={cn('flex-1', className)} {...props}>
       {children}
-    </div>
+    </Prose>
   );
 }
 
@@ -211,7 +212,7 @@ export function DocsDescription({ children, className, ...props }: ComponentProp
   if (children === undefined) return null;
 
   return (
-    <p {...props} className={cn('mb-8 text-lg text-fd-muted-foreground', className)}>
+    <p {...props} className={cn('mb-8 text-base text-fd-muted-foreground', className)}>
       {children}
     </p>
   );
@@ -219,7 +220,7 @@ export function DocsDescription({ children, className, ...props }: ComponentProp
 
 export function DocsTitle({ children, className, ...props }: ComponentProps<'h1'>) {
   return (
-    <h1 {...props} className={cn('text-[1.75em] font-semibold', className)}>
+    <h1 {...props} className={cn('text-xl leading-5.5 text-gray-900 font-medium', className)}>
       {children}
     </h1>
   );

@@ -22,11 +22,11 @@ export function TOCItems({ ref, className, ...props }: ComponentProps<'div'>) {
     <>
       <TocThumb
         containerRef={containerRef}
-        className="absolute top-(--fd-top) h-(--fd-height) w-0.5 rounded-e-sm bg-fd-primary transition-[top,height] ease-linear"
+        className="absolute top-(--fd-top) ml-[5px] h-(--fd-height) w-0.5 rounded-full bg-gray-500 transition-[top,height] ease-linear"
       />
       <div
         ref={mergeRefs(ref, containerRef)}
-        className={cn('flex flex-col border-s border-fd-foreground/10', className)}
+        className={cn('flex flex-col border-s-2 border-fd-foreground/10 ml-[5px]', className)}
         {...props}
       >
         {items.map((item) => (
@@ -42,7 +42,7 @@ function TOCItem({ item }: { item: Primitive.TOCItemType }) {
     <Primitive.TOCItem
       href={item.url}
       className={cn(
-        'prose py-1.5 text-sm text-fd-muted-foreground transition-colors wrap-anywhere first:pt-0 last:pb-0 data-[active=true]:text-fd-primary',
+        'prose py-1.5 text-sm leading-5 font-normal text-gray-400 transition-colors wrap-anywhere first:pt-0 last:pb-0 data-[active=true]:text-gray-600',
         item.depth <= 2 && 'ps-3',
         item.depth === 3 && 'ps-6',
         item.depth >= 4 && 'ps-8',
