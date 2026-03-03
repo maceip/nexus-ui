@@ -1,0 +1,21 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry.json",
+  "name": "nexus-ui",
+  "homepage": "https://nexus-ui.dev",
+  "items": [
+    {
+      "name": "prompt-input",
+      "type": "registry:ui",
+      "title": "Prompt Input",
+      "description": "A composable AI chat input component with auto-resizing textarea and action slots.",
+      "dependencies": ["@radix-ui/react-slot"],
+      "registryDependencies": ["textarea", "scroll-area"],
+      "files": [
+        {
+          "path": "registry/new-york/prompt-input/prompt-input.tsx",
+          "type": "registry:ui"
+        }
+      ]
+    }
+  ]
+}
