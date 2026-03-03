@@ -3,6 +3,84 @@ title: Installation
 description: How to install and set up Nexus UI in your project
 ---
 
-## Installation
+Nexus UI components are designed for React projects using Tailwind CSS v4 and TypeScript. Follow the steps below to get set up.
 
-Get started by installing Nexus UI in your project.
+## Prerequisites
+
+Make sure your project has the following:
+
+- [React 19](https://react.dev) or later
+- [Tailwind CSS v4](https://tailwindcss.com)
+- [TypeScript](https://typescriptlang.org)
+
+Nexus UI also depends on a few shared utilities from [shadcn/ui](https://ui.shadcn.com). If you don't have shadcn set up yet, initialize it first:
+
+```bash
+npx shadcn@latest init
+```
+
+## Add components
+
+Use the CLI to add components to your project:
+
+```bash
+npx nexus-ui@latest add prompt-input
+```
+
+This copies the component source into `components/nexus-ui/prompt-input.tsx`. You own the file and can modify it freely.
+
+## Manual installation
+
+If you prefer to install manually, copy the component source from the docs page directly into your project.
+
+Each component page includes the full source code. Copy it into your `components` directory and adjust imports as needed.
+
+## Dependencies
+
+Some components require additional dependencies. These are noted on each component's page. Common ones include:
+
+```bash
+npm install radix-ui class-variance-authority tailwind-merge lucide-react
+```
+
+## Project structure
+
+After adding components, your project will look something like this:
+
+```
+components/
+├── nexus-ui/
+│   └── prompt-input.tsx
+├── ui/
+│   ├── button.tsx
+│   ├── textarea.tsx
+│   └── scroll-area.tsx
+└── ...
+```
+
+Components in `nexus-ui/` are Nexus UI primitives. Components in `ui/` are shared shadcn/ui primitives that Nexus UI components may depend on.
+
+## Usage
+
+Import and compose components directly:
+
+```tsx
+import {
+  PromptInput,
+  PromptInputTextarea,
+  PromptInputActions,
+} from '@/components/nexus-ui/prompt-input'
+
+export function ChatInput() {
+  return (
+    <PromptInput>
+      <PromptInputTextarea placeholder="Ask anything..." />
+      <PromptInputActions>
+        <button type="submit">Send</button>
+      </PromptInputActions>
+    </PromptInput>
+  )
+}
+```
+
+See individual component pages for detailed usage and examples.

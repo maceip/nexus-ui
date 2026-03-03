@@ -38,7 +38,7 @@ export function Navbar() {
         {/* Logo / title */}
         <Link
           href="/"
-          className="inline-flex shrink-0 items-center gap-1 text-base font-semibold"
+          className="inline-flex shrink-0 items-center gap-1 text-base font-medium"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -55,7 +55,7 @@ export function Navbar() {
               fill="currentColor"
             />
           </svg>
-          Nexus UI
+  Nexus UI
         </Link>
 
         {/* Main links */}

@@ -1,45 +1,103 @@
-# nexus-ui
+<p align="center">
+  <h1 align="center">Nexus UI</h1>
+</p>
 
-This is a Next.js application generated with
-[Create Fumadocs](https://github.com/fuma-nama/fumadocs).
+<p align="center">
+  Flexible, customizable components for modern AI experiences.
+</p>
 
-Run development server:
+<p align="center">
+  <a href="https://nexus-ui.dev">Documentation</a> ·
+  <a href="https://nexus-ui.dev/docs/prompt-input">Components</a>
+</p>
+
+---
+
+## About
+
+Nexus UI is a design-first component library for building AI-powered applications. It provides a set of composable primitives that integrate seamlessly with the [Vercel AI SDK](https://sdk.vercel.ai), [ElevenLabs](https://elevenlabs.io), and other AI services.
+
+Think of it as **shadcn/ui, but purpose-built for AI apps**.
+
+Instead of adapting general-purpose components for AI use cases, Nexus UI is designed from the ground up for streaming, voice, multimodal, and agentic interfaces.
+
+Copy-paste components into your project. You own the code.
+
+## Components
+
+| Component | Description |
+|-----------|-------------|
+| `PromptInput` | Composable chat input with auto-resizing textarea and action slots |
+
+## Quick Start
 
 ```bash
-npm run dev
-# or
-pnpm dev
-# or
-yarn dev
+npx nexus-ui@latest init
 ```
 
-Open http://localhost:3000 with your browser to see the result.
+Add components:
 
-## Explore
+```bash
+npx nexus-ui@latest add prompt-input
+```
 
-In the project, you can see:
+## Usage
 
-- `lib/source.ts`: Code for content source adapter, [`loader()`](https://fumadocs.dev/docs/headless/source-api) provides the interface to access your content.
-- `lib/layout.shared.tsx`: Shared options for layouts, optional but preferred to keep.
+```tsx
+import { Button } from "@/components/ui/button";
+import PromptInput, {
+  PromptInputActions,
+  PromptInputAction,
+  PromptInputActionGroup,
+  PromptInputTextarea,
+} from "@/components/nexus-ui/prompt-input";
+import { ArrowUp, Paperclip } from "lucide-react";
 
-| Route                     | Description                                            |
-| ------------------------- | ------------------------------------------------------ |
-| `app/(home)`              | The route group for your landing page and other pages. |
-| `app/docs`                | The documentation layout and pages.                    |
-| `app/api/search/route.ts` | The Route Handler for search.                          |
+const ChatInput = () => {
+  return (
+    <PromptInput>
+      <PromptInputTextarea />
+      <PromptInputActions>
+        <PromptInputActionGroup>
+          <PromptInputAction asChild>
+            <Button className="size-8 cursor-pointer gap-1 rounded-full border-none bg-transparent text-[13px] leading-6 font-normal text-gray-900 hover:bg-[#E5E5E5] dark:text-white dark:hover:bg-gray-700">
+              <Paperclip />
+            </Button>
+          </PromptInputAction>
+        </PromptInputActionGroup>
 
-### Fumadocs MDX
+        <PromptInputActionGroup>
+          <PromptInputAction asChild>
+            <Button className="size-8 cursor-pointer gap-1 rounded-full bg-gray-700 text-[13px] leading-6 font-normal text-white hover:bg-[#E5E5E5] dark:text-white dark:hover:bg-gray-700">
+              <ArrowUp />
+            </Button>
+          </PromptInputAction>
+        </PromptInputActionGroup>
+      </PromptInputActions>
+    </PromptInput>
+  );
+};
 
-A `source.config.ts` config file has been included, you can customise different options like frontmatter schema.
+export default NexusInput;
 
-Read the [Introduction](https://fumadocs.dev/docs/mdx) for further details.
+```
 
-## Learn More
+## Tech Stack
 
-To learn more about Next.js and Fumadocs, take a look at the following
-resources:
+- React 19
+- TypeScript
+- Tailwind CSS v4
+- Radix UI Primitives
+- Next.js
+- Fumadocs
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js
-  features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-- [Fumadocs](https://fumadocs.dev) - learn about Fumadocs
+## Development
+
+```bash
+npm install
+npm dev
+```
+
+## License
+
+MIT

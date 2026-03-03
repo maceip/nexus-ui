@@ -3,137 +3,41 @@ title: Introduction
 description: Get started with Nexus UI
 ---
 
-Welcome to the docs! You can start writing documents in `/content/docs`.
+Nexus UI is an open-source component library for building AI-powered interfaces. It gives you composable, copy-paste primitives designed for chat, streaming, and multimodal experiences — built on React, Tailwind CSS v4, and Radix UI.
 
-**Nexus UI** is a component library built on top of shadcn/ui, purpose-designed for AI interfaces. Rather than retrofitting general-purpose components, every primitive is crafted around the patterns AI products demand — streaming states, conversational flows, confidence indicators, and dynamic content rendering. Composable, themeable, and production-ready, Nexus UI gives you the building blocks to ship polished AI experiences without reinventing the foundation.
+Think of it as **shadcn/ui, purpose-built for AI apps**.
 
-## Headings
+## Why Nexus UI?
 
-Welcome to the docs! You can start writing documents in `/content/docs`. Welcome to the docs! You can start writing documents in `/content/docs`. Welcome to the docs! You can start writing documents in `/content/docs`. Welcome to the docs! You can start writing documents in `/content/docs`. Welcome to the docs! You can start writing documents in `/content/docs`.
+- **AI-native** — Built for streaming, tool calls, and multimodal from day one
+- **Design-first** — Every component looks polished out of the box with refined animations and micro-interactions
+- **Composable** — Small, single-purpose primitives that compose into full experiences
+- **AI SDK compatible** — Works with `useChat` and the Vercel AI SDK
+- **Copy-paste ownership** — You own the code, not a dependency
+- **Themeable** — Compatible with shadcn/ui design tokens and themes
 
-Welcome to the docs! You can start writing documents in `/content/docs`. Welcome to the docs! You can start writing documents in `/content/docs`.
+## How it works
 
-### This is an h3
+Nexus UI follows the same model as shadcn/ui. Components are not installed as a package — you copy them into your project and own them entirely.
 
-#### This is an h4
-
-##### This is an h5
-
-###### This is an h6
-
-## Links
-
-Check out [Next.js](https://nextjs.org/docs) and [Fumadocs](https://fumadocs.dev) for more info.
-
-## Cards
-
-<Cards>
-  <Card title="Learn more about Next.js" href="https://nextjs.org/docs" />
-  <Card title="Learn more about Fumadocs" href="https://fumadocs.dev" />
-</Cards>
-
-## Callouts
-
-<Callout>
-  This is a default callout with some useful information.
-</Callout>
-
-<Callout type="info">
-  This is an info callout.
-</Callout>
-
-<Callout type="warn">
-  This is a warning callout. Be careful!
-</Callout>
-
-<Callout type="error">
-  This is an error callout. Something went wrong.
-</Callout>
-
-## Code Blocks
-
-Inline code: `const x = 42;`
-
-```js
-function greet(name) {
-  console.log(`Hello, ${name}!`);
-}
-
-greet('Nexus UI');
+```bash
+npx nexus-ui@latest add prompt-input
 ```
 
-```ts
-interface User {
-  id: string;
-  name: string;
-  email: string;
-}
+This copies the component source into your `components/nexus-ui` directory. You can then customize it however you want.
 
-function getUser(id: string): User {
-  return { id, name: 'Jane', email: 'jane@example.com' };
-}
-```
+## Components
 
-## Code Block Tabs
+| Component | Description |
+|-----------|-------------|
+| [Prompt Input](/docs/prompt-input) | Composable chat input with auto-resizing textarea and action slots |
 
-<CodeBlockTabs>
-  <CodeBlockTabsList>
-    <CodeBlockTabsTrigger value="npm">npm</CodeBlockTabsTrigger>
-    <CodeBlockTabsTrigger value="pnpm">pnpm</CodeBlockTabsTrigger>
-    <CodeBlockTabsTrigger value="yarn">yarn</CodeBlockTabsTrigger>
-  </CodeBlockTabsList>
-  <CodeBlockTab value="npm">
-    ```bash
-    npm install nexus-ui
-    ```
-  </CodeBlockTab>
-  <CodeBlockTab value="pnpm">
-    ```bash
-    pnpm add nexus-ui
-    ```
-  </CodeBlockTab>
-  <CodeBlockTab value="yarn">
-    ```bash
-    yarn add nexus-ui
-    ```
-  </CodeBlockTab>
-</CodeBlockTabs>
+More components are being actively developed. Check back often or follow the repo for updates.
 
-## Table
+## Tech stack
 
-| Component | Description | Status |
-|-----------|-------------|--------|
-| Message | Chat message display | Stable |
-| Chat Input | Text input for composing | Stable |
-| Streaming Text | Animated text streaming | Beta |
-| File | File attachment display | Beta |
-
-## Image
-
-![Placeholder](https://placehold.co/800x400/111/333.png?text=Nexus+UI)
-
-## Lists
-
-### Unordered
-
-- First item
-- Second item
-  - Nested item
-  - Another nested item
-- Third item
-
-### Ordered
-
-1. Step one
-2. Step two
-3. Step three
-
-## Blockquote
-
-> Nexus UI provides flexible, customizable components for modern AI experiences.
-
-## Horizontal Rule
-
----
-
-That's all the built-in MDX components!
+- [React 19](https://react.dev)
+- [TypeScript](https://typescriptlang.org)
+- [Tailwind CSS v4](https://tailwindcss.com)
+- [Radix UI](https://radix-ui.com)
+- [Next.js](https://nextjs.org)

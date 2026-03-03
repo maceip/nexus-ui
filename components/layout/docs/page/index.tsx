@@ -138,7 +138,7 @@ export function DocsPage({
         id="nd-page"
         data-full={full}
         className={cn(
-          'flex flex-col w-full max-w-[700px] mx-auto [grid-area:main] px-4 py-6 gap-4 md:px-6 md:pt-8 xl:px-8 xl:pt-10',
+          'flex flex-col w-full max-w-[750px] mx-auto [grid-area:main] px-4 py-6 gap-4 md:px-6 md:pt-8 xl:px-8 xl:pt-10',
           full ? 'max-w-[1168px]' : 'xl:layout:[--fd-toc-width:222px]',
           className,
         )}
@@ -220,7 +220,7 @@ export function DocsDescription({ children, className, ...props }: ComponentProp
 
 export function DocsTitle({ children, className, ...props }: ComponentProps<'h1'>) {
   return (
-    <h1 {...props} className={cn('text-xl leading-5.5 text-gray-900 font-medium', className)}>
+    <h1 {...props} className={cn('text-xl leading-5.5 tracking-[-0.5px] text-gray-900 font-medium', className)}>
       {children}
     </h1>
   );
