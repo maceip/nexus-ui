@@ -210,7 +210,7 @@ export function DocsPage({
               {markdownUrl && <CopyPageMarkdown markdownUrl={markdownUrl} />}
               {markdownUrl && (
                 <Link
-                  href={markdownUrl}
+                  href={markdownUrl.replace(/^\/llms\.mdx\/docs\//, "/docs/") + ".md"}
                   target="_blank"
                   rel="noreferrer noopener"
                   className="flex h-4 w-full cursor-pointer items-center justify-start gap-1 bg-transparent px-0! text-xs leading-4 font-[450] text-gray-400 hover:bg-transparent hover:text-gray-600"
