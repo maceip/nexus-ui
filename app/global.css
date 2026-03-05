@@ -158,6 +158,7 @@ code .line::before {
   text-align: right;
   color: #737373;
   padding-left: 0;
+  font-size: 14px;
 }
 
 code .line {
