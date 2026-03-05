@@ -22,13 +22,13 @@ export function Prose({
         // body text
         'prose-p:mb-4 prose-p:mt-4',
         // lead
-        'prose-lead:text-gray-900',
+        'prose-lead:text-gray-900 ',
         // links
         'prose-a:text-gray-900',
         // link underline
         'prose-a:underline prose-a:underline-offset-3',
         // strong
-        'prose-strong:text-gray-900',
+        'prose-strong:text-gray-900 prose-strong:font-[450]',
         // strong links
         '',
         '',
