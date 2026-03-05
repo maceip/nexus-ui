@@ -1,5 +1,5 @@
-'use client';
-import { Check, Copy } from 'lucide-react';
+"use client";
+import { Check, Copy } from "lucide-react";
 import {
   type ComponentProps,
   createContext,
@@ -9,14 +9,14 @@ import {
   use,
   useMemo,
   useRef,
-} from 'react';
-import { cn } from '../lib/cn';
-import { useCopyButton } from 'fumadocs-ui/utils/use-copy-button';
+} from "react";
+import { cn } from "../lib/cn";
+import { useCopyButton } from "fumadocs-ui/utils/use-copy-button";
 
-import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
-import { mergeRefs } from '../lib/merge-refs';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
+import { mergeRefs } from "../lib/merge-refs";
 
-export interface CodeBlockProps extends ComponentProps<'figure'> {
+export interface CodeBlockProps extends ComponentProps<"figure"> {
   /**
    * Icon of code block
    *
@@ -43,12 +43,12 @@ export interface CodeBlockProps extends ComponentProps<'figure'> {
   /**
    * show line numbers
    */
-  'data-line-numbers'?: boolean;
+  "data-line-numbers"?: boolean;
 
   /**
    * @defaultValue 1
    */
-  'data-line-numbers-start'?: number;
+  "data-line-numbers-start"?: number;
 
   Actions?: (props: { className?: string; children?: ReactNode }) => ReactNode;
 }
@@ -58,9 +58,12 @@ const TabsContext = createContext<{
   nested: boolean;
 } | null>(null);
 
-export function Pre(props: ComponentProps<'pre'>) {
+export function Pre(props: ComponentProps<"pre">) {
   return (
-    <pre {...props} className={cn('min-w-full w-max *:flex *:flex-col', props.className)}>
+    <pre
+      {...props}
+      className={cn("w-max min-w-full *:flex *:flex-col", props.className)}
+    >
       {props.children}
     </pre>
   );
@@ -74,7 +77,9 @@ export function CodeBlock({
   icon,
   viewportProps = {},
   children,
-  Actions = (props) => <div {...props} className={cn('empty:hidden', props.className)} />,
+  Actions = (props) => (
+    <div {...props} className={cn("empty:hidden", props.className)} />
+  ),
   ...props
 }: CodeBlockProps) {
   const inTab = use(TabsContext) !== null;
@@ -87,15 +92,17 @@ export function CodeBlock({
       {...props}
       tabIndex={-1}
       className={cn(
-        inTab ? 'bg-fd-secondary -mx-px -mb-px last:rounded-b-xl' : 'my-4 rounded-xl bg-gray-100 dark:bg-background',
-        keepBackground && 'bg-(--shiki-light-bg) dark:bg-(--shiki-dark-bg)',
-        'shiki relative border border-gray-200 not-prose overflow-hidden text-[13px] font-[450] dark:border-white/10',
+        inTab
+          ? "-mx-px -mb-px bg-fd-secondary last:rounded-b-xl"
+          : "my-4 rounded-xl bg-gray-100 dark:bg-background",
+        keepBackground && "bg-(--shiki-light-bg) dark:bg-(--shiki-dark-bg)",
+        "shiki not-prose relative overflow-hidden border border-gray-200 text-[13px] font-[450] dark:border-white/10",
         props.className,
       )}
     >
       {title ? (
-        <div className="flex text-fd-muted-foreground items-center gap-2 h-9.5 px-4">
-          {typeof icon === 'string' ? (
+        <div className="flex h-9.5 items-center gap-2 px-4 text-fd-muted-foreground">
+          {typeof icon === "string" ? (
             <div
               className="[&_svg]:size-3.5"
               dangerouslySetInnerHTML={{
@@ -107,15 +114,15 @@ export function CodeBlock({
           )}
           <figcaption className="flex-1 truncate">{title}</figcaption>
           {Actions({
-            className: '-me-2',
+            className: "-me-2",
             children: allowCopy && <CopyButton containerRef={areaRef} />,
           })}
         </div>
       ) : (
         Actions({
           className:
-            'absolute top-3 right-3 z-2 rounded-lg text-gray-400 hover:text-gray-600',
-          children: allowCopy && <CopyButton containerRef={areaRef} />,
+            "absolute top-3 right-3 z-2 rounded-lg text-gray-400 hover:text-gray-600",
+          children: allowCopy && <CopyButton containerRef={areaRef} showGlow />,
         })
       )}
       <div
@@ -124,15 +131,15 @@ export function CodeBlock({
         role="region"
         tabIndex={0}
         className={cn(
-          'text-sm leading-6 py-3.5 px-4 overflow-auto max-h-[600px] fd-scroll-container focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-fd-ring bg-white rounded-t-xl',
+          "fd-scroll-container max-h-[600px] overflow-auto rounded-t-xl bg-white px-4 py-3.5 text-sm leading-6 focus-visible:ring-2 focus-visible:ring-fd-ring focus-visible:outline-none focus-visible:ring-inset",
           viewportProps.className,
         )}
         style={
           {
             // space for toolbar
-            '--padding-right': !title ? 'calc(var(--spacing) * 8)' : undefined,
-            counterSet: props['data-line-numbers']
-              ? `line ${Number(props['data-line-numbers-start'] ?? 1) - 1}`
+            "--padding-right": !title ? "calc(var(--spacing) * 8)" : undefined,
+            counterSet: props["data-line-numbers"]
+              ? `line ${Number(props["data-line-numbers-start"] ?? 1) - 1}`
               : undefined,
             ...viewportProps.style,
           } as object
@@ -147,36 +154,45 @@ export function CodeBlock({
 function CopyButton({
   className,
   containerRef,
+  showGlow = false,
   ...props
-}: ComponentProps<'button'> & {
+}: ComponentProps<"button"> & {
   containerRef: RefObject<HTMLElement | null>;
+  showGlow?: boolean;
 }) {
   const [checked, onClick] = useCopyButton(() => {
-    const pre = containerRef.current?.getElementsByTagName('pre').item(0);
+    const pre = containerRef.current?.getElementsByTagName("pre").item(0);
     if (!pre) return;
 
     const clone = pre.cloneNode(true) as HTMLElement;
-    clone.querySelectorAll('.nd-copy-ignore').forEach((node) => {
-      node.replaceWith('\n');
+    clone.querySelectorAll(".nd-copy-ignore").forEach((node) => {
+      node.replaceWith("\n");
     });
 
-    void navigator.clipboard.writeText(clone.textContent ?? '');
+    void navigator.clipboard.writeText(clone.textContent ?? "");
   });
 
   return (
-    <button
-      type="button"
-      data-checked={checked || undefined}
-      className={cn(
-        'flex size-7 cursor-pointer items-center justify-center text-gray-400 hover:text-gray-600',
-        className,
-      )}
-      aria-label={checked ? 'Copied Text' : 'Copy Text'}
-      onClick={onClick}
-      {...props}
-    >
-      {checked ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}
-    </button>
+    <div className="relative">
+      {showGlow && <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-radial from-white from-20% via-white/85 to-white/0 to-70% size-14 rounded-l-full z-0"></div>}
+      <button
+        type="button"
+        data-checked={checked || undefined}
+        className={cn(
+          "flex size-7 cursor-pointer items-center justify-center text-gray-400 hover:text-gray-600 relative",
+          className,
+        )}
+        aria-label={checked ? "Copied Text" : "Copy Text"}
+        onClick={onClick}
+        {...props}
+      >
+        {checked ? (
+          <Check className="size-4" />
+        ) : (
+          <Copy className="size-3.5" />
+        )}
+      </button>
+    </div>
   );
 }
 
@@ -188,7 +204,11 @@ export function CodeBlockTabs({ ref, ...props }: ComponentProps<typeof Tabs>) {
     <Tabs
       ref={mergeRefs(containerRef, ref)}
       {...props}
-      className={cn('rounded-xl border border-gray-200 bg-white dark:border-white/10 dark:bg-background', !nested && 'my-0', props.className)}
+      className={cn(
+        "rounded-xl border border-gray-200 bg-white dark:border-white/10 dark:bg-background",
+        !nested && "my-0",
+        props.className,
+      )}
     >
       <TabsContext
         value={useMemo(
@@ -209,19 +229,25 @@ export function CodeBlockTabsList(props: ComponentProps<typeof TabsList>) {
   return (
     <TabsList
       {...props}
-      className={cn('flex flex-row px-2 overflow-x-auto text-fd-muted-foreground', props.className)}
+      className={cn(
+        "flex flex-row overflow-x-auto px-2 text-fd-muted-foreground",
+        props.className,
+      )}
     >
       {props.children}
     </TabsList>
   );
 }
 
-export function CodeBlockTabsTrigger({ children, ...props }: ComponentProps<typeof TabsTrigger>) {
+export function CodeBlockTabsTrigger({
+  children,
+  ...props
+}: ComponentProps<typeof TabsTrigger>) {
   return (
     <TabsTrigger
       {...props}
       className={cn(
-        'relative group inline-flex text-[13px] font-medium text-nowrap items-center transition-colors gap-2 px-2 py-1.5 hover:text-fd-accent-foreground data-[state=active]:text-fd-primary [&_svg]:size-3.5',
+        "group relative inline-flex items-center gap-2 px-2 py-1.5 text-[13px] font-medium text-nowrap transition-colors hover:text-fd-accent-foreground data-[state=active]:text-fd-primary [&_svg]:size-3.5",
         props.className,
       )}
     >
