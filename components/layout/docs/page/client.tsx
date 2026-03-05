@@ -253,14 +253,13 @@ export function PageFooter({ items, children, className, ...props }: FooterProps
     <>
       <div
         className={cn(
-          '@container grid gap-4',
-          previous && next ? 'grid-cols-2' : 'grid-cols-1',
+          '@container flex justify-between gap-4 mt-15 mb-10',
           className,
         )}
         {...props}
       >
-        {previous && <FooterItem item={previous} index={0} />}
-        {next && <FooterItem item={next} index={1} />}
+        {previous ? <FooterItem item={previous} index={0} /> : <div />}
+        {next ? <FooterItem item={next} index={1} /> : <div />}
       </div>
       {children}
     </>
@@ -275,22 +274,19 @@ function FooterItem({ item, index }: { item: Item; index: 0 | 1 }) {
     <Link
       href={item.url}
       className={cn(
-        'flex flex-col gap-2 rounded-lg border p-4 text-sm transition-colors hover:bg-fd-accent/80 hover:text-fd-accent-foreground @max-lg:col-span-full',
+        'flex flex-col w-fit gap-2 rounded-full h-8 px-3 text-sm items-center justify-center text-gray-500 bg-gray-100 transition-colors hover:bg-gray-200 hover:text-gray-700 @max-lg:col-span-full',
         index === 1 && 'text-end',
       )}
     >
       <div
         className={cn(
-          'inline-flex items-center gap-1.5 font-medium',
+          'inline-flex items-center gap-1.5 font-[450]',
           index === 1 && 'flex-row-reverse',
         )}
       >
         <Icon className="-mx-1 size-4 shrink-0 rtl:rotate-180" />
         <p>{item.name}</p>
       </div>
-      <p className="text-fd-muted-foreground truncate">
-        {item.description ?? (index === 0 ? text.previousPage : text.nextPage)}
-      </p>
     </Link>
   );
 }
