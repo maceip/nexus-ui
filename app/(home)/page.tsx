@@ -107,7 +107,7 @@ export default function HomePage() {
               <h1 className="text-2xl leading-[38px] font-medium tracking-[-0.8px] lg:text-[32px]">
                 Build Better AI Interfaces
               </h1>
-              <p className="w-[272px] text-center text-sm leading-6 font-normal text-[#737373] lg:w-[317px] lg:text-left lg:text-base">
+              <p className="w-[272px] text-center text-sm leading-6 font-normal text-gray-500 lg:w-[317px] lg:text-left lg:text-base">
                 Flexible, customizable components engineered for modern AI
                 experiences.
               </p>
@@ -140,8 +140,8 @@ export default function HomePage() {
                     onClick={() => setActiveTab(tab.key)}
                     className={`w-fit cursor-pointer gap-1 rounded-full text-sm leading-6 font-normal ${
                       isActive
-                        ? "bg-[#E5E5E5] text-[#171717] hover:bg-[#E5E5E5] dark:bg-[#404040] dark:text-white"
-                        : "bg-transparent text-[#171717] hover:bg-[#E5E5E5] dark:text-white dark:hover:bg-[#404040]"
+                        ? "bg-[#E5E5E5] text-gray-900 hover:bg-[#E5E5E5] dark:bg-gray-700 dark:text-white"
+                        : "bg-transparent text-gray-900 hover:bg-[#E5E5E5] dark:text-white dark:hover:bg-gray-700"
                     }`}
                   >
                     <Icon className="size-4" />
@@ -155,7 +155,7 @@ export default function HomePage() {
               <DynamicCodeBlock lang="ts" code={code} />
 
               <button
-                className="bor der absolute top-5 right-5 flex size-7 cursor-pointer items-center justify-center text-[#737373]"
+                className="bor der absolute top-5 right-5 flex size-7 cursor-pointer items-center justify-center text-gray-500"
                 onClick={handleCopy}
               >
                 {checked ? (
