@@ -8,7 +8,7 @@ export default function NexusIcon({ className }: { className?: string }) {
       height="24"
       viewBox="0 0 24 24"
       fill="none"
-      className={cn("size-4 text-[#171717] dark:text-[#FAFAFA]", className)}
+      className={cn("size-4 text-gray-900 dark:text-gray-50", className)}
     >
       <path
         fill-rule="evenodd"

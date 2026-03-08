@@ -126,7 +126,7 @@ export default function HomePage() {
           borderSide="left"
         >
           <div className="flex h-full w-full flex-col items-center px-4 lg:justify-between lg:px-6">
-            <div className="flex w-full flex-col items-center justify-end rounded-b-[40px] border-x border-b border-[#E5E5E5] bg-white p-3 pt-21.5 lg:h-16/51 lg:p-7 dark:border-white/10 dark:bg-background">
+            <div className="flex w-full flex-col items-center justify-end rounded-b-[40px] border-x border-b border-gray-200 bg-white p-3 pt-21.5 lg:h-16/51 lg:p-7 dark:border-white/10 dark:bg-background">
               {inputComponents[activeTab]}
             </div>
 
@@ -140,8 +140,8 @@ export default function HomePage() {
                     onClick={() => setActiveTab(tab.key)}
                     className={`w-fit cursor-pointer gap-1 rounded-full text-sm leading-6 font-normal ${
                       isActive
-                        ? "bg-[#E5E5E5] text-gray-900 hover:bg-[#E5E5E5] dark:bg-gray-700 dark:text-white"
-                        : "bg-transparent text-gray-900 hover:bg-[#E5E5E5] dark:text-white dark:hover:bg-gray-700"
+                        ? "bg-gray-200 text-gray-900 hover:bg-gray-200 dark:bg-gray-700 dark:text-white"
+                        : "bg-transparent text-gray-900 hover:bg-gray-200 dark:text-white dark:hover:bg-gray-700"
                     }`}
                   >
                     <Icon className="size-4" />
@@ -151,7 +151,7 @@ export default function HomePage() {
               })}
             </div>
 
-            <div className="relative w-full rounded-t-[40px] border-x border-t border-[#E5E5E5] bg-white lg:h-31/51 dark:border-white/10 dark:bg-background [&_.fd-scroll-container]:max-h-none! lg:[&_.fd-scroll-container]:h-full [&_.lucide-clipboard]:hidden [&_div.absolute.top-3.right-2]:hidden [&_pre]:text-sm [&_pre]:leading-6 [&>figure]:h-full [&>figure]:rounded-none [&>figure]:border-none [&>figure]:bg-transparent [&>figure]:py-3.5 [&>figure]:pr-3.5 [&>figure]:pl-7 [&>figure]:shadow-none">
+            <div className="relative w-full rounded-t-[40px] border-x border-t border-gray-200 bg-white lg:h-31/51 dark:border-white/10 dark:bg-background [&_.fd-scroll-container]:max-h-none! lg:[&_.fd-scroll-container]:h-full [&_.lucide-clipboard]:hidden [&_div.absolute.top-3.right-2]:hidden [&_pre]:text-sm [&_pre]:leading-6 [&>figure]:h-full [&>figure]:rounded-none [&>figure]:border-none [&>figure]:bg-transparent [&>figure]:py-3.5 [&>figure]:pr-3.5 [&>figure]:pl-7 [&>figure]:shadow-none">
               <DynamicCodeBlock lang="ts" code={code} />
 
               <button

@@ -36,7 +36,7 @@ const PromptInputTextarea = React.forwardRef<
         ref={ref}
         placeholder="How can I help you today?"
         className={cn(
-          "min-h-14 w-full resize-none border-0 bg-transparent dark:bg-transparent px-4 py-4 text-base leading-6 font-normal text-[#171717] shadow-none outline-none placeholder:text-[#737373] focus-visible:ring-0 focus-visible:ring-offset-0 dark:text-white",
+          "min-h-14 w-full resize-none border-0 bg-transparent px-4 py-4 text-base leading-6 font-normal text-gray-900 shadow-none outline-none placeholder:text-gray-500 focus-visible:ring-0 focus-visible:ring-offset-0 dark:bg-transparent dark:text-white",
           className,
         )}
         {...props}

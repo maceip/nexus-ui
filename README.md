@@ -25,8 +25,8 @@ Copy-paste components into your project. You own the code.
 
 ## Components
 
-| Component | Description |
-|-----------|-------------|
+| Component     | Description                                                        |
+| ------------- | ------------------------------------------------------------------ |
 | `PromptInput` | Composable chat input with auto-resizing textarea and action slots |
 
 ## Quick Start
@@ -78,7 +78,7 @@ const ChatInput = () => {
       <PromptInputActions>
         <PromptInputActionGroup>
           <PromptInputAction asChild>
-            <Button className="size-8 cursor-pointer gap-1 rounded-full border-none bg-transparent text-[13px] leading-6 font-normal text-gray-900 hover:bg-[#E5E5E5] dark:text-white dark:hover:bg-gray-700">
+            <Button className="size-8 cursor-pointer gap-1 rounded-full border-none bg-transparent text-[13px] leading-6 font-normal text-gray-900 hover:bg-gray-200 dark:text-white dark:hover:bg-gray-700">
               <Paperclip />
             </Button>
           </PromptInputAction>
@@ -86,7 +86,7 @@ const ChatInput = () => {
 
         <PromptInputActionGroup>
           <PromptInputAction asChild>
-            <Button className="size-8 cursor-pointer gap-1 rounded-full bg-gray-700 text-[13px] leading-6 font-normal text-white hover:bg-[#E5E5E5] dark:text-white dark:hover:bg-gray-700">
+            <Button className="size-8 cursor-pointer gap-1 rounded-full bg-gray-700 text-[13px] leading-6 font-normal text-white hover:bg-gray-200 dark:text-white dark:hover:bg-gray-700">
               <ArrowUp />
             </Button>
           </PromptInputAction>

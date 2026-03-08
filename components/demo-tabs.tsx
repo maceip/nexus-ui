@@ -44,7 +44,7 @@ const NexusInput = () => {
       <PromptInputActions>
         <PromptInputActionGroup>
           <PromptInputAction asChild>
-            <Button className="size-8 cursor-pointer gap-1 rounded-full border-none bg-transparent text-[13px] leading-6 font-normal text-[#171717] hover:bg-[#E5E5E5] dark:text-white dark:hover:bg-[#404040]">
+            <Button className="size-8 cursor-pointer gap-1 rounded-full border-none bg-transparent text-[13px] leading-6 font-normal text-gray-900 hover:bg-gray-200 dark:text-white dark:hover:bg-gray-700">
               <Paperclip />
             </Button>
           </PromptInputAction>
@@ -52,7 +52,7 @@ const NexusInput = () => {
 
         <PromptInputActionGroup>
           <PromptInputAction asChild>
-            <Button className="size-8 cursor-pointer gap-1 rounded-full bg-[#404040] text-[13px] leading-6 font-normal text-white hover:bg-[#E5E5E5] dark:text-white dark:hover:bg-[#404040]">
+            <Button className="size-8 cursor-pointer gap-1 rounded-full bg-gray-700 text-[13px] leading-6 font-normal text-white hover:bg-gray-200 dark:text-white dark:hover:bg-gray-700">
               <ArrowUp />
             </Button>
           </PromptInputAction>
@@ -88,25 +88,25 @@ const GeminiInput = () => {
       <PromptInputActions className="px-0 pt-2 pb-0">
         <PromptInputActionGroup>
           <PromptInputAction asChild>
-            <Button className="size-10 cursor-pointer rounded-full border-none bg-transparent text-[13px] leading-6 font-normal text-[#5D5D5D] hover:bg-[#E5E5E5] dark:text-white dark:hover:bg-[#404040]">
+            <Button className="size-10 cursor-pointer rounded-full border-none bg-transparent text-[13px] leading-6 font-normal text-[#5D5D5D] hover:bg-gray-200 dark:text-white dark:hover:bg-gray-700">
               <GeminiAdd className="size-5 text-[#5D5D5D]" />
             </Button>
           </PromptInputAction>
           <PromptInputAction asChild>
-            <Button className="size-10 cursor-pointer gap-1 rounded-full border-none bg-transparent text-[13px] leading-6 font-normal text-[#5D5D5D] hover:bg-[#E5E5E5] dark:text-white dark:hover:bg-[#404040]">
+            <Button className="size-10 cursor-pointer gap-1 rounded-full border-none bg-transparent text-[13px] leading-6 font-normal text-[#5D5D5D] hover:bg-gray-200 dark:text-white dark:hover:bg-gray-700">
               <GeminiPageInfo className="size-5 text-[#5D5D5D]" />
             </Button>
           </PromptInputAction>
         </PromptInputActionGroup>
         <PromptInputActionGroup>
           <PromptInputAction asChild>
-            <Button className="h-10 cursor-pointer gap-1.75 rounded-full border-none bg-transparent text-[13px] leading-6 font-normal text-[#5D5D5D] hover:bg-[#E5E5E5] dark:text-white dark:hover:bg-[#404040]">
+            <Button className="h-10 cursor-pointer gap-1.75 rounded-full border-none bg-transparent text-[13px] leading-6 font-normal text-[#5D5D5D] hover:bg-gray-200 dark:text-white dark:hover:bg-gray-700">
               <span>Fast</span>
               <GeminiCaret className="-mb-0.5 size-5 text-[#5D5D5D]" />
             </Button>
           </PromptInputAction>
           <PromptInputAction asChild>
-            <Button className="size-10 cursor-pointer gap-1 rounded-full border-none bg-transparent text-[13px] leading-6 font-normal text-[#5D5D5D] hover:bg-[#E5E5E5] dark:text-white dark:hover:bg-[#404040]">
+            <Button className="size-10 cursor-pointer gap-1 rounded-full border-none bg-transparent text-[13px] leading-6 font-normal text-[#5D5D5D] hover:bg-gray-200 dark:text-white dark:hover:bg-gray-700">
               <GeminiMic className="size-5 text-[#5D5D5D]" />
             </Button>
           </PromptInputAction>
@@ -137,13 +137,13 @@ const ChatgptInput = () => {
       <PromptInputActions className="px-3 py-2.5">
         <PromptInputActionGroup>
           <PromptInputAction asChild>
-            <Button className="w-9 cursor-pointer gap-1 rounded-full border border-border-primary bg-transparent text-[13px] leading-6 font-normal text-[#5D5D5D] hover:bg-[#E5E5E5] sm:w-fit dark:bg-[#404040] dark:text-white">
+            <Button className="w-9 cursor-pointer gap-1 rounded-full border border-border-primary bg-transparent text-[13px] leading-6 font-normal text-[#5D5D5D] hover:bg-gray-200 sm:w-fit dark:bg-gray-700 dark:text-white">
               <Paperclip className="size-4 text-[#5D5D5D]" />
               <span className="hidden sm:inline">Attach</span>
             </Button>
           </PromptInputAction>
           <PromptInputAction asChild>
-            <Button className="w-9 cursor-pointer gap-1 rounded-full border border-border-primary bg-transparent text-[13px] leading-6 font-normal text-[#5D5D5D] hover:bg-[#E5E5E5] sm:w-fit dark:bg-[#404040] dark:text-white">
+            <Button className="w-9 cursor-pointer gap-1 rounded-full border border-border-primary bg-transparent text-[13px] leading-6 font-normal text-[#5D5D5D] hover:bg-gray-200 sm:w-fit dark:bg-gray-700 dark:text-white">
               <Globe className="size-4 text-[#5D5D5D]" />
               <span className="hidden sm:inline">Search</span>
             </Button>
@@ -151,7 +151,7 @@ const ChatgptInput = () => {
         </PromptInputActionGroup>
         <PromptInputActionGroup>
           <PromptInputAction asChild>
-            <Button className="w-9 cursor-pointer gap-1 rounded-full bg-[#E5E5E5] text-[13px] leading-6 font-normal text-[#171717] hover:bg-[#E5E5E5] sm:w-fit dark:bg-[#404040] dark:text-white">
+            <Button className="w-9 cursor-pointer gap-1 rounded-full bg-gray-200 text-[13px] leading-6 font-normal text-gray-900 hover:bg-gray-200 sm:w-fit dark:bg-gray-700 dark:text-white">
               <AudioLines className="size-4" />
               <span className="hidden sm:inline">Voice</span>
             </Button>
@@ -188,7 +188,7 @@ const ClaudeInput = () => {
       <PromptInputActions className="px-1 py-0">
         <PromptInputActionGroup>
           <PromptInputAction asChild>
-            <Button className="size-8 cursor-pointer gap-1 rounded-md border-none bg-transparent text-[13px] leading-6 font-normal text-[#5D5D5D] hover:bg-[#E5E5E5] dark:text-white dark:hover:bg-[#404040]">
+            <Button className="size-8 cursor-pointer gap-1 rounded-md border-none bg-transparent text-[13px] leading-6 font-normal text-[#5D5D5D] hover:bg-gray-200 dark:text-white dark:hover:bg-gray-700">
               <ClaudeAdd className="size-5" />
             </Button>
           </PromptInputAction>
@@ -196,13 +196,13 @@ const ClaudeInput = () => {
 
         <PromptInputActionGroup>
           <PromptInputAction asChild>
-            <Button className="h-8 cursor-pointer gap-1 rounded-md bg-transparent pr-2! text-[13px] leading-6 font-normal text-[#171717] hover:bg-[#E5E5E5] dark:text-white dark:hover:bg-[#404040]">
+            <Button className="h-8 cursor-pointer gap-1 rounded-md bg-transparent pr-2! text-[13px] leading-6 font-normal text-gray-900 hover:bg-gray-200 dark:text-white dark:hover:bg-gray-700">
               <span>Sonnet 4.6</span>
               <ClaudeCaret className="size-4" />
             </Button>
           </PromptInputAction>
           <PromptInputAction asChild>
-            <Button className="size-8 cursor-pointer gap-1 rounded-md bg-transparent text-[13px] leading-6 font-normal text-[#171717] hover:bg-[#E5E5E5] dark:text-white dark:hover:bg-[#404040]">
+            <Button className="size-8 cursor-pointer gap-1 rounded-md bg-transparent text-[13px] leading-6 font-normal text-gray-900 hover:bg-gray-200 dark:text-white dark:hover:bg-gray-700">
               <ClaudeAudioLines className="size-5" />
             </Button>
           </PromptInputAction>
@@ -238,12 +238,12 @@ const V0Input = () => {
       <PromptInputActions className="px-0 py-0">
         <PromptInputActionGroup className="gap-1">
           <PromptInputAction asChild>
-            <Button className="-none size-7 cursor-pointer gap-1 rounded-sm bg-transparent text-[13px] leading-6 font-normal text-[#5D5D5D] hover:bg-[#f5f5f5] dark:text-white dark:hover:bg-[#404040]">
+            <Button className="-none size-7 cursor-pointer gap-1 rounded-sm bg-transparent text-[13px] leading-6 font-normal text-[#5D5D5D] hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">
               <V0Plus className="size-4" />
             </Button>
           </PromptInputAction>
           <PromptInputAction asChild>
-            <Button className="h-7 cursor-pointer gap-1 rounded-sm bg-transparent text-[13px] leading-6 font-normal text-[#5D5D5D] hover:bg-[#f5f5f5] dark:text-white dark:hover:bg-[#404040]">
+            <Button className="h-7 cursor-pointer gap-1 rounded-sm bg-transparent text-[13px] leading-6 font-normal text-[#5D5D5D] hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">
               <V0Model className="mr-0.5 size-4" />
               <span>v0 Max</span>
               <V0Caret className="size-4" />
@@ -253,7 +253,7 @@ const V0Input = () => {
 
         <PromptInputActionGroup className="">
           <PromptInputAction asChild>
-            <Button className="size-7 cursor-pointer gap-1 rounded-sm border border-[#e5e5e5] bg-[#f5f5f5]/50 text-[13px] leading-6 font-normal text-[#e5e5e5] dark:border-border-primary dark:bg-[#404040] dark:text-border-primary">
+            <Button className="size-7 cursor-pointer gap-1 rounded-sm border border-gray-200 bg-gray-100/50 text-[13px] leading-6 font-normal text-gray-200 dark:border-border-primary dark:bg-gray-700 dark:text-border-primary">
               <V0ArrowUp className="size-4" />
             </Button>
           </PromptInputAction>
