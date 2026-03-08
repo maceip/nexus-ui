@@ -31,7 +31,7 @@ export function getMDXComponents(components?: MDXComponents): MDXComponents {
     ),
     th: (props) => (
       <th
-        className="px-6 py-2.5 text-left font-[350]! text-[14px] text-gray-400! border-none"
+        className="px-6 py-2.5 text-left font-normal! text-[14px] text-gray-400! border-none"
         {...props}
       />
     ),
