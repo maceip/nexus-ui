@@ -64,7 +64,7 @@ export function Navbar({ navItems = [] }: NavbarProps) {
               className="absolute inset-0 dark:hidden"
               style={{
                 background:
-                  "repeating-linear-gradient(-45deg, #ffffff, #ffffff 14px, #D4D4D429 14px, #D4D4D429 16px)",
+                  "repeating-linear-gradient(-45deg, #ffffff, #ffffff 14px, #F8F8F8 14px, #F8F8F8 16px)",
               }}
               aria-hidden
             />
@@ -168,7 +168,7 @@ function DesktopNav({
         Docs
       </Link>
       <Link
-        href="/docs/test"
+        href="/docs/components"
         className={cn(
           "cursor-pointer rounded-md px-3 py-2 text-sm transition-colors",
           isComponents
