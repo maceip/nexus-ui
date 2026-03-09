@@ -1,9 +1,16 @@
-import defaultMdxComponents from 'fumadocs-ui/mdx';
-import type { MDXComponents } from 'mdx/types';
-import { CodeBlock, CodeBlockTab, CodeBlockTabs, CodeBlockTabsList, CodeBlockTabsTrigger } from './components/codeblock';
-import { Pre } from 'fumadocs-ui/components/codeblock';
-import { Tab, Tabs } from './components/tabs';
-import { TypeTable } from './components/type-table';
+import defaultMdxComponents from "fumadocs-ui/mdx";
+import type { MDXComponents } from "mdx/types";
+import {
+  CodeBlock,
+  CodeBlockTab,
+  CodeBlockTabs,
+  CodeBlockTabsList,
+  CodeBlockTabsTrigger,
+} from "./components/codeblock";
+import { Pre } from "fumadocs-ui/components/codeblock";
+import { Tab, Tabs } from "./components/tabs";
+import { TypeTable } from "./components/type-table";
+import { Step, Steps } from "./components/steps";
 
 export function getMDXComponents(components?: MDXComponents): MDXComponents {
   return {
@@ -11,6 +18,8 @@ export function getMDXComponents(components?: MDXComponents): MDXComponents {
     ...components,
     Tab,
     Tabs,
+    Step,
+    Steps,
     TypeTable,
     CodeBlockTab,
     CodeBlockTabs,
@@ -19,25 +28,28 @@ export function getMDXComponents(components?: MDXComponents): MDXComponents {
     table: (props) => (
       <div
         className={[
-          'overflow-hidden rounded-2xl border border-gray-200 bg-gray-100 prose-no-margin my-6 dark:border-white/10 dark:bg-white/5',
-          '[&_tbody_tr:first-child_td:first-child]:rounded-tl-xl',
-          '[&_tbody_tr:first-child_td:last-child]:rounded-tr-xl',
-          '[&_tbody_tr:last-child_td:first-child]:rounded-bl-xl',
-          '[&_tbody_tr:last-child_td:last-child]:rounded-br-xl',
-        ].join(' ')}
+          "my-6 prose-no-margin overflow-hidden rounded-2xl border border-gray-200 bg-gray-100 dark:border-white/10 dark:bg-white/5",
+          "[&_tbody_tr:first-child_td:first-child]:rounded-tl-xl",
+          "[&_tbody_tr:first-child_td:last-child]:rounded-tr-xl",
+          "[&_tbody_tr:last-child_td:first-child]:rounded-bl-xl",
+          "[&_tbody_tr:last-child_td:last-child]:rounded-br-xl",
+        ].join(" ")}
       >
-        <table className="w-full text-sm border-separate border-spacing-0 border-none" {...props} />
+        <table
+          className="w-full border-separate border-spacing-0 border-none text-sm"
+          {...props}
+        />
       </div>
     ),
     th: (props) => (
       <th
-        className="px-6 py-2.5 text-left font-normal! text-[14px] text-gray-400! border-none"
+        className="border-none px-6 py-2.5 text-left text-[14px] font-normal! text-gray-400!"
         {...props}
       />
     ),
     td: (props) => (
       <td
-        className="px-6 py-3.5 bg-white border-0 text-[14px] [tr:not(:first-child)_&]:border-t border-gray-100 dark:bg-background dark:border-white/10"
+        className="border-0 border-gray-100 bg-white px-6 py-3.5 text-[14px] dark:border-white/10 dark:bg-background [tr:not(:first-child)_&]:border-t"
         {...props}
       />
     ),
