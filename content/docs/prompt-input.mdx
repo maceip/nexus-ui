@@ -3,6 +3,57 @@ title: Prompt Input
 description: A flexible input component for composing chat messages
 ---
 
+import NexusInput from '@/components/nexus-ui/examples/nexus-input';
+import ReviewContainer from '@/components/preview-container';
+
 ## Prompt Input
 
 The Prompt Input component provides a text input area for composing messages.
+
+<Tabs items={["Preview", "Code"]} className="my-10">
+<Tab value="Preview">
+ <ReviewContainer>
+  <NexusInput />    
+</ReviewContainer>
+</Tab>
+    <Tab value="Code">
+```jsx
+import { Button } from "@/components/ui/button";
+import PromptInput, {
+  PromptInputActions,
+  PromptInputAction,
+  PromptInputActionGroup,
+  PromptInputTextarea,
+} from "@/components/nexus-ui/prompt-input";
+import { ArrowUp, Paperclip } from "lucide-react";
+
+const NexusInput = () => {
+  return (
+    <PromptInput>
+      <PromptInputTextarea />
+      <PromptInputActions>
+        <PromptInputActionGroup>
+          <PromptInputAction asChild>
+            <Button className="size-8 cursor-pointer gap-1 rounded-full border-none bg-transparent text-[13px] leading-6 font-normal text-gray-900 hover:bg-gray-200 dark:text-white dark:hover:bg-gray-700">
+              <Paperclip />
+            </Button>
+          </PromptInputAction>
+        </PromptInputActionGroup>
+
+        <PromptInputActionGroup>
+          <PromptInputAction asChild>
+            <Button className="size-8 cursor-pointer gap-1 rounded-full bg-gray-700 text-[13px] leading-6 font-normal text-white hover:bg-gray-200 dark:text-white dark:hover:bg-gray-700">
+              <ArrowUp />
+            </Button>
+          </PromptInputAction>
+        </PromptInputActionGroup>
+      </PromptInputActions>
+    </PromptInput>
+  );
+};
+
+export default NexusInput;
+
+```
+</Tab>
+</Tabs>
