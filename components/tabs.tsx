@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import * as React from 'react';
+import * as React from "react";
 import {
   type ComponentProps,
   createContext,
@@ -10,15 +10,15 @@ import {
   useId,
   useMemo,
   useState,
-} from 'react';
-import { cn } from '../lib/cn';
-import * as Unstyled from './ui/tabs';
+} from "react";
+import { cn } from "../lib/cn";
+import * as Unstyled from "./ui/tabs";
 
 type CollectionKey = string | symbol;
 
 export interface TabsProps extends Omit<
   ComponentProps<typeof Unstyled.Tabs>,
-  'value' | 'onValueChange'
+  "value" | "onValueChange"
 > {
   /**
    * Use simple mode instead of advanced usage as documented in https://radix-ui.com/primitives/docs/components/tabs.
@@ -36,6 +36,11 @@ export interface TabsProps extends Omit<
    * Additional label in tabs list when `items` is provided.
    */
   label?: ReactNode;
+
+  /**
+   * Whether to use a framed style for the tabs.
+   */
+  framed?: boolean;
 }
 
 const TabsContext = createContext<{
@@ -45,39 +50,47 @@ const TabsContext = createContext<{
 
 function useTabContext() {
   const ctx = useContext(TabsContext);
-  if (!ctx) throw new Error('You must wrap your component in <Tabs>');
+  if (!ctx) throw new Error("You must wrap your component in <Tabs>");
   return ctx;
 }
 
 export const TabsList = React.forwardRef<
   React.ComponentRef<typeof Unstyled.TabsList>,
-  React.ComponentPropsWithoutRef<typeof Unstyled.TabsList>
->((props, ref) => (
+  React.ComponentPropsWithoutRef<typeof Unstyled.TabsList> & {
+    framed?: boolean;
+  }
+>(({ framed, ...props }, ref) => (
   <Unstyled.TabsList
     ref={ref}
     {...props}
     className={cn(
-      'flex gap-2 text-fd-secondary-foreground overflow-x-auto px-4 not-prose dark:border-white/10 h-9',
+      "not-prose flex h-9 gap-2 overflow-x-auto text-fd-secondary-foreground dark:border-white/10",
       props.className,
+      framed ? "px-4": "",
     )}
   />
 ));
-TabsList.displayName = 'TabsList';
+TabsList.displayName = "TabsList";
 
 export const TabsTrigger = React.forwardRef<
   React.ComponentRef<typeof Unstyled.TabsTrigger>,
-  React.ComponentPropsWithoutRef<typeof Unstyled.TabsTrigger>
->((props, ref) => (
+  React.ComponentPropsWithoutRef<typeof Unstyled.TabsTrigger> & {
+    framed?: boolean;
+  }
+>(({ framed, ...props }, ref) => (
   <Unstyled.TabsTrigger
     ref={ref}
     {...props}
     className={cn(
-      'inline-flex items-center cursor-pointer gap-2 font-[450] whitespace-nowrap text-gray-400 border-b border-transparent py-2 px-1 text-[13px] transition-colors [&_svg]:size-4 hover:text-gray-900 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:border-gray-900 data-[state=active]:text-gray-900',
+      "inline-flex cursor-pointer items-center gap-2 font-[450] whitespace-nowrap text-gray-400",
       props.className,
+      framed
+        ? "border-b border-transparent px-1 py-2 text-[13px] transition-colors hover:text-gray-900 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:border-gray-900 data-[state=active]:text-gray-900 [&_svg]:size-4"
+        : "data-[state=active]:bg-gray-100 data-[state=active]:text-gray-900 px-3 rounded-full h-8",
     )}
   />
 ));
-TabsTrigger.displayName = 'TabsTrigger';
+TabsTrigger.displayName = "TabsTrigger";
 
 export function Tabs({
   ref,
@@ -86,6 +99,7 @@ export function Tabs({
   label,
   defaultIndex = 0,
   defaultValue = items ? escapeValue(items[defaultIndex]) : undefined,
+  framed = true,
   ...props
 }: TabsProps) {
   const [value, setValue] = useState(defaultValue);
@@ -95,8 +109,10 @@ export function Tabs({
     <Unstyled.Tabs
       ref={ref}
       className={cn(
-        'flex flex-col overflow-hidden rounded-xl border border-gray-200 bg-gray-100 my-4 dark:border-white/10 dark:bg-background',
+        "flex flex-col overflow-hidden",
         className,
+        framed ?
+          "my-4 rounded-xl border border-gray-200 bg-gray-100 dark:border-white/10 dark:bg-background": "gap-3 my-6!",
       )}
       value={value}
       onValueChange={(v: string) => {
@@ -106,23 +122,34 @@ export function Tabs({
       {...props}
     >
       {items && (
-        <TabsList>
-          {label && <span className="text-sm font-medium my-auto me-auto">{label}</span>}
+        <TabsList framed={framed as boolean}>
+          {label && (
+            <span className="my-auto me-auto text-sm font-medium">{label}</span>
+          )}
           {items.map((item) => (
-            <TabsTrigger key={item} value={escapeValue(item)}>
+            <TabsTrigger
+              key={item}
+              value={escapeValue(item)}
+              framed={framed as boolean}
+            >
               {item}
             </TabsTrigger>
           ))}
         </TabsList>
       )}
-      <TabsContext.Provider value={useMemo(() => ({ items, collection }), [collection, items])}>
+      <TabsContext.Provider
+        value={useMemo(() => ({ items, collection }), [collection, items])}
+      >
         {props.children}
       </TabsContext.Provider>
     </Unstyled.Tabs>
   );
 }
 
-export interface TabProps extends Omit<ComponentProps<typeof Unstyled.TabsContent>, 'value'> {
+export interface TabProps extends Omit<
+  ComponentProps<typeof Unstyled.TabsContent>,
+  "value"
+> {
   /**
    * Value of tab, detect from index if unspecified.
    */
@@ -137,7 +164,7 @@ export function Tab({ value, ...props }: TabProps) {
     items?.at(useCollectionIndex());
   if (!resolved)
     throw new Error(
-      'Failed to resolve tab `value`, please pass a `value` prop to the Tab component.',
+      "Failed to resolve tab `value`, please pass a `value` prop to the Tab component.",
     );
 
   return (
@@ -157,7 +184,7 @@ export function TabsContent({
       value={value}
       forceMount
       className={cn(
-        'p-0 text-sm bg-transparent rounded-xl outline-none prose-no-margin data-[state=inactive]:hidden [&>figure:only-child]:m-0 [&>figure:only-child]:border-none [&>figure:only-child]:rounded-none [&>figure:only-child]:shadow-none',
+        "prose-no-margin rounded-xl bg-transparent p-0 text-sm outline-none data-[state=inactive]:hidden [&>figure:only-child]:m-0 [&>figure:only-child]:rounded-none [&>figure:only-child]:border-none [&>figure:only-child]:shadow-none",
         className,
       )}
       {...props}
@@ -192,5 +219,5 @@ function useCollectionIndex() {
  * only escape whitespaces in values in simple mode
  */
 function escapeValue(v: string): string {
-  return v.toLowerCase().replace(/\s/, '-');
+  return v.toLowerCase().replace(/\s/, "-");
 }
