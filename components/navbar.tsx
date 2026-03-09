@@ -160,7 +160,7 @@ function DesktopNav({
         href="/docs"
         className={cn(
           "cursor-pointer rounded-md px-3 py-2 text-sm transition-colors",
-          isDocs
+          isDocs && !isComponents
             ? "font-medium text-fd-primary"
             : "text-fd-muted-foreground hover:text-fd-accent-foreground",
         )}
@@ -168,7 +168,7 @@ function DesktopNav({
         Docs
       </Link>
       <Link
-        href="/docs/components"
+        href="/docs/components/prompt-input"
         className={cn(
           "cursor-pointer rounded-md px-3 py-2 text-sm transition-colors",
           isComponents
@@ -362,9 +362,9 @@ function GithubIcon({ className }: { className?: string }) {
       <path
         d="M11.2539 16.5039V13.5039C11.3582 12.5644 11.0889 11.6215 10.5039 10.8789C12.7539 10.8789 15.0039 9.37891 15.0039 6.75391C15.0639 5.81641 14.8014 4.89391 14.2539 4.12891C14.4639 3.26641 14.4639 2.36641 14.2539 1.50391C14.2539 1.50391 13.5039 1.50391 12.0039 2.62891C10.0239 2.25391 7.98391 2.25391 6.00391 2.62891C4.50391 1.50391 3.75391 1.50391 3.75391 1.50391C3.52891 2.36641 3.52891 3.26641 3.75391 4.12891C3.20781 4.89082 2.94276 5.8185 3.00391 6.75391C3.00391 9.37891 5.25391 10.8789 7.50391 10.8789C7.21141 11.2464 6.99391 11.6664 6.86641 12.1164C6.73891 12.5664 6.70141 13.0389 6.75391 13.5039M6.75391 13.5039V16.5039M6.75391 13.5039C3.37141 15.0039 3.00391 12.0039 1.50391 12.0039"
         stroke="currentColor"
-        stroke-width="1.25"
-        stroke-linecap="round"
-        stroke-linejoin="round"
+        strokeWidth="1.25"
+        strokeLinecap="round"
+        strokeLinejoin="round"
       />
     </svg>
   );
@@ -383,9 +383,9 @@ function XIcon({ className }: { className?: string }) {
       <path
         d="M2.25 15.75L7.9113 10.0887M7.9113 10.0887L2.25 2.25H6L10.0887 7.9113M7.9113 10.0887L12 15.75H15.75L10.0887 7.9113M15.75 2.25L10.0887 7.9113"
         stroke="currentColor"
-        stroke-width="1.25"
-        stroke-linecap="round"
-        stroke-linejoin="round"
+        strokeWidth="1.25"
+        strokeLinecap="round"
+        strokeLinejoin="round"
       />
     </svg>
   );

@@ -4,6 +4,6 @@
     "index",
     "installation",
     "---Components---",
-    "prompt-input"
+    "components/prompt-input"
   ]
 }

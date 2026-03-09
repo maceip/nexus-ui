@@ -8,7 +8,7 @@
 
 <p align="center">
   <a href="https://nexus-ui.dev">Documentation</a> ·
-  <a href="https://nexus-ui.dev/docs/prompt-input">Components</a>
+  <a href="https://nexus-ui.dev/docs/components/prompt-input">Components</a>
 </p>
 
 ---
