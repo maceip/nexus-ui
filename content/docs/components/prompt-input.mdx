@@ -8,6 +8,7 @@ import PromptInputBasic from "@/components/nexus-ui/examples/prompt-input/basic"
 import PromptInputChatGPT from "@/components/nexus-ui/examples/prompt-input/chatgpt";
 import GeminiInput from "@/components/nexus-ui/examples/gemini-input";
 import PromptInputMultipleActions from "@/components/nexus-ui/examples/prompt-input/multiple-actions";
+import PromptInputWithTooltips from "@/components/nexus-ui/examples/prompt-input/with-tooltips";
 import ReviewContainer from "@/components/preview-container";
 
 A flexible, composable input component for building chat interfaces. Includes an auto-resizing textarea with scroll support and customizable action slots for buttons like send, attach, and more.
@@ -316,6 +317,92 @@ export default function PromptInputMultipleActions() {
         </PromptInputActionGroup>
       </PromptInputActions>
     </PromptInput>
+  );
+}
+```
+</Tab>
+</Tabs>
+
+### With Tooltips
+
+Action buttons wrapped in shadcn tooltips for descriptive hover labels.
+
+<Tabs items={["Preview", "Code"]}>
+<Tab value="Preview">
+<ReviewContainer>
+<PromptInputWithTooltips />
+</ReviewContainer>
+</Tab>
+<Tab value="Code">
+```tsx
+import { Button } from "@/components/ui/button";
+import PromptInput, {
+  PromptInputActions,
+  PromptInputAction,
+  PromptInputActionGroup,
+  PromptInputTextarea,
+} from "@/components/nexus-ui/prompt-input";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { ArrowUp, Image, Mic, Paperclip } from "lucide-react";
+
+export default function PromptInputWithTooltips() {
+  return (
+    <TooltipProvider delayDuration={200}>
+      <PromptInput>
+        <PromptInputTextarea />
+        <PromptInputActions>
+          <PromptInputActionGroup>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <PromptInputAction asChild>
+                  <Button className="size-8 rounded-full border-none bg-transparent text-gray-900 hover:bg-gray-200">
+                    <Paperclip className="size-4" />
+                  </Button>
+                </PromptInputAction>
+              </TooltipTrigger>
+              <TooltipContent>Attach file</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <PromptInputAction asChild>
+                  <Button className="size-8 rounded-full border-none bg-transparent text-gray-900 hover:bg-gray-200">
+                    <Image className="size-4" />
+                  </Button>
+                </PromptInputAction>
+              </TooltipTrigger>
+              <TooltipContent>Upload image</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <PromptInputAction asChild>
+                  <Button className="size-8 rounded-full border-none bg-transparent text-gray-900 hover:bg-gray-200">
+                    <Mic className="size-4" />
+                  </Button>
+                </PromptInputAction>
+              </TooltipTrigger>
+              <TooltipContent>Voice input</TooltipContent>
+            </Tooltip>
+          </PromptInputActionGroup>
+          <PromptInputActionGroup>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <PromptInputAction asChild>
+                  <Button className="size-8 rounded-full bg-gray-700 text-white hover:bg-gray-800">
+                    <ArrowUp />
+                  </Button>
+                </PromptInputAction>
+              </TooltipTrigger>
+              <TooltipContent>Send message</TooltipContent>
+            </Tooltip>
+          </PromptInputActionGroup>
+        </PromptInputActions>
+      </PromptInput>
+    </TooltipProvider>
   );
 }
 ```
