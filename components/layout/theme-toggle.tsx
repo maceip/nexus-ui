@@ -34,26 +34,41 @@ export function SmallThemeToggle({ className }: { className?: string }) {
     <button
       type="button"
       className={cn(
-        "inline-flex cursor-pointer items-center justify-center rounded-full p-2 text-gray-400 transition-colors duration-200 hover:bg-gray-100 hover:text-gray-900",
+        "inline-flex cursor-pointer items-center justify-center rounded-full text-gray-500 transition-colors duration-200 hover:bg-gray-100 hover:text-gray-900",
         className,
       )}
       aria-label="Toggle Theme"
       onClick={() => setTheme(isDark ? "light" : "dark")}
     >
       {isDark ? (
-        <Sun size={18} strokeWidth={1.25} />
-      ) : (
         <svg
           xmlns="http://www.w3.org/2000/svg"
-          width="18"
-          height="18"
-          viewBox="0 0 18 18"
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
           fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className="size-4.5"
         >
+          <circle cx="12" cy="12" r="4" />
+          <path d="M12 2v2" />
+          <path d="M12 20v2" />
+          <path d="m4.93 4.93 1.41 1.41" />
+          <path d="m17.66 17.66 1.41 1.41" />
+          <path d="M2 12h2" />
+          <path d="M20 12h2" />
+          <path d="m6.34 17.66-1.41 1.41" />
+          <path d="m19.07 4.93-1.41 1.41" />
+        </svg>
+      ) : (
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 18 18" fill="none" className="size-4">
           <path
             d="M16.125 10.5588C15.2252 11.0392 14.1976 11.3116 13.1063 11.3116C9.56182 11.3116 6.68844 8.43817 6.68844 4.89364C6.68844 3.80239 6.96079 2.77476 7.44122 1.875C4.25074 2.62273 1.875 5.48635 1.875 8.90482C1.875 12.8924 5.10757 16.125 9.09517 16.125C12.5137 16.125 15.3772 13.7493 16.125 10.5588Z"
             stroke="currentColor"
-            strokeWidth="1.25"
+            strokeWidth="1.5"
             strokeLinecap="round"
             strokeLinejoin="round"
           />
