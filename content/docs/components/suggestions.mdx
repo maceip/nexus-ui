@@ -4,6 +4,10 @@ description: Prompt suggestion chips for guiding user input
 ---
 
 import SuggestionDefault from "@/components/nexus-ui/examples/suggestion/default";
+import SuggestionVertical from "@/components/nexus-ui/examples/suggestion/vertical";
+import SuggestionCustomValue from "@/components/nexus-ui/examples/suggestion/custom-value";
+import SuggestionWithIcons from "@/components/nexus-ui/examples/suggestion/with-icons";
+import SuggestionWithPromptInput from "@/components/nexus-ui/examples/suggestion/with-prompt-input";
 import ReviewContainer from "@/components/preview-container";
 
 Clickable prompt suggestion chips that guide users toward common queries. Built on shadcn's `Button` with a composable compound pattern.
@@ -191,57 +195,189 @@ import {
 
 Use `orientation="vertical"` on `SuggestionList` to stack suggestions in a column.
 
-```tsx keepBackground
-<Suggestions onSelect={(value) => console.log(value)}>
-  <SuggestionList orientation="vertical">
-    <Suggestion>What is AI?</Suggestion>
-    <Suggestion>Teach me Engineering from scratch</Suggestion>
-    <Suggestion>Design a weekly workout plan</Suggestion>
-  </SuggestionList>
-</Suggestions>
+<Tabs items={["Preview", "Code"]}>
+<Tab value="Preview">
+<ReviewContainer>
+<SuggestionVertical />
+</ReviewContainer>
+</Tab>
+<Tab value="Code">
+```tsx
+"use client";
+
+import {
+  Suggestions,
+  SuggestionList,
+  Suggestion,
+} from "@/components/nexus-ui/suggestions";
+
+export default function SuggestionVertical() {
+  return (
+    <Suggestions onSelect={(value) => console.log(value)}>
+      <SuggestionList orientation="vertical">
+        <Suggestion>What is AI?</Suggestion>
+        <Suggestion>Teach me Engineering from scratch</Suggestion>
+        <Suggestion>Design a weekly workout plan</Suggestion>
+      </SuggestionList>
+    </Suggestions>
+  );
+}
 ```
+</Tab>
+</Tabs>
 
 ### With Custom Value
 
 Use the `value` prop when the display text differs from the value passed to `onSelect`.
 
-```tsx keepBackground
-<Suggestions onSelect={(value) => console.log(value)}>
-  <SuggestionList>
-    <Suggestion value="Explain artificial intelligence in simple terms">
-      What is AI?
-    </Suggestion>
-    <Suggestion value="Create a beginner-friendly React tutorial">
-      How to learn React?
-    </Suggestion>
-  </SuggestionList>
-</Suggestions>
+<Tabs items={["Preview", "Code"]}>
+<Tab value="Preview">
+<ReviewContainer>
+<SuggestionCustomValue />
+</ReviewContainer>
+</Tab>
+<Tab value="Code">
+```tsx
+"use client";
+
+import {
+  Suggestions,
+  SuggestionList,
+  Suggestion,
+} from "@/components/nexus-ui/suggestions";
+
+export default function SuggestionCustomValue() {
+  return (
+    <Suggestions onSelect={(value) => console.log(value)}>
+      <SuggestionList>
+        <Suggestion value="Explain artificial intelligence in simple terms">
+          What is AI?
+        </Suggestion>
+        <Suggestion value="Create a beginner-friendly React tutorial">
+          How to learn React?
+        </Suggestion>
+      </SuggestionList>
+    </Suggestions>
+  );
+}
 ```
+</Tab>
+</Tabs>
 
 ### With Icons
 
 Since `Suggestion` renders a shadcn `Button`, you can add icons alongside text.
 
-```tsx keepBackground
+<Tabs items={["Preview", "Code"]}>
+<Tab value="Preview">
+<ReviewContainer>
+<SuggestionWithIcons />
+</ReviewContainer>
+</Tab>
+<Tab value="Code">
+```tsx
+"use client";
+
+import {
+  Suggestions,
+  SuggestionList,
+  Suggestion,
+} from "@/components/nexus-ui/suggestions";
 import { Sparkles, Code, Dumbbell } from "lucide-react";
 
-<Suggestions onSelect={(value) => console.log(value)}>
-  <SuggestionList>
-    <Suggestion className="gap-1.5">
-      <Sparkles className="size-3.5" />
-      What is AI?
-    </Suggestion>
-    <Suggestion className="gap-1.5">
-      <Code className="size-3.5" />
-      How to learn React?
-    </Suggestion>
-    <Suggestion className="gap-1.5">
-      <Dumbbell className="size-3.5" />
-      Design a workout plan
-    </Suggestion>
-  </SuggestionList>
-</Suggestions>
+export default function SuggestionWithIcons() {
+  return (
+    <Suggestions onSelect={(value) => console.log(value)}>
+      <SuggestionList>
+        <Suggestion className="gap-1.5">
+          <Sparkles className="size-3.5" />
+          What is AI?
+        </Suggestion>
+        <Suggestion className="gap-1.5">
+          <Code className="size-3.5" />
+          How to learn React?
+        </Suggestion>
+        <Suggestion className="gap-1.5">
+          <Dumbbell className="size-3.5" />
+          Design a workout plan
+        </Suggestion>
+      </SuggestionList>
+    </Suggestions>
+  );
+}
 ```
+</Tab>
+</Tabs>
+
+### With Prompt Input
+
+Clicking a suggestion populates the `PromptInput` textarea, combining both components.
+
+<Tabs items={["Preview", "Code"]}>
+<Tab value="Preview">
+<ReviewContainer>
+<SuggestionWithPromptInput />
+</ReviewContainer>
+</Tab>
+<Tab value="Code">
+```tsx
+"use client";
+
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import PromptInput, {
+  PromptInputActions,
+  PromptInputAction,
+  PromptInputActionGroup,
+  PromptInputTextarea,
+} from "@/components/nexus-ui/prompt-input";
+import {
+  Suggestions,
+  SuggestionList,
+  Suggestion,
+} from "@/components/nexus-ui/suggestions";
+import { ArrowUp, Paperclip } from "lucide-react";
+
+export default function SuggestionWithPromptInput() {
+  const [input, setInput] = useState("");
+
+  return (
+    <div className="flex w-full flex-col gap-3">
+      <PromptInput>
+        <PromptInputTextarea
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+        />
+        <PromptInputActions>
+          <PromptInputActionGroup>
+            <PromptInputAction asChild>
+              <Button className="size-8 rounded-full border-none bg-transparent text-gray-900 hover:bg-gray-200">
+                <Paperclip className="size-4" />
+              </Button>
+            </PromptInputAction>
+          </PromptInputActionGroup>
+          <PromptInputActionGroup>
+            <PromptInputAction asChild>
+              <Button className="size-8 rounded-full bg-gray-700 text-white hover:bg-gray-800">
+                <ArrowUp />
+              </Button>
+            </PromptInputAction>
+          </PromptInputActionGroup>
+        </PromptInputActions>
+      </PromptInput>
+      <Suggestions onSelect={(value) => setInput(value)}>
+        <SuggestionList className="justify-center">
+          <Suggestion>What is AI?</Suggestion>
+          <Suggestion>Teach me Engineering from scratch</Suggestion>
+          <Suggestion>Design a weekly workout plan</Suggestion>
+        </SuggestionList>
+      </Suggestions>
+    </div>
+  );
+}
+```
+</Tab>
+</Tabs>
 
 ## API Reference
 

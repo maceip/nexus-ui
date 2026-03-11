@@ -11,7 +11,7 @@ type SuggestionsContextValue = {
 
 const SuggestionsContext = React.createContext<SuggestionsContextValue>({});
 
-type SuggestionsProps = React.HTMLAttributes<HTMLDivElement> & {
+type SuggestionsProps = Omit<React.HTMLAttributes<HTMLDivElement>, "onSelect"> & {
   onSelect?: (value: string) => void;
 };
 
