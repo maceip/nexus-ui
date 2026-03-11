@@ -48,7 +48,7 @@ export function Navbar({ navItems = [] }: NavbarProps) {
   }, [sidebarOpen]);
 
   return (
-    <>
+    <div className="contents">
       <header
         id="nd-nav"
         className={cn(
@@ -111,7 +111,7 @@ export function Navbar({ navItems = [] }: NavbarProps) {
         navItems={navItems}
         pathname={pathname}
       />
-    </>
+    </div>
   );
 }
 

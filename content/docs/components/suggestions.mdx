@@ -1,0 +1,310 @@
+---
+title: Suggestions
+description: Prompt suggestion chips for guiding user input
+---
+
+import SuggestionDefault from "@/components/nexus-ui/examples/suggestion/default";
+import ReviewContainer from "@/components/preview-container";
+
+Clickable prompt suggestion chips that guide users toward common queries. Built on shadcn's `Button` with a composable compound pattern.
+
+<Tabs items={["Preview", "Code"]} className="my-10">
+<Tab value="Preview">
+<ReviewContainer>
+<SuggestionDefault />
+</ReviewContainer>
+</Tab>
+<Tab value="Code">
+```tsx
+"use client";
+
+import {
+  Suggestions,
+  SuggestionList,
+  Suggestion,
+} from "@/components/nexus-ui/suggestions";
+
+export default function SuggestionDefault() {
+  return (
+    <Suggestions onSelect={(value) => console.log(value)}>
+      <SuggestionList>
+        <Suggestion>What is AI?</Suggestion>
+        <Suggestion>Teach me Engineering from scratch</Suggestion>
+        <Suggestion>Design a weekly workout plan</Suggestion>
+        <Suggestion>Places to visit in France</Suggestion>
+        <Suggestion>How to learn React?</Suggestion>
+      </SuggestionList>
+    </Suggestions>
+  );
+}
+```
+</Tab>
+</Tabs>
+
+## Installation
+
+<Tabs items={["CLI", "Manual"]} framed={false}>
+<Tab value="CLI">
+<Tabs items={["npm", "pnpm", "yarn", "bun"]}>
+<Tab value="npm">
+```bash
+npx shadcn@latest add https://nexus-ui.dev/r/suggestions.json
+```
+</Tab>
+<Tab value="pnpm">
+```bash
+pnpm dlx shadcn@latest add https://nexus-ui.dev/r/suggestions.json
+```
+</Tab>
+<Tab value="yarn">
+```bash
+npx shadcn@latest add https://nexus-ui.dev/r/suggestions.json
+```
+</Tab>
+<Tab value="bun">
+```bash
+bunx shadcn@latest add https://nexus-ui.dev/r/suggestions.json
+```
+</Tab>
+</Tabs>
+</Tab>
+<Tab value="Manual">
+<Steps>
+<Step>
+<h3>Copy and paste the following code into your project.</h3>
+
+```tsx title="components/nexus-ui/suggestions.tsx"
+"use client";
+
+import * as React from "react";
+
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+
+type SuggestionsContextValue = {
+  onSelect?: (value: string) => void;
+};
+
+const SuggestionsContext = React.createContext<SuggestionsContextValue>({});
+
+type SuggestionsProps = React.HTMLAttributes<HTMLDivElement> & {
+  onSelect?: (value: string) => void;
+};
+
+const Suggestions = React.forwardRef<HTMLDivElement, SuggestionsProps>(
+  ({ className, onSelect, ...props }, ref) => (
+    <SuggestionsContext value={{ onSelect }}>
+      <div ref={ref} className={cn("flex flex-col gap-2", className)} {...props} />
+    </SuggestionsContext>
+  ),
+);
+
+Suggestions.displayName = "Suggestions";
+
+type SuggestionListProps = React.HTMLAttributes<HTMLDivElement> & {
+  orientation?: "horizontal" | "vertical";
+};
+
+const SuggestionList = React.forwardRef<HTMLDivElement, SuggestionListProps>(
+  ({ className, orientation = "horizontal", ...props }, ref) => (
+    <div
+      ref={ref}
+      className={cn(
+        "flex gap-2",
+        orientation === "horizontal"
+          ? "flex-row flex-wrap items-center"
+          : "flex-col items-start",
+        className,
+      )}
+      role="group"
+      {...props}
+    />
+  ),
+);
+
+SuggestionList.displayName = "SuggestionList";
+
+type SuggestionProps = React.ComponentProps<typeof Button> & {
+  value?: string;
+};
+
+const Suggestion = React.forwardRef<HTMLButtonElement, SuggestionProps>(
+  ({ className, value, onClick, children, ...props }, ref) => {
+    const { onSelect } = React.useContext(SuggestionsContext);
+
+    return (
+      <Button
+        ref={ref}
+        className={cn(
+          "h-8 rounded-full border-none bg-gray-100 px-4 text-sm font-normal text-gray-900 shadow-none outline-none hover:bg-gray-200 focus-visible:ring-0 dark:bg-white/10 dark:text-gray-100 dark:hover:bg-white/15",
+          className,
+        )}
+        onClick={(e) => {
+          onClick?.(e);
+          const text = value ?? (typeof children === "string" ? children : "");
+          if (text && onSelect) onSelect(text);
+        }}
+        {...props}
+      >
+        {children}
+      </Button>
+    );
+  },
+);
+
+Suggestion.displayName = "Suggestion";
+
+export { Suggestions, SuggestionList, Suggestion };
+
+export default Suggestions;
+```
+</Step>
+<Step>
+<h3>Update the import paths to match your project setup.</h3>
+</Step>
+</Steps>
+</Tab>
+</Tabs>
+
+## Usage
+
+```tsx keepBackground
+import {
+  Suggestions,
+  SuggestionList,
+  Suggestion,
+} from "@/components/nexus-ui/suggestions";
+```
+
+```tsx keepBackground
+<Suggestions onSelect={(value) => handleSuggestion(value)}>
+  <SuggestionList>
+    <Suggestion>Tell me a joke</Suggestion>
+    <Suggestion>Explain quantum computing</Suggestion>
+  </SuggestionList>
+</Suggestions>
+```
+
+## Examples
+
+### Vertical Layout
+
+Use `orientation="vertical"` on `SuggestionList` to stack suggestions in a column.
+
+```tsx keepBackground
+<Suggestions onSelect={(value) => console.log(value)}>
+  <SuggestionList orientation="vertical">
+    <Suggestion>What is AI?</Suggestion>
+    <Suggestion>Teach me Engineering from scratch</Suggestion>
+    <Suggestion>Design a weekly workout plan</Suggestion>
+  </SuggestionList>
+</Suggestions>
+```
+
+### With Custom Value
+
+Use the `value` prop when the display text differs from the value passed to `onSelect`.
+
+```tsx keepBackground
+<Suggestions onSelect={(value) => console.log(value)}>
+  <SuggestionList>
+    <Suggestion value="Explain artificial intelligence in simple terms">
+      What is AI?
+    </Suggestion>
+    <Suggestion value="Create a beginner-friendly React tutorial">
+      How to learn React?
+    </Suggestion>
+  </SuggestionList>
+</Suggestions>
+```
+
+### With Icons
+
+Since `Suggestion` renders a shadcn `Button`, you can add icons alongside text.
+
+```tsx keepBackground
+import { Sparkles, Code, Dumbbell } from "lucide-react";
+
+<Suggestions onSelect={(value) => console.log(value)}>
+  <SuggestionList>
+    <Suggestion className="gap-1.5">
+      <Sparkles className="size-3.5" />
+      What is AI?
+    </Suggestion>
+    <Suggestion className="gap-1.5">
+      <Code className="size-3.5" />
+      How to learn React?
+    </Suggestion>
+    <Suggestion className="gap-1.5">
+      <Dumbbell className="size-3.5" />
+      Design a workout plan
+    </Suggestion>
+  </SuggestionList>
+</Suggestions>
+```
+
+## API Reference
+
+### Suggestions
+
+The root container that provides `onSelect` context to all child `Suggestion` components.
+
+<TypeTable
+  type={{
+    onSelect: {
+      type: "(value: string) => void",
+      description: "Callback fired when any Suggestion is clicked. Receives the suggestion's value or text content.",
+    },
+    className: {
+      type: "string",
+      description: "Additional CSS classes to apply to the root container.",
+    },
+    ref: {
+      type: "React.Ref<HTMLDivElement>",
+      description: "Forwarded ref to the root div element.",
+    },
+  }}
+/>
+
+### SuggestionList
+
+Layout wrapper for arranging suggestions horizontally or vertically.
+
+<TypeTable
+  type={{
+    orientation: {
+      type: '"horizontal" | "vertical"',
+      default: '"horizontal"',
+      description: "Layout direction. Horizontal wraps items in a row, vertical stacks them in a column.",
+    },
+    className: {
+      type: "string",
+      description: "Additional CSS classes to apply to the list container.",
+    },
+    ref: {
+      type: "React.Ref<HTMLDivElement>",
+      description: "Forwarded ref to the list div element.",
+    },
+  }}
+/>
+
+### Suggestion
+
+A clickable pill that triggers `onSelect` from the parent `Suggestions` context. Renders as a shadcn `Button`.
+
+<TypeTable
+  type={{
+    value: {
+      type: "string",
+      description: "The value passed to onSelect. Defaults to the text content of children.",
+    },
+    className: {
+      type: "string",
+      description: "Additional CSS classes to apply to the button.",
+    },
+    ref: {
+      type: "React.Ref<HTMLButtonElement>",
+      description: "Forwarded ref to the button element.",
+    },
+  }}
+/>

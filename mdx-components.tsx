@@ -11,6 +11,7 @@ import { Pre } from "fumadocs-ui/components/codeblock";
 import { Tab, Tabs } from "./components/tabs";
 import { TypeTable } from "./components/type-table";
 import { Step, Steps } from "./components/steps";
+import ReviewContainer from "@/components/preview-container";
 
 export function getMDXComponents(components?: MDXComponents): MDXComponents {
   return {
@@ -21,6 +22,7 @@ export function getMDXComponents(components?: MDXComponents): MDXComponents {
     Step,
     Steps,
     TypeTable,
+    ReviewContainer,
     CodeBlockTab,
     CodeBlockTabs,
     CodeBlockTabsList,
