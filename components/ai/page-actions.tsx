@@ -1,6 +1,6 @@
 "use client";
 import { type ReactNode, useMemo, useState } from "react";
-import { Check, ChevronDown, Copy, ExternalLinkIcon } from "lucide-react";
+import { Check, ChevronDown, Copy, ArrowUpRight } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { useCopyButton } from "fumadocs-ui/utils/use-copy-button";
 import { buttonVariants } from "fumadocs-ui/components/ui/button";
@@ -8,7 +8,7 @@ import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "fumadocs-ui/components/ui/popover";
+} from "@/components/ui/popover";
 
 const cache = new Map<string, string>();
 
@@ -230,18 +230,18 @@ export function ViewOptions({
           </>
         )}
       </PopoverTrigger>
-      <PopoverContent className="flex flex-col">
+      <PopoverContent className="flex w-[204px]! -translate-x-4 translate-y-1 flex-col rounded-lg border-gray-200 bg-white p-0.5 shadow-modal">
         {items.map((item) => (
           <a
             key={item.href}
             href={item.href}
             rel="noreferrer noopener"
             target="_blank"
-            className="inline-flex items-center gap-2 rounded-lg p-2 text-sm hover:bg-fd-accent hover:text-fd-accent-foreground [&_svg]:size-4"
+            className="inline-flex h-9 items-center gap-2 rounded-lg group p-3 text-sm hover:bg-gray-100 hover:text-gray-900 dark:hover:bg-gray-800 dark:hover:text-gray-100 [&_svg]:size-4"
           >
             {item.icon}
             {item.title}
-            <ExternalLinkIcon className="ms-auto size-3.5 text-fd-muted-foreground" />
+            <ArrowUpRight className="ms-auto size-4 text-gray-400 dark:text-gray-600 opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
           </a>
         ))}
       </PopoverContent>
