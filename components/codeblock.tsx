@@ -156,10 +156,11 @@ export function CodeBlock({
             keepBackground ? "bg-gray-100! dark:bg-white/5!" : "bg-white",
             viewportProps.className,
             overflows && expanded && "overflow-auto",
+            overflows && !expanded && "overflow-hidden",
           )}
           style={
             {
-              maxHeight: expanded ? 500 : collapsedHeight,
+              maxHeight: expanded ? 615 : collapsedHeight,
               "--padding-right": !title
                 ? "calc(var(--spacing) * 8)"
                 : undefined,
