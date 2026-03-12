@@ -23,6 +23,7 @@
       "type": "registry:ui",
       "title": "Suggestions",
       "description": "Composable prompt suggestion chips for guiding user input.",
+      "dependencies": ["@radix-ui/react-slot"],
       "registryDependencies": ["button"],
       "files": [
         {

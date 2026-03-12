@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { Slot } from "@radix-ui/react-slot";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -57,11 +58,11 @@ SuggestionList.displayName = "SuggestionList";
 
 const suggestionVariants = {
   default:
-    "h-8 rounded-full border-none bg-gray-100 px-4 text-sm font-normal text-gray-900 shadow-none outline-none hover:bg-gray-200 focus-visible:ring-0 dark:bg-white/10 dark:text-gray-100 dark:hover:bg-white/15",
+    "h-8 gap-1.5 rounded-full border-none bg-gray-100 px-4 text-sm font-normal text-gray-900 shadow-none outline-none hover:bg-gray-200 focus-visible:ring-0 dark:bg-white/10 dark:text-gray-100 dark:hover:bg-white/15",
   outline:
-    "h-8 rounded-full border border-gray-200 bg-transparent px-4 text-sm font-normal text-gray-900 shadow-none outline-none hover:bg-gray-100 focus-visible:ring-0 dark:border-white/10 dark:text-gray-100 dark:hover:bg-white/10",
+    "h-8 gap-1.5 rounded-full border border-gray-200 bg-transparent px-4 text-sm font-normal text-gray-900 shadow-none outline-none hover:bg-gray-100 focus-visible:ring-0 dark:border-white/10 dark:text-gray-100 dark:hover:bg-white/10",
   ghost:
-    "h-8 rounded-full border-none bg-transparent px-4 text-sm font-normal text-gray-500 shadow-none outline-none hover:bg-gray-100 hover:text-gray-900 focus-visible:ring-0 dark:text-gray-400 dark:hover:bg-white/10 dark:hover:text-gray-100",
+    "h-8 gap-1.5 rounded-full border-none bg-transparent px-4 text-sm font-normal text-gray-500 shadow-none outline-none hover:bg-gray-100 hover:text-gray-900 focus-visible:ring-0 dark:text-gray-400 dark:hover:bg-white/10 dark:hover:text-gray-100",
 };
 
 type SuggestionVariant = keyof typeof suggestionVariants;
@@ -143,6 +144,111 @@ const Suggestion = React.forwardRef<HTMLButtonElement, SuggestionProps>(
 
 Suggestion.displayName = "Suggestion";
 
-export { Suggestions, SuggestionList, Suggestion };
+type SuggestionPanelProps = React.HTMLAttributes<HTMLDivElement> & {
+  onClose?: () => void;
+};
+
+const SuggestionPanel = React.forwardRef<HTMLDivElement, SuggestionPanelProps>(
+  ({ className, onClose, ...props }, ref) => {
+    React.useEffect(() => {
+      const handleKeyDown = (e: KeyboardEvent) => {
+        if (e.key === "Escape") onClose?.();
+      };
+      window.addEventListener("keydown", handleKeyDown);
+      return () => window.removeEventListener("keydown", handleKeyDown);
+    }, [onClose]);
+
+    return (
+      <div
+        ref={ref}
+        className={cn(
+          "absolute inset-x-0 -top-6.75 z-0 mx-auto flex w-[calc(100%-16px)] flex-col items-center justify-center gap-3 rounded-t-[6px] rounded-b-[20px] bg-gray-100 px-2 py-2 dark:border-white/10 dark:bg-gray-900",
+          className,
+        )}
+        {...props}
+      />
+    );
+  },
+);
+
+SuggestionPanel.displayName = "SuggestionPanel";
+
+const SuggestionPanelHeader = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>(({ className, ...props }, ref) => (
+  <div
+    ref={ref}
+    className={cn("flex w-full items-center justify-between px-3", className)}
+    {...props}
+  />
+));
+
+SuggestionPanelHeader.displayName = "SuggestionPanelHeader";
+
+const SuggestionPanelTitle = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>(({ className, ...props }, ref) => (
+  <div ref={ref} className={cn("flex items-center gap-1.5", className)} {...props} />
+));
+
+SuggestionPanelTitle.displayName = "SuggestionPanelTitle";
+
+type SuggestionPanelCloseProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
+  asChild?: boolean;
+};
+
+const SuggestionPanelClose = React.forwardRef<
+  HTMLButtonElement,
+  SuggestionPanelCloseProps
+>(({ asChild = false, className, ...props }, ref) => {
+  const Comp = asChild ? Slot : "button";
+
+  return (
+    <Comp
+      ref={ref}
+      type={asChild ? undefined : "button"}
+      className={cn(
+        "cursor-pointer text-gray-400 hover:text-gray-600 dark:hover:text-gray-200",
+        className,
+      )}
+      {...props}
+    />
+  );
+});
+
+SuggestionPanelClose.displayName = "SuggestionPanelClose";
+
+type SuggestionPanelContentProps = React.HTMLAttributes<HTMLDivElement> & {
+  asChild?: boolean;
+};
+
+const SuggestionPanelContent = React.forwardRef<
+  HTMLDivElement,
+  SuggestionPanelContentProps
+>(({ asChild = false, className, ...props }, ref) => {
+  const Comp = asChild ? Slot : "div";
+  return (
+    <Comp
+      ref={ref}
+      className={cn("w-full", className)}
+      {...props}
+    />
+  );
+});
+
+SuggestionPanelContent.displayName = "SuggestionPanelContent";
+
+export {
+  Suggestions,
+  SuggestionList,
+  Suggestion,
+  SuggestionPanel,
+  SuggestionPanelHeader,
+  SuggestionPanelTitle,
+  SuggestionPanelClose,
+  SuggestionPanelContent,
+};
 
 export default Suggestions;

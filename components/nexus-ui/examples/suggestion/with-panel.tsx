@@ -136,8 +136,8 @@ export default function SuggestionWithPanel() {
         </Suggestions>
 
         {active && (
-          <SuggestionPanel>
-            <SuggestionPanelHeader className="bord er">
+          <SuggestionPanel onClose={() => setActiveCategory(null)}>
+            <SuggestionPanelHeader>
               <SuggestionPanelTitle>
                 <active.icon className="size-3.5 text-gray-400" />
                 <span className="text-[13px] font-[350] text-gray-400">

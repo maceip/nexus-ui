@@ -563,7 +563,7 @@ export default function SuggestionWithPanel() {
         </Suggestions>
 
         {active && (
-          <SuggestionPanel>
+          <SuggestionPanel onClose={() => setActiveCategory(null)}>
             <SuggestionPanelHeader>
               <SuggestionPanelTitle>
                 <active.icon className="size-3.5 text-gray-400" />
@@ -662,15 +662,15 @@ A clickable pill that triggers `onSelect` from the parent `Suggestions` context.
     variant: {
       type: '"default" | "outline" | "ghost"',
       default: '"default"',
-      description: "Visual style of the suggestion pill. Default uses a filled background, outline adds a border, and ghost is transparent until hovered.",
+      description: "Visual style of the suggestion pill.",
     },
     highlight: {
       type: "string | string[]",
-      description: "Term(s) to render in a lighter weight. Non-matching text is bolded. Matches are case-insensitive.",
+      description: "Defines the text(s) or word(s) in the suggestion to be highlighted. Matches are case-insensitive. Style the highlighted text via className or by composing your own wrapper.",
     },
     value: {
       type: "string",
-      description: "The value passed to onSelect. Defaults to the text content of children.",
+      description: "The value passed to onSelect.",
     },
     className: {
       type: "string",
@@ -685,10 +685,14 @@ A clickable pill that triggers `onSelect` from the parent `Suggestions` context.
 
 ### SuggestionPanel
 
-Full-width panel that displays below the input, covering the category pills. Use with `SuggestionPanelHeader`, `SuggestionPanelTitle`, `SuggestionPanelClose`, and `SuggestionPanelContent`.
+Full-width panel that displays below the input, covering the category pills. Closes on Escape when `onClose` is provided. Use with `SuggestionPanelHeader`, `SuggestionPanelTitle`, `SuggestionPanelClose`, and `SuggestionPanelContent`.
 
 <TypeTable
   type={{
+    onClose: {
+      type: "() => void",
+      description: "Callback fired when the panel should close (e.g. Escape key).",
+    },
     className: {
       type: "string",
       description: "Additional CSS classes to apply to the panel container.",
@@ -736,10 +740,15 @@ Title area for the panel header. Use for the category icon and label.
 
 ### SuggestionPanelClose
 
-Close button for the panel. Renders as a native button.
+Close button for the panel. Use `asChild` to merge props onto a child element.
 
 <TypeTable
   type={{
+    asChild: {
+      type: "boolean",
+      default: "false",
+      description: "Merges props onto the child element instead of rendering a button.",
+    },
     className: {
       type: "string",
       description: "Additional CSS classes to apply to the close button.",
@@ -753,10 +762,15 @@ Close button for the panel. Renders as a native button.
 
 ### SuggestionPanelContent
 
-Content wrapper for the panel's suggestion list. Use with `Suggestions` and `SuggestionList` inside.
+Content wrapper for the panel's suggestion list. Use with `Suggestions` and `SuggestionList` inside. Use `asChild` to merge props onto a child element.
 
 <TypeTable
   type={{
+    asChild: {
+      type: "boolean",
+      default: "false",
+      description: "Merges props onto the child element instead of rendering a div.",
+    },
     className: {
       type: "string",
       description: "Additional CSS classes to apply to the content container.",
