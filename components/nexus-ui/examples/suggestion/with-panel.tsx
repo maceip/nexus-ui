@@ -31,7 +31,6 @@ import {
   BookOpenText,
 } from "lucide-react";
 
-
 const categories = [
   {
     label: "Plan",
@@ -164,10 +163,10 @@ export default function SuggestionWithPanel() {
                       variant="ghost"
                       highlight={active.highlight}
                       value={text}
-                      className="group h-9 w-full justify-between rounded-[6px] hover:bg-gray-200/72 px-3 text-left text-gray-900"
+                      className="group h-auto w-full whitespace-normal justify-between rounded-[6px] px-3 text-left text-gray-900 hover:bg-gray-200/72"
                     >
                       {text}
-                      <ArrowUpRight className="size-3.5 opacity-0 transition-opacity group-hover:opacity-100 text-gray-400 dark:text-gray-500" />
+                      <ArrowUpRight className="size-3.5 text-gray-400 opacity-0 transition-opacity group-hover:opacity-100 dark:text-gray-500" />
                     </Suggestion>
                   ))}
                 </SuggestionList>
