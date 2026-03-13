@@ -16,7 +16,7 @@ const PromptInput = React.forwardRef<HTMLDivElement, PromptInputProps>(
       role="group"
       aria-label="Chat input"
       className={cn(
-        "flex h-auto w-full flex-col gap-0 rounded-[24px] border border-border-primary bg-surface-elevated",
+        "flex h-auto w-full flex-col gap-0 rounded-[24px] border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800",
         className,
       )}
       {...props}

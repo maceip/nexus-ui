@@ -15,7 +15,7 @@ export default function PromptInputBasic() {
         <PromptInputActionGroup />
         <PromptInputActionGroup>
           <PromptInputAction asChild>
-            <Button className="size-8 cursor-pointer rounded-full bg-gray-700 text-white hover:bg-gray-800 dark:hover:bg-gray-600">
+            <Button className="size-8 cursor-pointer rounded-full bg-gray-700 text-white hover:bg-gray-800 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200">
               <ArrowUp />
             </Button>
           </PromptInputAction>
