@@ -1,4 +1,5 @@
 import { getPageImage, source } from "@/lib/source";
+import { SITE_URL } from "@/lib/site";
 import {
   DocsBody,
   DocsDescription,
@@ -97,11 +98,24 @@ export async function generateMetadata(
   const page = source.getPage(params.slug);
   if (!page) notFound();
 
+  const pageUrl = `${SITE_URL}${page.url}`;
+
   return {
     title: page.data.title,
-    description: page.data.description,
+    description: page.data.description ?? undefined,
     openGraph: {
+      title: page.data.title,
+      description: page.data.description ?? undefined,
+      url: pageUrl,
       images: getPageImage(page).url,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: page.data.title,
+      description: page.data.description ?? undefined,
+    },
+    alternates: {
+      canonical: pageUrl,
     },
   };
 }
