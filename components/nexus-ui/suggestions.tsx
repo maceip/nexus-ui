@@ -227,7 +227,7 @@ const SuggestionPanel = React.forwardRef<HTMLDivElement, SuggestionPanelProps>(
         aria-modal="true"
         aria-label="Suggestions panel"
         className={cn(
-          "absolute inset-x-0 -top-6.75 z-0 mx-auto flex w-[calc(100%-16px)] flex-col items-center justify-center gap-3 rounded-t-[6px] rounded-b-[20px] bg-gray-100 px-2 py-2 dark:border-white/10 dark:bg-gray-900",
+          "absolute inset-x-0 -top-6.75 z-0 mx-auto flex w-[calc(100%-16px)] flex-col items-center justify-center gap-3 rounded-t-[6px] rounded-b-xl bg-gray-100 px-2 py-2 dark:border-white/10 dark:bg-gray-900",
           className,
         )}
         {...props}
