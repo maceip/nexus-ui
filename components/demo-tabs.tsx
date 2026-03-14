@@ -2,11 +2,11 @@ import NexusIcon from "@/components/svgs/nexus";
 import ChatgptIcon from "@/components/svgs/chatgpt";
 import ClaudeIcon from "@/components/svgs/claude";
 import GeminiIcon from "@/components/svgs/gemini";
-import ChatgptInput from "@/components/nexus-ui/examples/prompt-input/chatgpt";
+import ChatgptInput from "@/components/nexus-ui/examples/prompt-input/chatgpt-input";
 import NexusInput from "@/components/nexus-ui/examples/prompt-input/default";
-import ClaudeInput from "@/components/nexus-ui/examples/claude-input";
-import GeminiInput from "@/components/nexus-ui/examples/gemini-input";
-import V0Input from "@/components/nexus-ui/examples/v0-input";
+import ClaudeInput from "@/components/nexus-ui/examples/prompt-input/claude-input";
+import GeminiInput from "@/components/nexus-ui/examples/prompt-input/gemini-input";
+import V0Input from "@/components/nexus-ui/examples/prompt-input/v0-input";
 import V0Icon from "@/components/svgs/v0";
 
 export type TabKey = "nexus" | "gemini" | "chatgpt" | "claude" | "v0";
