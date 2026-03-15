@@ -1,1 +1,1 @@
-export { default } from "./prompt-input/chatgpt";
+export { default } from "./prompt-input/chatgpt-input";
