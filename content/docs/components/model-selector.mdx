@@ -7,6 +7,7 @@ import ModelSelectorDefault from "@/components/nexus-ui/examples/model-selector/
 import ModelSelectorBasic from "@/components/nexus-ui/examples/model-selector/basic";
 import ModelSelectorWithSub from "@/components/nexus-ui/examples/model-selector/with-sub";
 import ModelSelectorWithItems from "@/components/nexus-ui/examples/model-selector/with-items";
+import ModelSelectorWithCheckbox from "@/components/nexus-ui/examples/model-selector/with-checkbox";
 import ModelSelectorTriggerVariants from "@/components/nexus-ui/examples/model-selector/trigger-variants";
 import ModelSelectorWithPromptInput from "@/components/nexus-ui/examples/model-selector/with-prompt-input";
 import ModelSelectorCustomTrigger from "@/components/nexus-ui/examples/model-selector/custom-trigger";
@@ -366,6 +367,85 @@ export default function ModelSelectorWithItems() {
             <Switch checked={extendedThinking} onCheckedChange={setExtendedThinking} />
           </div>
         </ModelSelectorItem>
+      </ModelSelectorContent>
+    </ModelSelector>
+  );
+}
+```
+</Tab>
+</Tabs>
+
+### With Checkbox
+
+Use `ModelSelectorCheckboxItem` alone for multi-select. Each item is a checkbox—toggle models on or off. Use a custom trigger to show the selection (e.g. "Select models", "GPT-4", or "3 models").
+
+<Tabs items={["Preview", "Code"]}>
+<Tab value="Preview">
+<ReviewContainer>
+<ModelSelectorWithCheckbox />
+</ReviewContainer>
+</Tab>
+<Tab value="Code">
+```tsx
+"use client";
+
+import * as React from "react";
+import {
+  ModelSelector,
+  ModelSelectorCheckboxItem,
+  ModelSelectorContent,
+  ModelSelectorGroup,
+  ModelSelectorLabel,
+  ModelSelectorTrigger,
+} from "@/components/nexus-ui/model-selector";
+import ChatgptIcon from "@/components/svgs/chatgpt";
+import { ClaudeIcon2 } from "@/components/svgs/claude";
+import GeminiIcon from "@/components/svgs/gemini";
+import { ChevronDown } from "lucide-react";
+
+const models = [
+  { value: "gpt-4", icon: ChatgptIcon, title: "GPT-4", description: "Most capable" },
+  { value: "gpt-4o-mini", icon: ChatgptIcon, title: "GPT-4o Mini", description: "Fast" },
+  { value: "claude-3.5", icon: ClaudeIcon2, title: "Claude 3.5", description: "Strong reasoning" },
+  { value: "gemini-1.5-flash", icon: GeminiIcon, title: "Gemini 1.5 Flash", description: "Fast and versatile" },
+];
+
+export default function ModelSelectorWithCheckbox() {
+  const [selected, setSelected] = React.useState<string[]>([]);
+
+  const toggle = (value: string, checked: boolean) => {
+    setSelected((prev) =>
+      checked ? [...prev, value] : prev.filter((v) => v !== value)
+    );
+  };
+
+  const triggerLabel =
+    selected.length === 0
+      ? "Select models"
+      : selected.length === 1
+        ? models.find((m) => m.value === selected[0])?.title ?? selected[0]
+        : `${selected.length} models`;
+
+  return (
+    <ModelSelector value={selected[0] ?? ""} onValueChange={() => {}} items={models}>
+      <ModelSelectorTrigger variant="outline">
+        <span className="truncate">{triggerLabel}</span>
+        <ChevronDown className="size-4 shrink-0" />
+      </ModelSelectorTrigger>
+      <ModelSelectorContent className="w-[264px]" align="start">
+        <ModelSelectorGroup>
+          <ModelSelectorLabel>Enabled models</ModelSelectorLabel>
+          {models.map((m) => (
+            <ModelSelectorCheckboxItem
+              key={m.value}
+              checked={selected.includes(m.value)}
+              onCheckedChange={(checked) => toggle(m.value, !!checked)}
+              icon={m.icon}
+              title={m.title}
+              description={m.description}
+            />
+          ))}
+        </ModelSelectorGroup>
       </ModelSelectorContent>
     </ModelSelector>
   );
