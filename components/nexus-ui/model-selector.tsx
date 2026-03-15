@@ -91,13 +91,11 @@ function ModelSelectorTrigger({
 
   const defaultContent = (
     <>
-      <span className="flex items-center gap-2">
-        {selected?.icon && (
-          <selected.icon className="size-4 shrink-0 text-muted-foreground" />
-        )}
+      <span className="flex items-center gap-1">
+        {selected?.icon && <selected.icon className="size-4 shrink-0" />}
         <span className="truncate">{selected?.title ?? value}</span>
       </span>
-      <ChevronDownIcon className="size-4 shrink-0 text-muted-foreground" />
+      <ChevronDownIcon className="size-4 shrink-0" />
     </>
   );
 
@@ -117,7 +115,10 @@ function ModelSelectorTrigger({
     <DropdownMenuPrimitive.Trigger
       data-slot="model-selector-trigger"
       asChild={asChild}
-      className={cn("inline-flex items-center gap-2 outline-none", className)}
+      className={cn(
+        "inline-flex h-8 items-center gap-1 rounded-full bg-gray-100 px-3 font-normal text-gray-900 outline-none",
+        className,
+      )}
       {...props}
     >
       {triggerContent}
@@ -138,7 +139,7 @@ function ModelSelectorContent({
         data-slot="model-selector-content"
         sideOffset={sideOffset}
         className={cn(
-          "data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 z-50 max-h-(--radix-dropdown-menu-content-available-height) min-w-48 origin-(--radix-dropdown-menu-content-transform-origin) overflow-x-hidden overflow-y-auto rounded-md border bg-popover p-1 text-popover-foreground shadow-md",
+          "data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 z-50 max-h-(--radix-dropdown-menu-content-available-height) min-w-48 origin-(--radix-dropdown-menu-content-transform-origin) overflow-x-hidden overflow-y-auto rounded-lg border border-gray-200 bg-white p-0.5 text-popover-foreground shadow-modal",
           className,
         )}
         {...props}
@@ -187,7 +188,9 @@ function ModelSelectorItem({
       <div className="min-w-0 flex-1">
         {title != null && <p className="truncate font-medium">{title}</p>}
         {description != null && (
-          <p className="truncate text-xs text-muted-foreground">{description}</p>
+          <p className="truncate text-xs text-muted-foreground">
+            {description}
+          </p>
         )}
       </div>
     </>
@@ -199,7 +202,7 @@ function ModelSelectorItem({
       data-inset={inset}
       data-variant={variant}
       className={cn(
-        "relative flex cursor-default items-center gap-3 rounded-sm py-2 pl-2 pr-2 text-sm outline-hidden select-none focus:bg-accent focus:text-accent-foreground data-inset:pl-8 data-[variant=destructive]:text-destructive data-[variant=destructive]:focus:bg-destructive/10 data-[variant=destructive]:focus:text-destructive dark:data-[variant=destructive]:focus:bg-destructive/20 data-disabled:pointer-events-none data-disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 [&_svg:not([class*='text-'])]:text-muted-foreground data-[variant=destructive]:*:[svg]:text-destructive!",
+        "relative flex cursor-default items-center gap-2.5 rounded-md min-h-9 hover:bg-gray-100 py-3 pr-3 pl-3 text-sm outline-hidden select-none focus:bg-accent focus:text-accent-foreground data-inset:pl-8 data-[variant=destructive]:text-destructive data-[variant=destructive]:focus:bg-destructive/10 data-[variant=destructive]:focus:text-destructive dark:data-[variant=destructive]:focus:bg-destructive/20 data-disabled:pointer-events-none data-disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 [&_svg:not([class*='text-'])]:text-muted-foreground data-[variant=destructive]:*:[svg]:text-destructive!",
         className,
       )}
       {...props}
@@ -234,7 +237,9 @@ function ModelSelectorCheckboxItem({
       <div className="min-w-0 flex-1">
         {title != null && <p className="truncate font-medium">{title}</p>}
         {description != null && (
-          <p className="truncate text-xs text-muted-foreground">{description}</p>
+          <p className="truncate text-xs text-muted-foreground">
+            {description}
+          </p>
         )}
       </div>
       <span className="pointer-events-none absolute right-2 flex size-3.5 items-center justify-center">
@@ -249,7 +254,7 @@ function ModelSelectorCheckboxItem({
     <DropdownMenuPrimitive.CheckboxItem
       data-slot="model-selector-checkbox-item"
       className={cn(
-        "relative flex cursor-default items-center gap-3 rounded-sm py-2 pr-8 pl-2 text-sm outline-hidden select-none focus:bg-accent focus:text-accent-foreground data-disabled:pointer-events-none data-disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0",
+         "relative flex cursor-default items-center gap-2.5 rounded-md min-h-9 hover:bg-gray-100 py-3 pr-3 pl-3 text-sm outline-hidden select-none focus:bg-accent focus:text-accent-foreground data-disabled:pointer-events-none data-disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0",
         className,
       )}
       checked={checked}
@@ -291,17 +296,19 @@ function ModelSelectorRadioItem({
   const defaultContent = (
     <>
       {Icon && (
-        <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-muted">
-          <Icon className="size-4 text-muted-foreground" />
+        <span className="flex shrink-0 items-center justify-center">
+          <Icon className="size-4" />
         </span>
       )}
-      <div className="min-w-0 flex-1">
-        {title != null && <p className="truncate font-medium">{title}</p>}
+      <div className="min-w-0 flex-1 flex flex-col gap-0.25">
+        {title != null && <p className="truncate font-normal text-sm">{title}</p>}
         {description != null && (
-          <p className="truncate text-xs text-muted-foreground">{description}</p>
+          <p className="truncate text-xs font-[350] text-gray-400">
+            {description}
+          </p>
         )}
       </div>
-      <span className="pointer-events-none absolute right-2 flex size-3.5 items-center justify-center">
+      <span className="pointer-events-none absolute right-3 flex size-4 items-center justify-center">
         <DropdownMenuPrimitive.ItemIndicator>
           <CheckIcon className="size-4" />
         </DropdownMenuPrimitive.ItemIndicator>
@@ -314,7 +321,7 @@ function ModelSelectorRadioItem({
       data-slot="model-selector-radio-item"
       value={value}
       className={cn(
-        "relative flex cursor-default items-center gap-3 rounded-sm py-2 pr-8 pl-2 text-sm outline-hidden select-none focus:bg-accent focus:text-accent-foreground data-disabled:pointer-events-none data-disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0",
+        "relative flex cursor-default items-center gap-2 rounded-md min-h-9 hover:bg-gray-100 py-2 pl-3 pr-9 text-sm outline-hidden select-none focus:bg-accent focus:text-accent-foreground data-disabled:pointer-events-none data-disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0",
         className,
       )}
       {...props}
@@ -338,7 +345,7 @@ function ModelSelectorLabel({
       data-slot="model-selector-label"
       data-inset={inset}
       className={cn(
-        "px-2 py-1.5 text-sm font-medium data-inset:pl-8",
+        "px-2 py-1.5 text-xs font-medium data-inset:pl-8",
         className,
       )}
       {...props}

@@ -1,6 +1,6 @@
 import NexusIcon from "@/components/svgs/nexus";
 import ChatgptIcon from "@/components/svgs/chatgpt";
-import ClaudeIcon from "@/components/svgs/claude";
+import { ClaudeIcon } from "@/components/svgs/claude";
 import GeminiIcon from "@/components/svgs/gemini";
 import ChatgptInput from "@/components/nexus-ui/examples/prompt-input/chatgpt-input";
 import NexusInput from "@/components/nexus-ui/examples/prompt-input/default";
