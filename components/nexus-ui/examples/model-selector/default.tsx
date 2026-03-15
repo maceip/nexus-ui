@@ -1,21 +1,3 @@
----
-title: Model Selector
-description: A dropdown for selecting an AI model
----
-
-import ModelSelectorDefault from "@/components/nexus-ui/examples/model-selector/default";
-import ReviewContainer from "@/components/preview-container";
-
-The Model Selector provides a dropdown for selecting an AI model. The trigger displays the selected model (icon, name, caret) and updates when the selection changes.
-
-<Tabs items={["Preview", "Code"]} className="my-10">
-<Tab value="Preview">
-<ReviewContainer>
-<ModelSelectorDefault />
-</ReviewContainer>
-</Tab>
-<Tab value="Code">
-```tsx
 "use client";
 
 import * as React from "react";
@@ -60,7 +42,7 @@ export default function ModelSelectorDefault() {
       <ModelSelectorTrigger asChild>
         <Button variant="outline" className="min-w-[180px] justify-between" />
       </ModelSelectorTrigger>
-      <ModelSelectorContent className="min-w-[240px]">
+      <ModelSelectorContent className="">
         <ModelSelectorGroup>
           <ModelSelectorLabel>Select model</ModelSelectorLabel>
           <ModelSelectorRadioGroup value={model} onValueChange={setModel}>
@@ -79,6 +61,3 @@ export default function ModelSelectorDefault() {
     </ModelSelector>
   );
 }
-```
-</Tab>
-</Tabs>
