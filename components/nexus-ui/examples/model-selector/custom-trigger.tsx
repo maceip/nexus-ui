@@ -13,40 +13,29 @@ import {
 import ChatgptIcon from "@/components/svgs/chatgpt";
 import { ClaudeIcon2 } from "@/components/svgs/claude";
 import GeminiIcon from "@/components/svgs/gemini";
+import { ChevronDown, Sparkles } from "lucide-react";
 
 const models = [
-  {
-    value: "gpt-4",
-    icon: ChatgptIcon,
-    title: "GPT-4",
-    description: "Most capable, best for complex tasks",
-  },
-  {
-    value: "gpt-4o-mini",
-    icon: ChatgptIcon,
-    title: "GPT-4o Mini",
-    description: "Fast and affordable",
-  },
-  {
-    value: "claude-3.5",
-    icon: ClaudeIcon2,
-    title: "Claude 3.5",
-    description: "Strong reasoning and analysis",
-  },
-  {
-    value: "gemini-1.5-flash",
-    icon: GeminiIcon,
-    title: "Gemini 1.5 Flash",
-    description: "Fast and versatile",
-  },
+  { value: "gpt-4", icon: ChatgptIcon, title: "GPT-4" },
+  { value: "gpt-4o-mini", icon: ChatgptIcon, title: "GPT-4o Mini" },
+  { value: "claude-3.5", icon: ClaudeIcon2, title: "Claude 3.5" },
+  { value: "gemini-1.5-flash", icon: GeminiIcon, title: "Gemini 1.5 Flash" },
 ];
 
-export default function ModelSelectorDefault() {
+export default function ModelSelectorCustomTrigger() {
   const [model, setModel] = React.useState("gpt-4");
+  const selected = models.find((m) => m.value === model);
 
   return (
     <ModelSelector value={model} onValueChange={setModel} items={models}>
-      <ModelSelectorTrigger />
+      <ModelSelectorTrigger variant="outline" className="gap-2">
+        <Sparkles className="size-3.5 text-gray-500" />
+        <span className="text-gray-500">Using</span>
+        <span className="font-medium text-gray-900">
+          {selected?.title ?? model}
+        </span>
+        <ChevronDown className="size-4 shrink-0 text-gray-400" />
+      </ModelSelectorTrigger>
       <ModelSelectorContent className="w-[264px]" align="start">
         <ModelSelectorGroup>
           <ModelSelectorLabel>Select model</ModelSelectorLabel>
@@ -57,7 +46,6 @@ export default function ModelSelectorDefault() {
                 value={m.value}
                 icon={m.icon}
                 title={m.title}
-                description={m.description}
               />
             ))}
           </ModelSelectorRadioGroup>

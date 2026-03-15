@@ -85,12 +85,24 @@ function ModelSelectorPortal({
 
 ModelSelectorPortal.displayName = "ModelSelectorPortal";
 
+const triggerVariants = {
+  filled:
+    "inline-flex h-8 items-center gap-1 rounded-full bg-gray-100 px-3 font-normal text-gray-900 outline-none hover:bg-gray-200 data-[state=open]:bg-gray-200",
+  outline:
+    "inline-flex h-8 items-center gap-1 rounded-full border border-gray-200 bg-transparent px-3 font-normal text-gray-900 outline-none hover:bg-gray-100 data-[state=open]:bg-gray-100",
+  ghost:
+    "inline-flex h-8 items-center gap-1 rounded-full bg-transparent px-3 font-normal text-gray-900 outline-none hover:bg-gray-100 data-[state=open]:bg-gray-100",
+};
+
 function ModelSelectorTrigger({
   className,
   children,
   asChild,
+  variant = "filled",
   ...props
-}: React.ComponentProps<typeof DropdownMenuPrimitive.Trigger>) {
+}: React.ComponentProps<typeof DropdownMenuPrimitive.Trigger> & {
+  variant?: "filled" | "outline" | "ghost";
+}) {
   const { value, items } = useModelSelectorContext();
   const selected = items.get(value);
 
@@ -119,11 +131,9 @@ function ModelSelectorTrigger({
   return (
     <DropdownMenuPrimitive.Trigger
       data-slot="model-selector-trigger"
+      data-variant={variant}
       asChild={asChild}
-      className={cn(
-        "inline-flex h-8 items-center gap-1 rounded-full bg-gray-100 px-3 font-normal text-gray-900 outline-none",
-        className,
-      )}
+      className={cn(triggerVariants[variant], className)}
       {...props}
     >
       {triggerContent}
