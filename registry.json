@@ -32,6 +32,21 @@
           "target": "~/components/nexus-ui/suggestions.tsx"
         }
       ]
+    },
+    {
+      "name": "model-selector",
+      "type": "registry:ui",
+      "title": "Model Selector",
+      "description": "A dropdown for selecting an AI model with radio groups, sub-menus, and custom items.",
+      "dependencies": ["radix-ui", "lucide-react"],
+      "registryDependencies": [],
+      "files": [
+        {
+          "path": "registry/new-york/model-selector/model-selector.tsx",
+          "type": "registry:file",
+          "target": "~/components/nexus-ui/model-selector.tsx"
+        }
+      ]
     }
   ]
 }
