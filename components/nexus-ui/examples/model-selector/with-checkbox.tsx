@@ -46,7 +46,7 @@ export default function ModelSelectorWithCheckbox() {
 
   const toggle = (value: string, checked: boolean) => {
     setSelected((prev) =>
-      checked ? [...prev, value] : prev.filter((v) => v !== value)
+      checked ? [...prev, value] : prev.filter((v) => v !== value),
     );
   };
 
@@ -54,7 +54,7 @@ export default function ModelSelectorWithCheckbox() {
     selected.length === 0
       ? "Select models"
       : selected.length === 1
-        ? models.find((m) => m.value === selected[0])?.title ?? selected[0]
+        ? (models.find((m) => m.value === selected[0])?.title ?? selected[0])
         : `${selected.length} models`;
 
   return (

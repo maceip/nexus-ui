@@ -40,38 +40,39 @@ import { ClaudeIcon2 } from "@/components/svgs/claude";
 import GeminiIcon from "@/components/svgs/gemini";
 
 const models = [
-  { value: "gpt-4", icon: ChatgptIcon, title: "GPT-4", description: "Most capable" },
-  { value: "gpt-4o-mini", icon: ChatgptIcon, title: "GPT-4o Mini", description: "Fast" },
-  { value: "claude-3.5", icon: ClaudeIcon2, title: "Claude 3.5", description: "Strong reasoning" },
-  { value: "gemini-1.5-flash", icon: GeminiIcon, title: "Gemini 1.5 Flash", description: "Fast and versatile" },
+{ value: "gpt-4", icon: ChatgptIcon, title: "GPT-4", description: "Most capable" },
+{ value: "gpt-4o-mini", icon: ChatgptIcon, title: "GPT-4o Mini", description: "Fast" },
+{ value: "claude-3.5", icon: ClaudeIcon2, title: "Claude 3.5", description: "Strong reasoning" },
+{ value: "gemini-1.5-flash", icon: GeminiIcon, title: "Gemini 1.5 Flash", description: "Fast and versatile" },
 ];
 
 export default function ModelSelectorDefault() {
   const [model, setModel] = React.useState("gpt-4");
 
-  return (
-    <ModelSelector value={model} onValueChange={setModel} items={models}>
-      <ModelSelectorTrigger />
-      <ModelSelectorContent className="w-[264px]" align="start">
-        <ModelSelectorGroup>
-          <ModelSelectorLabel>Select model</ModelSelectorLabel>
-          <ModelSelectorRadioGroup value={model} onValueChange={setModel}>
-            {models.map((m) => (
-              <ModelSelectorRadioItem
+return (
+<ModelSelector value={model} onValueChange={setModel} items={models}>
+<ModelSelectorTrigger />
+<ModelSelectorContent className="w-[264px]" align="start">
+<ModelSelectorGroup>
+<ModelSelectorLabel>Select model</ModelSelectorLabel>
+<ModelSelectorRadioGroup value={model} onValueChange={setModel}>
+{models.map((m) => (
+<ModelSelectorRadioItem
                 key={m.value}
                 value={m.value}
                 icon={m.icon}
                 title={m.title}
                 description={m.description}
               />
-            ))}
-          </ModelSelectorRadioGroup>
-        </ModelSelectorGroup>
-      </ModelSelectorContent>
-    </ModelSelector>
-  );
+))}
+</ModelSelectorRadioGroup>
+</ModelSelectorGroup>
+</ModelSelectorContent>
+</ModelSelector>
+);
 }
-```
+
+````
 </Tab>
 </Tabs>
 
@@ -83,7 +84,8 @@ export default function ModelSelectorDefault() {
 <Tab value="npm">
 ```bash
 npx shadcn@latest add https://nexus-ui.dev/r/model-selector.json
-```
+````
+
 </Tab>
 <Tab value="pnpm">
 ```bash
@@ -108,11 +110,13 @@ bunx shadcn@latest add https://nexus-ui.dev/r/model-selector.json
 <h3>Copy the Model Selector component into your project.</h3>
 
 Copy `components/nexus-ui/model-selector.tsx` from this repository. The component depends on Radix UI Dropdown Menu (`radix-ui`), `lucide-react`, and `@/lib/utils`.
+
 </Step>
 <Step>
 <h3>Ensure the dropdown menu primitive is available.</h3>
 
 The Model Selector wraps Radix UI's Dropdown Menu. If you use shadcn/ui, you likely already have it. Otherwise, install `@radix-ui/react-dropdown-menu` or use the `radix-ui` package.
+
 </Step>
 <Step>
 <h3>Update import paths to match your project setup.</h3>
@@ -178,30 +182,192 @@ import {
 } from "@/components/nexus-ui/model-selector";
 
 const models = [
-  { value: "gpt-4", title: "GPT-4" },
-  { value: "gpt-4o-mini", title: "GPT-4o Mini" },
-  { value: "claude-3.5", title: "Claude 3.5" },
-  { value: "gemini-1.5-flash", title: "Gemini 1.5 Flash" },
+{ value: "gpt-4", title: "GPT-4" },
+{ value: "gpt-4o-mini", title: "GPT-4o Mini" },
+{ value: "claude-3.5", title: "Claude 3.5" },
+{ value: "gemini-1.5-flash", title: "Gemini 1.5 Flash" },
 ];
 
 export default function ModelSelectorBasic() {
   const [model, setModel] = React.useState("gpt-4");
 
-  return (
-    <ModelSelector value={model} onValueChange={setModel} items={models}>
-      <ModelSelectorTrigger />
-      <ModelSelectorContent className="w-[200px]" align="start">
-        <ModelSelectorGroup>
-          <ModelSelectorRadioGroup value={model} onValueChange={setModel}>
-            {models.map((m) => (
-              <ModelSelectorRadioItem key={m.value} value={m.value} title={m.title} />
-            ))}
-          </ModelSelectorRadioGroup>
-        </ModelSelectorGroup>
-      </ModelSelectorContent>
-    </ModelSelector>
-  );
+return (
+<ModelSelector value={model} onValueChange={setModel} items={models}>
+<ModelSelectorTrigger />
+<ModelSelectorContent className="w-[200px]" align="start">
+<ModelSelectorGroup>
+<ModelSelectorRadioGroup value={model} onValueChange={setModel}>
+{models.map((m) => (
+<ModelSelectorRadioItem key={m.value} value={m.value} title={m.title} />
+))}
+</ModelSelectorRadioGroup>
+</ModelSelectorGroup>
+</ModelSelectorContent>
+</ModelSelector>
+);
 }
+
+````
+</Tab>
+</Tabs>
+
+### Trigger Variants
+
+The trigger supports three variants: `filled` (default), `outline`, and `ghost`. Use `outline` or `ghost` when placing the model selector inside a [Prompt Input](/docs/components/prompt-input) or other dense UI.
+
+<Tabs items={["Preview", "Code"]}>
+<Tab value="Preview">
+<ReviewContainer>
+<ModelSelectorTriggerVariants />
+</ReviewContainer>
+</Tab>
+<Tab value="Code">
+```tsx
+"use client";
+
+import * as React from "react";
+import {
+  ModelSelector,
+  ModelSelectorContent,
+  ModelSelectorGroup,
+  ModelSelectorLabel,
+  ModelSelectorRadioGroup,
+  ModelSelectorRadioItem,
+  ModelSelectorTrigger,
+} from "@/components/nexus-ui/model-selector";
+import ChatgptIcon from "@/components/svgs/chatgpt";
+import { ClaudeIcon2 } from "@/components/svgs/claude";
+import GeminiIcon from "@/components/svgs/gemini";
+
+const models = [
+{ value: "gpt-4", icon: ChatgptIcon, title: "GPT-4" },
+{ value: "claude-3.5", icon: ClaudeIcon2, title: "Claude 3.5" },
+{ value: "gemini-1.5-flash", icon: GeminiIcon, title: "Gemini 1.5 Flash" },
+];
+
+export default function ModelSelectorTriggerVariants() {
+  const [filled, setFilled] = React.useState("gpt-4");
+  const [outline, setOutline] = React.useState("claude-3.5");
+  const [ghost, setGhost] = React.useState("gemini-1.5-flash");
+
+return (
+<div className="flex flex-wrap items-center gap-4">
+<ModelSelector value={filled} onValueChange={setFilled} items={models}>
+<ModelSelectorTrigger variant="filled" />
+<ModelSelectorContent className="w-[220px]" align="start">
+<ModelSelectorGroup>
+<ModelSelectorLabel>Filled (default)</ModelSelectorLabel>
+<ModelSelectorRadioGroup value={filled} onValueChange={setFilled}>
+{models.map((m) => (
+<ModelSelectorRadioItem key={m.value} value={m.value} icon={m.icon} title={m.title} />
+))}
+</ModelSelectorRadioGroup>
+</ModelSelectorGroup>
+</ModelSelectorContent>
+</ModelSelector>
+<ModelSelector value={outline} onValueChange={setOutline} items={models}>
+<ModelSelectorTrigger variant="outline" />
+<ModelSelectorContent className="w-[220px]" align="start">
+<ModelSelectorGroup>
+<ModelSelectorLabel>Outline</ModelSelectorLabel>
+<ModelSelectorRadioGroup value={outline} onValueChange={setOutline}>
+{models.map((m) => (
+<ModelSelectorRadioItem key={m.value} value={m.value} icon={m.icon} title={m.title} />
+))}
+</ModelSelectorRadioGroup>
+</ModelSelectorGroup>
+</ModelSelectorContent>
+</ModelSelector>
+<ModelSelector value={ghost} onValueChange={setGhost} items={models}>
+<ModelSelectorTrigger variant="ghost" />
+<ModelSelectorContent className="w-[220px]" align="start">
+<ModelSelectorGroup>
+<ModelSelectorLabel>Ghost</ModelSelectorLabel>
+<ModelSelectorRadioGroup value={ghost} onValueChange={setGhost}>
+{models.map((m) => (
+<ModelSelectorRadioItem key={m.value} value={m.value} icon={m.icon} title={m.title} />
+))}
+</ModelSelectorRadioGroup>
+</ModelSelectorGroup>
+</ModelSelectorContent>
+</ModelSelector>
+</div>
+);
+}
+
+````
+</Tab>
+</Tabs>
+
+### Custom Trigger
+
+Pass custom `children` to `ModelSelectorTrigger` to override the default icon-and-title layout. You control the content entirely—use your own copy, icons, and layout.
+
+<Tabs items={["Preview", "Code"]}>
+<Tab value="Preview">
+<ReviewContainer>
+<ModelSelectorCustomTrigger />
+</ReviewContainer>
+</Tab>
+<Tab value="Code">
+```tsx
+"use client";
+
+import * as React from "react";
+import {
+  ModelSelector,
+  ModelSelectorContent,
+  ModelSelectorGroup,
+  ModelSelectorLabel,
+  ModelSelectorRadioGroup,
+  ModelSelectorRadioItem,
+  ModelSelectorTrigger,
+} from "@/components/nexus-ui/model-selector";
+import ChatgptIcon from "@/components/svgs/chatgpt";
+import { ClaudeIcon2 } from "@/components/svgs/claude";
+import GeminiIcon from "@/components/svgs/gemini";
+import { ChevronDown, Sparkles } from "lucide-react";
+
+const models = [
+{ value: "gpt-4", icon: ChatgptIcon, title: "GPT-4" },
+{ value: "gpt-4o-mini", icon: ChatgptIcon, title: "GPT-4o Mini" },
+{ value: "claude-3.5", icon: ClaudeIcon2, title: "Claude 3.5" },
+{ value: "gemini-1.5-flash", icon: GeminiIcon, title: "Gemini 1.5 Flash" },
+];
+
+export default function ModelSelectorCustomTrigger() {
+  const [model, setModel] = React.useState("gpt-4");
+  const selected = models.find((m) => m.value === model);
+
+return (
+<ModelSelector value={model} onValueChange={setModel} items={models}>
+<ModelSelectorTrigger variant="outline" className="gap-2">
+<Sparkles className="size-3.5 text-gray-500" />
+<span className="text-gray-500">Using</span>
+<span className="font-medium text-gray-900">
+{selected?.title ?? model}
+</span>
+<ChevronDown className="size-4 shrink-0 text-gray-400" />
+</ModelSelectorTrigger>
+<ModelSelectorContent className="w-[264px]" align="start">
+<ModelSelectorGroup>
+<ModelSelectorLabel>Select model</ModelSelectorLabel>
+<ModelSelectorRadioGroup value={model} onValueChange={setModel}>
+{models.map((m) => (
+<ModelSelectorRadioItem
+                key={m.value}
+                value={m.value}
+                icon={m.icon}
+                title={m.title}
+              />
+))}
+</ModelSelectorRadioGroup>
+</ModelSelectorGroup>
+</ModelSelectorContent>
+</ModelSelector>
+);
+}
+
 ```
 </Tab>
 </Tabs>
@@ -301,77 +467,8 @@ export default function ModelSelectorWithSub() {
     </ModelSelector>
   );
 }
-```
-</Tab>
-</Tabs>
+````
 
-### With Items and Separators
-
-Use `ModelSelectorItem` for non-selection actions (e.g. extended thinking toggle) and `ModelSelectorSeparator` to divide sections.
-
-<Tabs items={["Preview", "Code"]}>
-<Tab value="Preview">
-<ReviewContainer>
-<ModelSelectorWithItems />
-</ReviewContainer>
-</Tab>
-<Tab value="Code">
-```tsx
-"use client";
-
-import * as React from "react";
-import {
-  ModelSelector,
-  ModelSelectorContent,
-  ModelSelectorGroup,
-  ModelSelectorItem,
-  ModelSelectorLabel,
-  ModelSelectorRadioGroup,
-  ModelSelectorRadioItem,
-  ModelSelectorSeparator,
-  ModelSelectorTrigger,
-} from "@/components/nexus-ui/model-selector";
-import ChatgptIcon from "@/components/svgs/chatgpt";
-import { ClaudeIcon2 } from "@/components/svgs/claude";
-import { Switch } from "@/components/ui/switch";
-
-const models = [
-  { value: "gpt-4", icon: ChatgptIcon, title: "GPT-4", description: "Most capable" },
-  { value: "gpt-4o-mini", icon: ChatgptIcon, title: "GPT-4o Mini", description: "Fast" },
-  { value: "claude-3.5", icon: ClaudeIcon2, title: "Claude 3.5", description: "Strong reasoning" },
-];
-
-export default function ModelSelectorWithItems() {
-  const [model, setModel] = React.useState("gpt-4");
-  const [extendedThinking, setExtendedThinking] = React.useState(false);
-
-  return (
-    <ModelSelector value={model} onValueChange={setModel} items={models}>
-      <ModelSelectorTrigger />
-      <ModelSelectorContent className="w-[264px]" align="start">
-        <ModelSelectorGroup>
-          <ModelSelectorLabel>Select model</ModelSelectorLabel>
-          <ModelSelectorRadioGroup value={model} onValueChange={setModel}>
-            {models.map((m) => (
-              <ModelSelectorRadioItem key={m.value} value={m.value} icon={m.icon} title={m.title} description={m.description} />
-            ))}
-          </ModelSelectorRadioGroup>
-        </ModelSelectorGroup>
-        <ModelSelectorSeparator />
-        <ModelSelectorItem onClick={() => setExtendedThinking(!extendedThinking)}>
-          <div className="flex w-full items-center justify-between gap-2">
-            <div>
-              <p className="text-sm font-normal">Extended thinking</p>
-              <p className="text-xs text-gray-400">Think longer for complex tasks</p>
-            </div>
-            <Switch checked={extendedThinking} onCheckedChange={setExtendedThinking} />
-          </div>
-        </ModelSelectorItem>
-      </ModelSelectorContent>
-    </ModelSelector>
-  );
-}
-```
 </Tab>
 </Tabs>
 
@@ -450,94 +547,8 @@ export default function ModelSelectorWithCheckbox() {
     </ModelSelector>
   );
 }
-```
-</Tab>
-</Tabs>
+````
 
-### Trigger Variants
-
-The trigger supports three variants: `filled` (default), `outline`, and `ghost`. Use `outline` or `ghost` when placing the model selector inside a [Prompt Input](/docs/components/prompt-input) or other dense UI.
-
-<Tabs items={["Preview", "Code"]}>
-<Tab value="Preview">
-<ReviewContainer>
-<ModelSelectorTriggerVariants />
-</ReviewContainer>
-</Tab>
-<Tab value="Code">
-```tsx
-"use client";
-
-import * as React from "react";
-import {
-  ModelSelector,
-  ModelSelectorContent,
-  ModelSelectorGroup,
-  ModelSelectorLabel,
-  ModelSelectorRadioGroup,
-  ModelSelectorRadioItem,
-  ModelSelectorTrigger,
-} from "@/components/nexus-ui/model-selector";
-import ChatgptIcon from "@/components/svgs/chatgpt";
-import { ClaudeIcon2 } from "@/components/svgs/claude";
-import GeminiIcon from "@/components/svgs/gemini";
-
-const models = [
-  { value: "gpt-4", icon: ChatgptIcon, title: "GPT-4" },
-  { value: "claude-3.5", icon: ClaudeIcon2, title: "Claude 3.5" },
-  { value: "gemini-1.5-flash", icon: GeminiIcon, title: "Gemini 1.5 Flash" },
-];
-
-export default function ModelSelectorTriggerVariants() {
-  const [filled, setFilled] = React.useState("gpt-4");
-  const [outline, setOutline] = React.useState("claude-3.5");
-  const [ghost, setGhost] = React.useState("gemini-1.5-flash");
-
-  return (
-    <div className="flex flex-wrap items-center gap-4">
-      <ModelSelector value={filled} onValueChange={setFilled} items={models}>
-        <ModelSelectorTrigger variant="filled" />
-        <ModelSelectorContent className="w-[220px]" align="start">
-          <ModelSelectorGroup>
-            <ModelSelectorLabel>Filled (default)</ModelSelectorLabel>
-            <ModelSelectorRadioGroup value={filled} onValueChange={setFilled}>
-              {models.map((m) => (
-                <ModelSelectorRadioItem key={m.value} value={m.value} icon={m.icon} title={m.title} />
-              ))}
-            </ModelSelectorRadioGroup>
-          </ModelSelectorGroup>
-        </ModelSelectorContent>
-      </ModelSelector>
-      <ModelSelector value={outline} onValueChange={setOutline} items={models}>
-        <ModelSelectorTrigger variant="outline" />
-        <ModelSelectorContent className="w-[220px]" align="start">
-          <ModelSelectorGroup>
-            <ModelSelectorLabel>Outline</ModelSelectorLabel>
-            <ModelSelectorRadioGroup value={outline} onValueChange={setOutline}>
-              {models.map((m) => (
-                <ModelSelectorRadioItem key={m.value} value={m.value} icon={m.icon} title={m.title} />
-              ))}
-            </ModelSelectorRadioGroup>
-          </ModelSelectorGroup>
-        </ModelSelectorContent>
-      </ModelSelector>
-      <ModelSelector value={ghost} onValueChange={setGhost} items={models}>
-        <ModelSelectorTrigger variant="ghost" />
-        <ModelSelectorContent className="w-[220px]" align="start">
-          <ModelSelectorGroup>
-            <ModelSelectorLabel>Ghost</ModelSelectorLabel>
-            <ModelSelectorRadioGroup value={ghost} onValueChange={setGhost}>
-              {models.map((m) => (
-                <ModelSelectorRadioItem key={m.value} value={m.value} icon={m.icon} title={m.title} />
-              ))}
-            </ModelSelectorRadioGroup>
-          </ModelSelectorGroup>
-        </ModelSelectorContent>
-      </ModelSelector>
-    </div>
-  );
-}
-```
 </Tab>
 </Tabs>
 
@@ -638,18 +649,19 @@ export default function ModelSelectorWithPromptInput() {
     </PromptInput>
   );
 }
-```
+````
+
 </Tab>
 </Tabs>
 
-### Custom Trigger
+### With Items and Separators
 
-Pass custom `children` to `ModelSelectorTrigger` to override the default icon-and-title layout. You control the content entirely—use your own copy, icons, and layout.
+Use `ModelSelectorItem` for non-selection actions (e.g. extended thinking toggle) and `ModelSelectorSeparator` to divide sections.
 
 <Tabs items={["Preview", "Code"]}>
 <Tab value="Preview">
 <ReviewContainer>
-<ModelSelectorCustomTrigger />
+<ModelSelectorWithItems />
 </ReviewContainer>
 </Tab>
 <Tab value="Code">
@@ -661,56 +673,55 @@ import {
   ModelSelector,
   ModelSelectorContent,
   ModelSelectorGroup,
+  ModelSelectorItem,
   ModelSelectorLabel,
   ModelSelectorRadioGroup,
   ModelSelectorRadioItem,
+  ModelSelectorSeparator,
   ModelSelectorTrigger,
 } from "@/components/nexus-ui/model-selector";
 import ChatgptIcon from "@/components/svgs/chatgpt";
 import { ClaudeIcon2 } from "@/components/svgs/claude";
-import GeminiIcon from "@/components/svgs/gemini";
-import { ChevronDown, Sparkles } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 
 const models = [
-  { value: "gpt-4", icon: ChatgptIcon, title: "GPT-4" },
-  { value: "gpt-4o-mini", icon: ChatgptIcon, title: "GPT-4o Mini" },
-  { value: "claude-3.5", icon: ClaudeIcon2, title: "Claude 3.5" },
-  { value: "gemini-1.5-flash", icon: GeminiIcon, title: "Gemini 1.5 Flash" },
+{ value: "gpt-4", icon: ChatgptIcon, title: "GPT-4", description: "Most capable" },
+{ value: "gpt-4o-mini", icon: ChatgptIcon, title: "GPT-4o Mini", description: "Fast" },
+{ value: "claude-3.5", icon: ClaudeIcon2, title: "Claude 3.5", description: "Strong reasoning" },
 ];
 
-export default function ModelSelectorCustomTrigger() {
+export default function ModelSelectorWithItems() {
   const [model, setModel] = React.useState("gpt-4");
-  const selected = models.find((m) => m.value === model);
+  const [extendedThinking, setExtendedThinking] = React.useState(false);
 
-  return (
-    <ModelSelector value={model} onValueChange={setModel} items={models}>
-      <ModelSelectorTrigger variant="outline" className="gap-2">
-        <Sparkles className="size-3.5 text-gray-500" />
-        <span className="text-gray-500">Using</span>
-        <span className="font-medium text-gray-900">
-          {selected?.title ?? model}
-        </span>
-        <ChevronDown className="size-4 shrink-0 text-gray-400" />
-      </ModelSelectorTrigger>
-      <ModelSelectorContent className="w-[264px]" align="start">
-        <ModelSelectorGroup>
-          <ModelSelectorLabel>Select model</ModelSelectorLabel>
-          <ModelSelectorRadioGroup value={model} onValueChange={setModel}>
-            {models.map((m) => (
-              <ModelSelectorRadioItem
-                key={m.value}
-                value={m.value}
-                icon={m.icon}
-                title={m.title}
-              />
-            ))}
-          </ModelSelectorRadioGroup>
-        </ModelSelectorGroup>
-      </ModelSelectorContent>
-    </ModelSelector>
-  );
+return (
+<ModelSelector value={model} onValueChange={setModel} items={models}>
+<ModelSelectorTrigger />
+<ModelSelectorContent className="w-[264px]" align="start">
+<ModelSelectorGroup>
+<ModelSelectorLabel>Select model</ModelSelectorLabel>
+<ModelSelectorRadioGroup value={model} onValueChange={setModel}>
+{models.map((m) => (
+<ModelSelectorRadioItem key={m.value} value={m.value} icon={m.icon} title={m.title} description={m.description} />
+))}
+</ModelSelectorRadioGroup>
+</ModelSelectorGroup>
+<ModelSelectorSeparator />
+<ModelSelectorItem onClick={() => setExtendedThinking(!extendedThinking)}>
+<div className="flex w-full items-center justify-between gap-2">
+<div>
+<p className="text-sm font-normal">Extended thinking</p>
+<p className="text-xs text-gray-400">Think longer for complex tasks</p>
+</div>
+<Switch checked={extendedThinking} onCheckedChange={setExtendedThinking} />
+</div>
+</ModelSelectorItem>
+</ModelSelectorContent>
+</ModelSelector>
+);
 }
-```
+
+````
 </Tab>
 </Tabs>
 
@@ -849,3 +860,4 @@ Section label. Use inside `ModelSelectorGroup` to label a group of items.
 ### Other primitives
 
 `ModelSelectorContent`, `ModelSelectorPortal`, `ModelSelectorGroup`, `ModelSelectorRadioGroup`, `ModelSelectorSeparator`, `ModelSelectorSub`, `ModelSelectorSubTrigger`, and `ModelSelectorSubContent` accept the same props as their Radix Dropdown Menu counterparts. See the [Radix Dropdown Menu documentation](https://www.radix-ui.com/primitives/docs/components/dropdown-menu) for details.
+```
