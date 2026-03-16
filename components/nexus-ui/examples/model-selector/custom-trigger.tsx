@@ -29,12 +29,12 @@ export default function ModelSelectorCustomTrigger() {
   return (
     <ModelSelector value={model} onValueChange={setModel} items={models}>
       <ModelSelectorTrigger variant="outline" className="gap-2">
-        <Sparkles className="size-3.5 text-gray-500" />
-        <span className="text-gray-500">Using</span>
-        <span className="font-medium text-gray-900">
+        <Sparkles className="size-3.5 text-gray-500 dark:text-gray-400" />
+        <span className="text-gray-500 dark:text-gray-400">Using</span>
+        <span className="font-medium text-gray-900 dark:text-gray-100">
           {selected?.title ?? model}
         </span>
-        <ChevronDown className="size-4 shrink-0 text-gray-400" />
+        <ChevronDown className="size-4 shrink-0 text-gray-400 dark:text-gray-500" />
       </ModelSelectorTrigger>
       <ModelSelectorContent className="w-[264px]" align="start">
         <ModelSelectorGroup>
