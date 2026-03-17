@@ -41,6 +41,14 @@ export interface CodeBlockProps extends ComponentProps<"figure"> {
    */
   keepBackground?: boolean;
 
+  /**
+   * Disable collapse behavior. When true, the code block shows full content
+   * without max-height or "Show more" button.
+   *
+   * @defaultValue false
+   */
+  noCollapse?: boolean;
+
   viewportProps?: HTMLAttributes<HTMLElement>;
 
   /**
@@ -77,6 +85,7 @@ export function CodeBlock({
   title,
   allowCopy = true,
   keepBackground = false,
+  noCollapse = false,
   icon,
   viewportProps = {},
   children,
@@ -93,6 +102,7 @@ export function CodeBlock({
   const collapsedHeight = 16 * 24 + 28; // 16 lines × 24px line-height + 28px padding
 
   useEffect(() => {
+    if (noCollapse) return;
     const el = areaRef.current;
     if (!el) return;
 
@@ -102,7 +112,7 @@ export function CodeBlock({
     const observer = new ResizeObserver(check);
     observer.observe(el);
     return () => observer.disconnect();
-  }, [children, collapsedHeight]);
+  }, [children, collapsedHeight, noCollapse]);
 
   return (
     <figure
@@ -168,7 +178,11 @@ export function CodeBlock({
           )}
           style={
             {
-              maxHeight: expanded ? 615 : collapsedHeight,
+              maxHeight: noCollapse
+                ? "none"
+                : expanded
+                  ? 615
+                  : collapsedHeight,
               "--padding-right": !title
                 ? "calc(var(--spacing) * 8)"
                 : undefined,
@@ -181,7 +195,7 @@ export function CodeBlock({
         >
           {children}
         </div>
-        {overflows && !expanded && (
+        {!noCollapse && overflows && !expanded && (
           <div className="absolute inset-x-0 bottom-0 flex h-60 items-end justify-center bg-linear-to-t from-[#999999] from-3% via-[#999999]/20 to-transparent dark:from-gray-950 dark:via-gray-950/90">
             <Button
               onClick={() => setExpanded(true)}

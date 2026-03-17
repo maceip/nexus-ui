@@ -25,9 +25,11 @@ export default defineConfig({
           'title',
           'tab',
           'keepBackground',
+          'noCollapse',
         ]);
         const data: Record<string, unknown> = parsed.attributes;
         if ('keepBackground' in data) data.keepBackground = true;
+        if ('noCollapse' in data) data.noCollapse = true;
         return data;
       },
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
