@@ -16,110 +16,84 @@ Make sure your project has the following:
 Nexus UI also depends on shared utilities from [shadcn/ui](https://ui.shadcn.com). If you don't have shadcn set up yet, initialize it first:
 
 <Tabs items={["npm", "pnpm", "yarn", "bun"]}>
-<Tab value="npm">
-```bash
-npx shadcn@latest init
-```
-</Tab>
-<Tab value="pnpm">
-```bash
-pnpm dlx shadcn@latest init
-```
-</Tab>
-<Tab value="yarn">
-```bash
-npx shadcn@latest init
-```
-</Tab>
-<Tab value="bun">
-```bash
-bunx shadcn@latest init
-```
-</Tab>
+  <Tab value="npm">```bash npx shadcn@latest init ```</Tab>
+  <Tab value="pnpm">```bash pnpm dlx shadcn@latest init ```</Tab>
+  <Tab value="yarn">```bash yarn dlx shadcn@latest init ```</Tab>
+  <Tab value="bun">```bash bunx shadcn@latest init ```</Tab>
 </Tabs>
 
-## Add the registry
+## Add registry
 
-Add the Nexus UI registry to your `components.json`:
+Add the Nexus UI registry to your `components.json` (skip if using Option 1):
 
 ```json title="components.json"
 {
   "registries": {
-    "@nexus-ui": "https://nexus-ui.dev/api/registry/{name}.json"
+    "@nexus-ui": "https://nexus-ui.dev/r/{name}.json"
   }
 }
 ```
 
-You can also use the legacy `/r/` path: `https://nexus-ui.dev/r/{name}.json`
-
 ## Add components
 
-### Option 1: Nexus UI CLI (recommended)
+### Option 1: shadcn CLI (recommended)
 
-```bash
-# Install all components
-npx nexus-ui-cli@latest
-
-# Install specific components
-npx nexus-ui-cli@latest add prompt-input
-npx nexus-ui-cli@latest add prompt-input suggestions model-selector
-```
-
-### Option 2: shadcn CLI
-
-Use the shadcn CLI to add Nexus UI components:
+Nexus UI is in the [shadcn directory](https://ui.shadcn.com/registry). No config needed—add components directly:
 
 <Tabs items={["npm", "pnpm", "yarn", "bun"]}>
-<Tab value="npm">
-```bash
-npx shadcn@latest add @nexus-ui/prompt-input
-```
-</Tab>
-<Tab value="pnpm">
-```bash
-pnpm dlx shadcn@latest add @nexus-ui/prompt-input
-```
-</Tab>
-<Tab value="yarn">
-```bash
-npx shadcn@latest add @nexus-ui/prompt-input
-```
-</Tab>
-<Tab value="bun">
-```bash
-bunx shadcn@latest add @nexus-ui/prompt-input
-```
-</Tab>
+  <Tab value="npm">
+    ```bash npx shadcn@latest add @nexus-ui/prompt-input ```
+  </Tab>
+  <Tab value="pnpm">
+    ```bash pnpm dlx shadcn@latest add @nexus-ui/prompt-input ```
+  </Tab>
+  <Tab value="yarn">
+    ```bash yarn dlx shadcn@latest add @nexus-ui/prompt-input ```
+  </Tab>
+  <Tab value="bun">
+    ```bash bunx shadcn@latest add @nexus-ui/prompt-input ```
+  </Tab>
 </Tabs>
 
-This installs the component along with any required dependencies (like `textarea` and `scroll-area`) automatically.
+Available components: `prompt-input`, `suggestions`, `model-selector`.
 
-### Install via URL
+### Option 2: Direct URL
 
-You can also install directly via URL without configuring the registry:
+Add components by passing the registry URL directly:
 
 <Tabs items={["npm", "pnpm", "yarn", "bun"]}>
-<Tab value="npm">
-```bash
-npx shadcn@latest add https://nexus-ui.dev/api/registry/prompt-input.json
-```
-</Tab>
-<Tab value="pnpm">
-```bash
-pnpm dlx shadcn@latest add https://nexus-ui.dev/api/registry/prompt-input.json
-```
-</Tab>
-<Tab value="yarn">
-```bash
-npx shadcn@latest add https://nexus-ui.dev/api/registry/prompt-input.json
-```
-</Tab>
-<Tab value="bun">
-```bash
-bunx shadcn@latest add https://nexus-ui.dev/api/registry/prompt-input.json
-```
-</Tab>
+  <Tab value="npm">
+    ```bash npx shadcn@latest add https://nexus-ui.dev/r/prompt-input.json ```
+  </Tab>
+  <Tab value="pnpm">
+    ```bash pnpm dlx shadcn@latest add https://nexus-ui.dev/r/prompt-input.json
+    ```
+  </Tab>
+  <Tab value="yarn">
+    ```bash yarn dlx shadcn@latest add https://nexus-ui.dev/r/prompt-input.json
+    ```
+  </Tab>
+  <Tab value="bun">
+    ```bash bunx shadcn@latest add https://nexus-ui.dev/r/prompt-input.json ```
+  </Tab>
 </Tabs>
+
+### Option 3: Nexus UI CLI
+
+Install components using the Nexus UI CLI:
+
+<Tabs items={["npm", "pnpm", "yarn", "bun"]}>
+  <Tab value="npm">```bash npx nexus-ui-cli@latest add prompt-input ```</Tab>
+  <Tab value="pnpm">
+    ```bash pnpm dlx nexus-ui-cli@latest add prompt-input ```
+  </Tab>
+  <Tab value="yarn">
+    ```bash yarn dlx nexus-ui-cli@latest add prompt-input ```
+  </Tab>
+  <Tab value="bun">```bash bunx nexus-ui-cli@latest add prompt-input ```</Tab>
+</Tabs>
+
+Install all components: `npx nexus-ui-cli@latest`
 
 ## Manual installation
 
@@ -128,26 +102,10 @@ If you prefer to install manually, copy the component source from the docs page 
 Each component page includes the full source code. Copy it into your `components/nexus-ui` directory and install the required dependencies:
 
 <Tabs items={["npm", "pnpm", "yarn", "bun"]}>
-<Tab value="npm">
-```bash
-npm install @radix-ui/react-slot
-```
-</Tab>
-<Tab value="pnpm">
-```bash
-pnpm add @radix-ui/react-slot
-```
-</Tab>
-<Tab value="yarn">
-```bash
-yarn add @radix-ui/react-slot
-```
-</Tab>
-<Tab value="bun">
-```bash
-bun add @radix-ui/react-slot
-```
-</Tab>
+  <Tab value="npm">```bash npm install @radix-ui/react-slot ```</Tab>
+  <Tab value="pnpm">```bash pnpm add @radix-ui/react-slot ```</Tab>
+  <Tab value="yarn">```bash yarn add @radix-ui/react-slot ```</Tab>
+  <Tab value="bun">```bash bun add @radix-ui/react-slot ```</Tab>
 </Tabs>
 
 ## Project structure

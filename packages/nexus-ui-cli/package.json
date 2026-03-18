@@ -1,6 +1,6 @@
 {
   "name": "nexus-ui-cli",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "CLI for installing Nexus UI components via the shadcn registry",
   "homepage": "https://nexus-ui.dev",
   "license": "MIT",
