@@ -41,27 +41,11 @@ Make sure you have [shadcn/ui](https://ui.shadcn.com) initialized in your projec
 npx shadcn@latest init
 ```
 
-Add the Nexus UI registry to your `components.json`:
+Add components using any of these methods:
 
-```json
-{
-  "registries": {
-    "@nexus-ui": "https://nexus-ui.dev/api/registry/{name}.json"
-  }
-}
-```
+**Option 1: shadcn CLI (recommended)**
 
-Then add components using either method:
-
-**Option 1: Nexus UI CLI (recommended)**
-
-```bash
-npx nexus-ui-cli@latest
-# or add specific components
-npx nexus-ui-cli@latest add prompt-input model-selector suggestions
-```
-
-**Option 2: shadcn CLI**
+Nexus UI is in the [shadcn registry](https://ui.shadcn.com/registry). No config needed:
 
 ```bash
 npx shadcn@latest add @nexus-ui/prompt-input
@@ -69,10 +53,28 @@ npx shadcn@latest add @nexus-ui/model-selector
 npx shadcn@latest add @nexus-ui/suggestions
 ```
 
-Or install directly via URL without any config:
+**Option 2: Direct URL**
 
 ```bash
-npx shadcn@latest add https://nexus-ui.dev/api/registry/prompt-input.json
+npx shadcn@latest add https://nexus-ui.dev/r/prompt-input.json
+```
+
+**Option 3: Nexus UI CLI**
+
+```bash
+npx nexus-ui-cli@latest
+# or add specific components
+npx nexus-ui-cli@latest add prompt-input model-selector suggestions
+```
+
+To use the `@nexus-ui` scope with a custom registry, add to your `components.json`:
+
+```json
+{
+  "registries": {
+    "@nexus-ui": "https://nexus-ui.dev/r/{name}.json"
+  }
+}
 ```
 
 ## Usage
