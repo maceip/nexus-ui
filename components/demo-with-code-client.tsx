@@ -21,7 +21,7 @@ export function DemoWithCodeClient({
         <ReviewContainer className={previewClassName}>{children}</ReviewContainer>
       </Tab>
       <Tab value="Code">
-        <CodeBlock noCollapse>{highlightedCode}</CodeBlock>
+        <CodeBlock>{highlightedCode}</CodeBlock>
       </Tab>
     </Tabs>
   );

@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 
 export function Steps({ children }: { children: ReactNode }) {
   return (
-    <div className="relative ml-2 border-l border-gray-200 pl-6 [counter-reset:step] sm:ml-4 sm:pl-7 dark:border-gray-800">
+    <div className="relative ml-2 border-l border-gray-200 pl-8 [counter-reset:step] sm:ml-4 sm:pl-7 dark:border-gray-800">
       {children}
     </div>
   );
