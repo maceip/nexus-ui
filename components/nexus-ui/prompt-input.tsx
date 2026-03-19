@@ -8,16 +8,32 @@ import { cn } from "@/lib/utils";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea, ScrollViewport } from "@/components/ui/scroll-area";
 
-const PromptInputContext =
-  React.createContext<React.RefObject<HTMLTextAreaElement | null> | null>(null);
+type PromptInputContextValue = {
+  textareaRef: React.RefObject<HTMLTextAreaElement | null>;
+  onSubmit?: (value: string) => void;
+};
 
-type PromptInputProps = React.HTMLAttributes<HTMLDivElement>;
+const PromptInputContext =
+  React.createContext<PromptInputContextValue | null>(null);
+
+type PromptInputProps = Omit<
+  React.HTMLAttributes<HTMLDivElement>,
+  "onSubmit"
+> & {
+  /**
+   * Called when Enter is pressed in the textarea (without Shift). Use with
+   * value/onChange on PromptInputTextarea for controlled mode. Shift+Enter
+   * inserts a new line.
+   */
+  onSubmit?: (value: string) => void;
+};
 
 function PromptInput({
   className,
   role: _role,
   "aria-label": _ariaLabel,
   onClick,
+  onSubmit,
   ...props
 }: PromptInputProps) {
   const textareaRef = React.useRef<HTMLTextAreaElement | null>(null);
@@ -37,8 +53,13 @@ function PromptInput({
     [onClick],
   );
 
+  const contextValue = React.useMemo<PromptInputContextValue>(
+    () => ({ textareaRef, onSubmit }),
+    [onSubmit],
+  );
+
   return (
-    <PromptInputContext.Provider value={textareaRef}>
+    <PromptInputContext.Provider value={contextValue}>
       <div
         role="group"
         aria-label="Chat input"
@@ -59,13 +80,26 @@ const PromptInputTextarea = React.forwardRef<
   HTMLTextAreaElement,
   PromptInputTextareaProps
 >(function PromptInputTextarea(
-  { className, "aria-label": _ariaLabel, ...props },
+  { className, "aria-label": _ariaLabel, onKeyDown, ...props },
   ref,
 ) {
-  const textareaRef = React.useContext(PromptInputContext);
+  const context = React.useContext(PromptInputContext);
+  const textareaRef = context?.textareaRef;
+  const onSubmit = context?.onSubmit;
   const mergedRef = textareaRef
     ? mergeRefs<HTMLTextAreaElement>(textareaRef, ref)
     : ref;
+
+  const handleKeyDown = React.useCallback(
+    (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+      if (e.key === "Enter" && !e.shiftKey && onSubmit) {
+        e.preventDefault();
+        onSubmit(e.currentTarget.value);
+      }
+      onKeyDown?.(e);
+    },
+    [onSubmit, onKeyDown],
+  );
 
   return (
     <ScrollArea className="max-h-40">
@@ -78,6 +112,7 @@ const PromptInputTextarea = React.forwardRef<
             "min-h-14 w-full resize-none border-0 bg-transparent px-4 py-4 text-sm leading-6 font-normal text-gray-900 shadow-none outline-none placeholder:text-gray-500 focus-visible:ring-0 focus-visible:ring-offset-0 dark:bg-transparent dark:text-white",
             className,
           )}
+          onKeyDown={handleKeyDown}
           {...props}
         />
       </ScrollViewport>

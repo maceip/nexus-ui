@@ -1,3 +1,6 @@
+"use client";
+
+import * as React from "react";
 import { Button } from "@/components/ui/button";
 import PromptInput, {
   PromptInputActions,
@@ -5,29 +8,67 @@ import PromptInput, {
   PromptInputActionGroup,
   PromptInputTextarea,
 } from "@/components/nexus-ui/prompt-input";
-import { ArrowUp, Mic, Paperclip } from "lucide-react";
+import { ArrowUp, Mic, Paperclip, Square } from "lucide-react";
+
+type InputStatus = "idle" | "loading" | "error" | "submitted";
 
 export default function PromptInputMultipleActions() {
+  const [input, setInput] = React.useState("");
+  const [status, setStatus] = React.useState<InputStatus>("idle");
+
+  const doSubmit = React.useCallback((value: string) => {
+    if (!value.trim()) return;
+    setInput("");
+    setStatus("loading");
+
+    setTimeout(() => {
+      setStatus("submitted");
+      setTimeout(() => setStatus("idle"), 800);
+    }, 2500);
+  }, []);
+
+  const isLoading = status === "loading";
+
   return (
-    <PromptInput>
-      <PromptInputTextarea />
+    <PromptInput onSubmit={doSubmit}>
+      <PromptInputTextarea
+        value={input}
+        onChange={(e) => setInput(e.target.value)}
+        placeholder="How can I help you today?"
+        disabled={isLoading}
+      />
       <PromptInputActions>
         <PromptInputActionGroup>
           <PromptInputAction asChild>
-            <Button className="size-8 cursor-pointer rounded-full border-none bg-transparent text-gray-900 hover:bg-gray-200 dark:text-white dark:hover:bg-gray-700">
+            <Button
+              type="button"
+              className="size-8 cursor-pointer rounded-full border-none bg-transparent text-gray-900 hover:bg-gray-200 dark:text-white dark:hover:bg-gray-700"
+            >
               <Paperclip className="size-4" />
             </Button>
           </PromptInputAction>
           <PromptInputAction asChild>
-            <Button className="size-8 cursor-pointer rounded-full border-none bg-transparent text-gray-900 hover:bg-gray-200 dark:text-white dark:hover:bg-gray-700">
+            <Button
+              type="button"
+              className="size-8 cursor-pointer rounded-full border-none bg-transparent text-gray-900 hover:bg-gray-200 dark:text-white dark:hover:bg-gray-700"
+            >
               <Mic className="size-4" />
             </Button>
           </PromptInputAction>
         </PromptInputActionGroup>
         <PromptInputActionGroup>
           <PromptInputAction asChild>
-            <Button className="size-8 cursor-pointer rounded-full bg-gray-700 text-white hover:bg-gray-800 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200">
-              <ArrowUp />
+            <Button
+              type="button"
+              className="size-8 cursor-pointer rounded-full bg-gray-700 text-white hover:bg-gray-800 disabled:opacity-70 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200"
+              disabled={isLoading || !input.trim()}
+              onClick={() => input.trim() && doSubmit(input)}
+            >
+              {isLoading ? (
+                <Square className="size-3.5 fill-current" />
+              ) : (
+                <ArrowUp />
+              )}
             </Button>
           </PromptInputAction>
         </PromptInputActionGroup>

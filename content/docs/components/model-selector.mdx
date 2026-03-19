@@ -241,18 +241,17 @@ export default function ChatWithModelSelector() {
   const [input, setInput] = useState("");
   const isLoading = status !== "ready";
 
+  const handleSubmit = (e?: React.FormEvent) => {
+    e?.preventDefault();
+    if (input.trim()) {
+      sendMessage({ text: input });
+      setInput("");
+    }
+  };
+
   return (
-    <form
-      onSubmit={(e) => {
-        e.preventDefault();
-        if (input.trim()) {
-          sendMessage({ text: input });
-          setInput("");
-        }
-      }}
-      className="w-full"
-    >
-      <PromptInput>
+    <form onSubmit={handleSubmit} className="w-full">
+      <PromptInput onSubmit={handleSubmit}>
         <PromptInputTextarea
           value={input}
           onChange={(e) => setInput(e.target.value)}

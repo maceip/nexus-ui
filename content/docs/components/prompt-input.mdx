@@ -152,10 +152,12 @@ export async function POST(req: Request) {
 <Step>
 <h3>Wire Prompt Input to `useChat`</h3>
 
+Use `onSubmit` for Enter-to-submit. Shift+Enter inserts a new line.
+
 ```tsx
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import { Button } from "@/components/ui/button";
@@ -174,18 +176,21 @@ export default function ChatWithPromptInput() {
   const [input, setInput] = useState("");
   const isLoading = status !== "ready";
 
+  const handleSubmit = useCallback(
+    (e?: React.FormEvent) => {
+      e?.preventDefault();
+      const trimmed = input.trim();
+      if (trimmed) {
+        sendMessage({ text: trimmed });
+        setInput("");
+      }
+    },
+    [input, sendMessage],
+  );
+
   return (
-    <form
-      onSubmit={(e) => {
-        e.preventDefault();
-        if (input.trim()) {
-          sendMessage({ text: input });
-          setInput("");
-        }
-      }}
-      className="w-full"
-    >
-      <PromptInput>
+    <form onSubmit={handleSubmit} className="w-full">
+      <PromptInput onSubmit={handleSubmit}>
         <PromptInputTextarea
           value={input}
           onChange={(e) => setInput(e.target.value)}
@@ -227,6 +232,11 @@ The root container that wraps the textarea and action bar.
 
 <TypeTable
   type={{
+    onSubmit: {
+      type: "(value: string) => void",
+      description:
+        "Called when Enter is pressed in the textarea (without Shift). Use with value/onChange on PromptInputTextarea for controlled mode. Shift+Enter inserts a new line.",
+    },
     className: {
       type: "string",
       description: "Additional CSS classes to apply to the container.",
@@ -245,13 +255,21 @@ The root container that wraps the textarea and action bar.
 
 ### PromptInputTextarea
 
-An auto-resizing textarea wrapped in a scroll area. Accepts all standard `textarea` props.
+An auto-resizing textarea wrapped in a scroll area. Accepts all standard `textarea` props including `disabled` and `onKeyDown`. Use `onSubmit` on PromptInput for Enter-to-submit; Shift+Enter inserts a new line.
 
 <TypeTable
   type={{
     className: {
       type: "string",
       description: "Additional CSS classes to apply to the textarea.",
+    },
+    disabled: {
+      type: "boolean",
+      description: "Disables the textarea (e.g. while the AI is responding).",
+    },
+    onKeyDown: {
+      type: "React.KeyboardEventHandler<HTMLTextAreaElement>",
+      description: "Called when a key is pressed. Fired after the internal Enter/Shift+Enter handler.",
     },
     placeholder: {
       type: "string",

@@ -173,19 +173,18 @@ export default function ChatWithSuggestions() {
   const [input, setInput] = useState("");
   const isLoading = status !== "ready";
 
+  const handleSubmit = (e?: React.FormEvent) => {
+    e?.preventDefault();
+    if (input.trim()) {
+      sendMessage({ text: input });
+      setInput("");
+    }
+  };
+
   return (
     <div className="flex w-full flex-col gap-6">
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          if (input.trim()) {
-            sendMessage({ text: input });
-            setInput("");
-          }
-        }}
-        className="w-full"
-      >
-        <PromptInput>
+      <form onSubmit={handleSubmit} className="w-full">
+        <PromptInput onSubmit={handleSubmit}>
           <PromptInputTextarea
             value={input}
             onChange={(e) => setInput(e.target.value)}

@@ -66,3 +66,22 @@ export function GeminiCaret({ className }: { className?: string }) {
     </svg>
   );
 }
+
+export function GeminiSend({ className }: { className?: string }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      height="24px"
+      viewBox="0 -960 960 960"
+      width="24px"
+      fill="none"
+      className={cn("size-4 -mr-1 text-gray-900 dark:text-gray-50", className)}
+    >
+      {/* Filled send icon - solid center, shallower notch, rounded outer corners */}
+      <path
+        d="M172-160 720-400Q920-480 720-560L172-802Q80-840 80-740L80-560 400-480 80-440 80-220Q80-120 172-160Z"
+        fill="currentColor"
+      />
+    </svg>
+  );
+}
