@@ -11,7 +11,7 @@ export const docs = defineDocs({
     postprocess: {
       // Disabled: causes ~12GB heap during Turbopack compilation.
       // Re-enable if you need /llms-full.txt or /llms.mdx/docs/... routes.
-      includeProcessedMarkdown: false,
+      includeProcessedMarkdown: true,
     },
   },
   meta: {
