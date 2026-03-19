@@ -968,7 +968,7 @@ For one-click submission (suggestion sends immediately without editing), call `s
 
 ### Suggestions
 
-The root container that provides `onSelect` context to all child `Suggestion` components.
+The root container that provides `onSelect` context to all child `Suggestion` components. Extends `React.HTMLAttributes<HTMLDivElement>`.
 
 <TypeTable
   type={{
@@ -981,16 +981,12 @@ The root container that provides `onSelect` context to all child `Suggestion` co
       type: "string",
       description: "Additional CSS classes to apply to the root container.",
     },
-    ref: {
-      type: "React.Ref<HTMLDivElement>",
-      description: "Forwarded ref to the root div element.",
-    },
   }}
 />
 
 ### SuggestionList
 
-Layout wrapper for arranging suggestions horizontally or vertically.
+Layout wrapper for arranging suggestions horizontally or vertically. Extends `React.HTMLAttributes<HTMLDivElement>`.
 
 <TypeTable
   type={{
@@ -1004,16 +1000,12 @@ Layout wrapper for arranging suggestions horizontally or vertically.
       type: "string",
       description: "Additional CSS classes to apply to the list container.",
     },
-    ref: {
-      type: "React.Ref<HTMLDivElement>",
-      description: "Forwarded ref to the list div element.",
-    },
   }}
 />
 
 ### Suggestion
 
-A clickable pill that triggers `onSelect` from the parent `Suggestions` context. Renders as a shadcn `Button`.
+A clickable pill that triggers `onSelect` from the parent `Suggestions` context. Renders as a shadcn `Button`. Extends `Button` props (except `variant`).
 
 <TypeTable
   type={{
@@ -1029,29 +1021,43 @@ A clickable pill that triggers `onSelect` from the parent `Suggestions` context.
     },
     value: {
       type: "string",
-      description: "The value passed to onSelect.",
+      description: "The value passed to onSelect. Defaults to children when children is a string.",
+    },
+    children: {
+      type: "React.ReactNode",
+      description: "The content to display. Used as the value for onSelect when value is not provided.",
+    },
+    onClick: {
+      type: "React.MouseEventHandler<HTMLButtonElement>",
+      description: "Optional click handler. Called before onSelect.",
     },
     className: {
       type: "string",
       description: "Additional CSS classes to apply to the button.",
-    },
-    ref: {
-      type: "React.Ref<HTMLButtonElement>",
-      description: "Forwarded ref to the button element.",
     },
   }}
 />
 
 ### SuggestionPanel
 
-Full-width panel that displays below the input, covering the category pills. Closes on Escape when `onClose` is provided. Use with `SuggestionPanelHeader`, `SuggestionPanelTitle`, `SuggestionPanelClose`, and `SuggestionPanelContent`.
+Full-width panel that displays below the input, covering the category pills. Uses `Presence` for enter/exit animations. Closes on Escape via `onOpenChange`. Use with `SuggestionPanelHeader`, `SuggestionPanelTitle`, `SuggestionPanelClose`, and `SuggestionPanelContent`.
 
 <TypeTable
   type={{
+    open: {
+      type: "boolean",
+      default: "true",
+      description: "Controls panel visibility. Use for controlled open/close state.",
+    },
+    onOpenChange: {
+      type: "(open: boolean) => void",
+      description:
+        "Callback fired when the panel open state changes (e.g. Escape key, SuggestionPanelClose click).",
+    },
     onClose: {
       type: "() => void",
       description:
-        "Callback fired when the panel should close (e.g. Escape key).",
+        "Callback fired when the panel's exit animation completes. Use for cleanup (e.g. focus management).",
     },
     className: {
       type: "string",
@@ -1066,7 +1072,7 @@ Full-width panel that displays below the input, covering the category pills. Clo
 
 ### SuggestionPanelHeader
 
-Header row for the panel. Typically contains `SuggestionPanelTitle` and `SuggestionPanelClose`.
+Header row for the panel. Typically contains `SuggestionPanelTitle` and `SuggestionPanelClose`. Extends `React.HTMLAttributes<HTMLDivElement>`.
 
 <TypeTable
   type={{
@@ -1074,16 +1080,12 @@ Header row for the panel. Typically contains `SuggestionPanelTitle` and `Suggest
       type: "string",
       description: "Additional CSS classes to apply to the header.",
     },
-    ref: {
-      type: "React.Ref<HTMLDivElement>",
-      description: "Forwarded ref to the header div element.",
-    },
   }}
 />
 
 ### SuggestionPanelTitle
 
-Title area for the panel header. Use for the category icon and label.
+Title area for the panel header. Use for the category icon and label. Extends `React.HTMLAttributes<HTMLDivElement>`.
 
 <TypeTable
   type={{
@@ -1091,16 +1093,12 @@ Title area for the panel header. Use for the category icon and label.
       type: "string",
       description: "Additional CSS classes to apply to the title container.",
     },
-    ref: {
-      type: "React.Ref<HTMLDivElement>",
-      description: "Forwarded ref to the title div element.",
-    },
   }}
 />
 
 ### SuggestionPanelClose
 
-Close button for the panel. Use `asChild` to merge props onto a child element.
+Close button for the panel. Clicking it calls `onOpenChange(false)` via context. Use `asChild` to merge props onto a child element. Extends `React.ButtonHTMLAttributes<HTMLButtonElement>`.
 
 <TypeTable
   type={{
@@ -1110,20 +1108,20 @@ Close button for the panel. Use `asChild` to merge props onto a child element.
       description:
         "Merges props onto the child element instead of rendering a button.",
     },
+    onClick: {
+      type: "React.MouseEventHandler<HTMLButtonElement>",
+      description: "Optional click handler. Called after the panel close is triggered.",
+    },
     className: {
       type: "string",
       description: "Additional CSS classes to apply to the close button.",
-    },
-    ref: {
-      type: "React.Ref<HTMLButtonElement>",
-      description: "Forwarded ref to the button element.",
     },
   }}
 />
 
 ### SuggestionPanelContent
 
-Content wrapper for the panel's suggestion list. Use with `Suggestions` and `SuggestionList` inside. Use `asChild` to merge props onto a child element.
+Content wrapper for the panel's suggestion list. Use with `Suggestions` and `SuggestionList` inside. Use `asChild` to merge props onto a child element. Extends `React.HTMLAttributes<HTMLDivElement>`.
 
 <TypeTable
   type={{
@@ -1136,10 +1134,6 @@ Content wrapper for the panel's suggestion list. Use with `Suggestions` and `Sug
     className: {
       type: "string",
       description: "Additional CSS classes to apply to the content container.",
-    },
-    ref: {
-      type: "React.Ref<HTMLDivElement>",
-      description: "Forwarded ref to the content div element.",
     },
   }}
 />
