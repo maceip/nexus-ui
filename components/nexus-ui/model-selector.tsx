@@ -118,11 +118,13 @@ function ModelSelectorTrigger({
 
   const defaultContent = (
     <>
-      <span className="flex items-center gap-1">
+      <span data-slot="model-selector-trigger-content" className="flex items-center gap-1">
         {selected?.icon && <selected.icon className="size-4 shrink-0" />}
-        <span className="truncate">{selected?.title ?? value}</span>
+        <span data-slot="model-selector-trigger-title" className="truncate">{selected?.title ?? value}</span>
       </span>
-      <ChevronDownIcon className="size-4 shrink-0" />
+      <span data-slot="model-selector-trigger-chevron">
+        <ChevronDownIcon className="size-4 shrink-0" />
+      </span>
     </>
   );
 
@@ -226,19 +228,25 @@ function ModelSelectorCheckboxItem({
   const defaultContent = (
     <>
       {Icon && (
-        <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-muted">
+        <span
+          data-slot="model-selector-checkbox-item-icon"
+          className="flex size-8 shrink-0 items-center justify-center rounded-md bg-muted"
+        >
           <Icon className="size-4 text-muted-foreground" />
         </span>
       )}
-      <div className="min-w-0 flex-1">
-        {title != null && <p className="truncate font-medium">{title}</p>}
+      <div data-slot="model-selector-checkbox-item-content" className="min-w-0 flex-1">
+        {title != null && <p data-slot="model-selector-checkbox-item-title" className="truncate font-medium">{title}</p>}
         {description != null && (
-          <p className="truncate text-xs text-muted-foreground">
+          <p data-slot="model-selector-checkbox-item-description" className="truncate text-xs text-muted-foreground">
             {description}
           </p>
         )}
       </div>
-      <span className="pointer-events-none absolute right-2 flex size-3.5 items-center justify-center">
+      <span
+        data-slot="model-selector-checkbox-item-indicator"
+        className="pointer-events-none absolute right-2 flex size-3.5 items-center justify-center"
+      >
         <DropdownMenuPrimitive.ItemIndicator>
           <CheckIcon className="size-4" />
         </DropdownMenuPrimitive.ItemIndicator>
@@ -284,35 +292,47 @@ function ModelSelectorRadioItem({
   title,
   description,
   disabled,
+  indicator,
   ...props
 }: React.ComponentProps<typeof DropdownMenuPrimitive.RadioItem> & {
   icon?: React.ComponentType<{ className?: string }>;
   title?: string;
   description?: string;
+  /** Custom content to show when selected. Renders inside ItemIndicator. Defaults to CheckIcon. */
+  indicator?: React.ReactNode;
 }) {
   const defaultContent = (
     <>
       {Icon && (
-        <span className="flex shrink-0 items-center justify-center">
+        <span
+          data-slot="model-selector-radio-item-icon"
+          className="flex shrink-0 items-center justify-center"
+        >
           <Icon className="size-4" />
         </span>
       )}
-      <div className="flex min-w-0 flex-1 flex-col gap-0.25">
+      <div
+        data-slot="model-selector-radio-item-content"
+        className="flex min-w-0 flex-1 flex-col gap-0.25"
+      >
         {title != null && (
-          <p className="truncate text-sm font-normal">{title}</p>
+          <p data-slot="model-selector-radio-item-title" className="truncate text-sm font-normal">{title}</p>
         )}
         {description != null && (
-          <p className="truncate text-xs font-[350] text-gray-400">
+          <p data-slot="model-selector-radio-item-description" className="truncate text-xs font-[350] text-gray-400">
             {description}
           </p>
         )}
       </div>
-      <span className="pointer-events-none absolute right-3 flex size-4 items-center justify-center">
+      <span
+        data-slot="model-selector-radio-item-indicator"
+        className="pointer-events-none absolute right-3 flex size-4 items-center justify-center"
+      >
         {disabled ? (
           <LockIcon className="size-4" />
         ) : (
           <DropdownMenuPrimitive.ItemIndicator>
-            <CheckIcon className="size-4" />
+            {indicator ?? <CheckIcon className="size-4" />}
           </DropdownMenuPrimitive.ItemIndicator>
         )}
       </span>
