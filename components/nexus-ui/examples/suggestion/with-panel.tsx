@@ -20,16 +20,15 @@ import {
 } from "@/components/nexus-ui/suggestions";
 import {
   ArrowUp,
-  ArrowUpRight,
   Paperclip,
-  LayoutGrid,
-  Search,
   PenLine,
   Sparkles,
   X,
   Map,
   BookOpenText,
+  ChevronRight,
 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 const categories = [
   {
@@ -135,8 +134,9 @@ export default function SuggestionWithPanel() {
             {categories.map((category) => (
               <Suggestion
                 key={category.label}
-                variant="default"
+                variant="filled"
                 onClick={(e) => handleCategoryClick(e, category.label)}
+                className={cn(open && "opacity-0")}
               >
                 <category.icon className="size-3.5" />
                 {category.label}
@@ -152,15 +152,15 @@ export default function SuggestionWithPanel() {
         >
           {active && (
             <>
-              <SuggestionPanelHeader>
+              <SuggestionPanelHeader className="h-6">
                 <SuggestionPanelTitle>
                   <active.icon className="size-3.5 text-gray-400" />
                   <span className="text-[13px] font-normal text-gray-400">
                     {active.label}
                   </span>
                 </SuggestionPanelTitle>
-                <SuggestionPanelClose>
-                  <X className="size-3.5" />
+                <SuggestionPanelClose className="-mr-0.75 size-5">
+                  <X className="size-4" />
                 </SuggestionPanelClose>
               </SuggestionPanelHeader>
               <SuggestionPanelContent>
@@ -170,22 +170,22 @@ export default function SuggestionWithPanel() {
                     setOpen(false);
                   }}
                 >
-                <SuggestionList orientation="vertical" className="gap-2">
-                  {active.suggestions.map((text) => (
-                    <Suggestion
-                      key={text}
-                      variant="ghost"
-                      highlight={active.highlight}
-                      value={text}
-                      className="group h-auto w-full whitespace-normal justify-between rounded-[6px] px-3 text-left text-gray-900 hover:bg-gray-200/72"
-                    >
-                      {text}
-                      <ArrowUpRight className="size-3.5 text-gray-400 opacity-0 transition-opacity group-hover:opacity-100 dark:text-gray-500" />
-                    </Suggestion>
-                  ))}
-                </SuggestionList>
-              </Suggestions>
-            </SuggestionPanelContent>
+                  <SuggestionList orientation="vertical" className="gap-2">
+                    {active.suggestions.map((text) => (
+                      <Suggestion
+                        key={text}
+                        variant="ghost"
+                        highlight={active.highlight}
+                        value={text}
+                        className="group h-auto w-full justify-between rounded-[6px] px-3 text-left whitespace-normal text-gray-900 hover:bg-gray-200/72"
+                      >
+                        {text}
+                        <ChevronRight className="size-4 text-gray-400 opacity-0 transition-opacity group-hover:opacity-100 dark:text-gray-500" />
+                      </Suggestion>
+                    ))}
+                  </SuggestionList>
+                </Suggestions>
+              </SuggestionPanelContent>
             </>
           )}
         </SuggestionPanel>

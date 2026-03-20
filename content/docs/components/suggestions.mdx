@@ -81,7 +81,7 @@ import {
 
 ### Variants
 
-The `Suggestion` component supports three variants: `default` (filled background), `outline` (bordered), and `ghost` (transparent until hovered).
+The `Suggestion` component supports three variants: `filled` (filled background), `outline` (bordered), and `ghost` (transparent until hovered).
 
 <DemoWithCode src="components/nexus-ui/examples/suggestion/variants.tsx">
   <SuggestionVariants />
@@ -293,8 +293,8 @@ A clickable pill that triggers `onSelect` from the parent `Suggestions` context.
 <TypeTable
   type={{
     variant: {
-      type: '"default" | "outline" | "ghost"',
-      default: '"default"',
+      type: '"filled" | "outline" | "ghost"',
+      default: '"filled"',
       description: "Visual style of the suggestion pill.",
     },
     highlight: {

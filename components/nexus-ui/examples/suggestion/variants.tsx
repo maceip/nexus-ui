@@ -10,7 +10,7 @@ export default function SuggestionVariants() {
   return (
     <Suggestions onSelect={(value) => console.log(value)}>
       <SuggestionList>
-        <Suggestion>Default</Suggestion>
+        <Suggestion>Filled</Suggestion>
         <Suggestion variant="outline">Outline</Suggestion>
         <Suggestion variant="ghost">Ghost</Suggestion>
       </SuggestionList>

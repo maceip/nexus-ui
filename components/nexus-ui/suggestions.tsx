@@ -4,8 +4,29 @@ import * as React from "react";
 import { Presence } from "@radix-ui/react-presence";
 import { Slot } from "@radix-ui/react-slot";
 
+import { cva, type VariantProps } from "class-variance-authority";
+
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+
+const suggestionVariants = cva(
+  "h-8 gap-1.5 rounded-full px-4 text-sm font-normal shadow-none outline-none transition-all duration-150 focus-visible:ring-2 focus-visible:ring-gray-400 focus-visible:ring-offset-2 dark:focus-visible:ring-gray-500 active:scale-99",
+  {
+    variants: {
+      variant: {
+        filled:
+          "border-none bg-gray-100 text-gray-900 hover:bg-gray-200 dark:bg-white/10 dark:text-gray-100 dark:hover:bg-white/15",
+        outline:
+          "border border-gray-200 bg-transparent text-gray-900 hover:bg-gray-100 dark:border-white/10 dark:text-gray-100 dark:hover:bg-white/10",
+        ghost:
+          "border-none bg-transparent text-gray-500 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-white/10 dark:hover:text-gray-100",
+      },
+    },
+    defaultVariants: {
+      variant: "filled",
+    },
+  },
+);
 
 type SuggestionsContextValue = {
   onSelect?: (value: string) => void;
@@ -24,6 +45,7 @@ function Suggestions({ className, onSelect, ...props }: SuggestionsProps) {
   return (
     <SuggestionsContext.Provider value={{ onSelect }}>
       <div
+        data-slot="suggestions"
         role="group"
         aria-label="Suggestions"
         className={cn("flex flex-col gap-2", className)}
@@ -44,10 +66,11 @@ function SuggestionList({
 }: SuggestionListProps) {
   return (
     <div
+      data-slot="suggestion-list"
       role="group"
       aria-label="Suggestions"
       className={cn(
-        "flex gap-2 animate-in fade-in-0 duration-150",
+        "flex animate-in gap-2 duration-150 fade-in-0",
         orientation === "horizontal"
           ? "flex-row flex-wrap items-center justify-center"
           : "flex-col items-start",
@@ -58,22 +81,11 @@ function SuggestionList({
   );
 }
 
-const suggestionVariants = {
-  default:
-    "h-8 gap-1.5 rounded-full border-none bg-gray-100 px-4 text-sm font-normal text-gray-900 shadow-none outline-none transition-colors duration-150 hover:bg-gray-200 focus-visible:ring-2 focus-visible:ring-gray-400 focus-visible:ring-offset-2 dark:bg-white/10 dark:text-gray-100 dark:hover:bg-white/15 dark:focus-visible:ring-gray-500",
-  outline:
-    "h-8 gap-1.5 rounded-full border border-gray-200 bg-transparent px-4 text-sm font-normal text-gray-900 shadow-none outline-none transition-colors duration-150 hover:bg-gray-100 focus-visible:ring-2 focus-visible:ring-gray-400 focus-visible:ring-offset-2 dark:border-white/10 dark:text-gray-100 dark:hover:bg-white/10 dark:focus-visible:ring-gray-500",
-  ghost:
-    "h-8 gap-1.5 rounded-full border-none bg-transparent px-4 text-sm font-normal text-gray-500 shadow-none outline-none transition-colors duration-150 hover:bg-gray-100 hover:text-gray-900 focus-visible:ring-2 focus-visible:ring-gray-400 focus-visible:ring-offset-2 dark:text-gray-400 dark:hover:bg-white/10 dark:hover:text-gray-100 dark:focus-visible:ring-gray-500",
-};
-
-type SuggestionVariant = keyof typeof suggestionVariants;
-
-type SuggestionProps = Omit<React.ComponentProps<typeof Button>, "variant"> & {
-  value?: string;
-  variant?: SuggestionVariant;
-  highlight?: string | string[];
-};
+type SuggestionProps = Omit<React.ComponentProps<typeof Button>, "variant"> &
+  VariantProps<typeof suggestionVariants> & {
+    value?: string;
+    highlight?: string | string[];
+  };
 
 function highlightText(
   text: string,
@@ -104,7 +116,7 @@ function highlightText(
 function Suggestion({
   className,
   value,
-  variant = "default",
+  variant = "filled",
   highlight,
   onClick,
   children,
@@ -129,7 +141,8 @@ function Suggestion({
 
   return (
     <Button
-      className={cn(suggestionVariants[variant], className)}
+      data-slot="suggestion"
+      className={cn(suggestionVariants({ variant }), className)}
       onClick={(e) => {
         onClick?.(e);
         const text = value ?? (typeof children === "string" ? children : "");
@@ -249,13 +262,14 @@ function SuggestionPanel({
     <Presence present={open}>
       <div
         ref={mergedRef}
+        data-slot="suggestion-panel"
         role="dialog"
         aria-modal="true"
         aria-label="Suggestions panel"
         data-state={open ? "open" : "closed"}
         onAnimationEnd={handleAnimationEnd}
         className={cn(
-          "absolute inset-x-0 -top-7.5 z-0 mx-auto flex w-[calc(100%-16px)] flex-col items-center justify-center gap-3 rounded-t-0 rounded-b-[20px] bg-gray-100 px-2 py-3 dark:border-white/10 dark:bg-gray-900 duration-200 data-[state=closed]:duration-100 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:slide-in-from-top-2 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:slide-out-to-top-2",
+          "rounded-t-0 absolute inset-x-0 -top-7.5 z-0 mx-auto flex w-[calc(100%-16px)] flex-col items-center justify-center gap-3 rounded-b-[20px] bg-gray-100 px-2 py-3 duration-200 data-[state=closed]:animate-out data-[state=closed]:duration-0 data-[state=closed]:fade-out-0 data-[state=closed]:slide-out-to-top-2 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:slide-in-from-top-2 dark:border-white/10 dark:bg-gray-900",
           className,
         )}
         {...props}
@@ -274,6 +288,7 @@ function SuggestionPanelHeader({
 }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
+      data-slot="suggestion-panel-header"
       className={cn("flex w-full items-center justify-between px-3", className)}
       {...props}
     />
@@ -285,7 +300,11 @@ function SuggestionPanelTitle({
   ...props
 }: React.HTMLAttributes<HTMLDivElement>) {
   return (
-    <div className={cn("flex items-center gap-1.5", className)} {...props} />
+    <div
+      data-slot="suggestion-panel-title"
+      className={cn("flex items-center gap-1.5", className)}
+      {...props}
+    />
   );
 }
 
@@ -312,9 +331,10 @@ function SuggestionPanelClose({
   return (
     <Comp
       type={asChild ? undefined : "button"}
+      data-slot="suggestion-panel-close"
       aria-label="Close suggestions panel"
       className={cn(
-        "cursor-pointer text-gray-400 hover:text-gray-600 dark:hover:text-gray-200",
+        "cursor-pointer text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 flex items-center justify-center",
         className,
       )}
       onClick={handleClick}
@@ -333,7 +353,13 @@ function SuggestionPanelContent({
   ...props
 }: SuggestionPanelContentProps) {
   const Comp = asChild ? Slot : "div";
-  return <Comp className={cn("w-full", className)} {...props} />;
+  return (
+    <Comp
+      data-slot="suggestion-panel-content"
+      className={cn("w-full", className)}
+      {...props}
+    />
+  );
 }
 
 export {
