@@ -187,6 +187,69 @@ function ModelSelectorGroup({
 
 ModelSelectorGroup.displayName = "ModelSelectorGroup";
 
+function ModelSelectorItemTitle({
+  className,
+  ...props
+}: React.HTMLAttributes<HTMLParagraphElement>) {
+  return (
+    <p
+      data-slot="model-selector-item-title"
+      className={cn("truncate", className)}
+      {...props}
+    />
+  );
+}
+
+ModelSelectorItemTitle.displayName = "ModelSelectorItemTitle";
+
+function ModelSelectorItemDescription({
+  className,
+  ...props
+}: React.HTMLAttributes<HTMLParagraphElement>) {
+  return (
+    <p
+      data-slot="model-selector-item-description"
+      className={cn("truncate text-xs", className)}
+      {...props}
+    />
+  );
+}
+
+ModelSelectorItemDescription.displayName = "ModelSelectorItemDescription";
+
+function ModelSelectorItemIcon({
+  className,
+  ...props
+}: React.HTMLAttributes<HTMLSpanElement>) {
+  return (
+    <span
+      data-slot="model-selector-item-icon"
+      className={cn("flex shrink-0 items-center justify-center", className)}
+      {...props}
+    />
+  );
+}
+
+ModelSelectorItemIcon.displayName = "ModelSelectorItemIcon";
+
+function ModelSelectorItemIndicator({
+  className,
+  ...props
+}: React.HTMLAttributes<HTMLSpanElement>) {
+  return (
+    <span
+      data-slot="model-selector-item-indicator"
+      className={cn(
+        "pointer-events-none absolute right-2 flex size-3.5 items-center justify-center",
+        className,
+      )}
+      {...props}
+    />
+  );
+}
+
+ModelSelectorItemIndicator.displayName = "ModelSelectorItemIndicator";
+
 function ModelSelectorItem({
   className,
   inset,
@@ -228,29 +291,25 @@ function ModelSelectorCheckboxItem({
   const defaultContent = (
     <>
       {Icon && (
-        <span
-          data-slot="model-selector-checkbox-item-icon"
-          className="flex size-8 shrink-0 items-center justify-center rounded-md bg-muted"
-        >
+        <ModelSelectorItemIcon className="size-8 rounded-md bg-muted">
           <Icon className="size-4 text-muted-foreground" />
-        </span>
+        </ModelSelectorItemIcon>
       )}
       <div data-slot="model-selector-checkbox-item-content" className="min-w-0 flex-1">
-        {title != null && <p data-slot="model-selector-checkbox-item-title" className="truncate font-medium">{title}</p>}
+        {title != null && (
+          <ModelSelectorItemTitle className="font-medium">{title}</ModelSelectorItemTitle>
+        )}
         {description != null && (
-          <p data-slot="model-selector-checkbox-item-description" className="truncate text-xs text-muted-foreground">
+          <ModelSelectorItemDescription className="text-muted-foreground">
             {description}
-          </p>
+          </ModelSelectorItemDescription>
         )}
       </div>
-      <span
-        data-slot="model-selector-checkbox-item-indicator"
-        className="pointer-events-none absolute right-2 flex size-3.5 items-center justify-center"
-      >
+      <ModelSelectorItemIndicator>
         <DropdownMenuPrimitive.ItemIndicator>
           <CheckIcon className="size-4" />
         </DropdownMenuPrimitive.ItemIndicator>
-      </span>
+      </ModelSelectorItemIndicator>
     </>
   );
 
@@ -304,30 +363,24 @@ function ModelSelectorRadioItem({
   const defaultContent = (
     <>
       {Icon && (
-        <span
-          data-slot="model-selector-radio-item-icon"
-          className="flex shrink-0 items-center justify-center"
-        >
+        <ModelSelectorItemIcon>
           <Icon className="size-4" />
-        </span>
+        </ModelSelectorItemIcon>
       )}
       <div
         data-slot="model-selector-radio-item-content"
         className="flex min-w-0 flex-1 flex-col gap-0.25"
       >
         {title != null && (
-          <p data-slot="model-selector-radio-item-title" className="truncate text-sm font-normal">{title}</p>
+          <ModelSelectorItemTitle className="text-sm font-normal">{title}</ModelSelectorItemTitle>
         )}
         {description != null && (
-          <p data-slot="model-selector-radio-item-description" className="truncate text-xs font-[350] text-gray-400">
+          <ModelSelectorItemDescription className="font-[350] text-gray-400">
             {description}
-          </p>
+          </ModelSelectorItemDescription>
         )}
       </div>
-      <span
-        data-slot="model-selector-radio-item-indicator"
-        className="pointer-events-none absolute right-3 flex size-4 items-center justify-center"
-      >
+      <ModelSelectorItemIndicator className="right-3 size-4">
         {disabled ? (
           <LockIcon className="size-4" />
         ) : (
@@ -335,7 +388,7 @@ function ModelSelectorRadioItem({
             {indicator ?? <CheckIcon className="size-4" />}
           </DropdownMenuPrimitive.ItemIndicator>
         )}
-      </span>
+      </ModelSelectorItemIndicator>
     </>
   );
 
@@ -458,6 +511,10 @@ export {
   ModelSelectorContent,
   ModelSelectorGroup,
   ModelSelectorLabel,
+  ModelSelectorItemTitle,
+  ModelSelectorItemDescription,
+  ModelSelectorItemIcon,
+  ModelSelectorItemIndicator,
   ModelSelectorItem,
   ModelSelectorCheckboxItem,
   ModelSelectorRadioGroup,

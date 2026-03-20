@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
 const suggestionVariants = cva(
-  "h-8 gap-1.5 rounded-full px-4 text-sm font-normal shadow-none outline-none transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-gray-400 focus-visible:ring-offset-2 dark:focus-visible:ring-gray-500",
+  "h-8 gap-1.5 rounded-full px-4 text-sm font-normal shadow-none outline-none transition-all duration-150 focus-visible:ring-2 focus-visible:ring-gray-400 focus-visible:ring-offset-2 dark:focus-visible:ring-gray-500 active:scale-99",
   {
     variants: {
       variant: {
@@ -70,7 +70,7 @@ function SuggestionList({
       role="group"
       aria-label="Suggestions"
       className={cn(
-        "flex gap-2 animate-in fade-in-0 duration-150",
+        "flex animate-in gap-2 duration-150 fade-in-0",
         orientation === "horizontal"
           ? "flex-row flex-wrap items-center justify-center"
           : "flex-col items-start",
@@ -269,7 +269,7 @@ function SuggestionPanel({
         data-state={open ? "open" : "closed"}
         onAnimationEnd={handleAnimationEnd}
         className={cn(
-          "absolute inset-x-0 -top-7.5 z-0 mx-auto flex w-[calc(100%-16px)] flex-col items-center justify-center gap-3 rounded-t-0 rounded-b-[20px] bg-gray-100 px-2 py-3 dark:border-white/10 dark:bg-gray-900 duration-200 data-[state=closed]:duration-100 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:slide-in-from-top-2 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:slide-out-to-top-2",
+          "rounded-t-0 absolute inset-x-0 -top-7.5 z-0 mx-auto flex w-[calc(100%-16px)] flex-col items-center justify-center gap-3 rounded-b-[20px] bg-gray-100 px-2 py-3 duration-200 data-[state=closed]:animate-out data-[state=closed]:duration-0 data-[state=closed]:fade-out-0 data-[state=closed]:slide-out-to-top-2 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:slide-in-from-top-2 dark:border-white/10 dark:bg-gray-900",
           className,
         )}
         {...props}
@@ -334,7 +334,7 @@ function SuggestionPanelClose({
       data-slot="suggestion-panel-close"
       aria-label="Close suggestions panel"
       className={cn(
-        "cursor-pointer text-gray-400 hover:text-gray-600 dark:hover:text-gray-200",
+        "cursor-pointer text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 flex items-center justify-center",
         className,
       )}
       onClick={handleClick}
