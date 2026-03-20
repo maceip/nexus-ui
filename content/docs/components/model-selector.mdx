@@ -242,16 +242,16 @@ export default function ChatWithModelSelector() {
   const [input, setInput] = useState("");
   const isLoading = status !== "ready";
 
-  const handleSubmit = (e?: React.FormEvent) => {
-    e?.preventDefault();
-    if (input.trim()) {
-      sendMessage({ text: input });
+  const handleSubmit = (value?: string) => {
+    const text = (value ?? input).trim();
+    if (text) {
+      sendMessage({ text });
       setInput("");
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="w-full">
+    <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }} className="w-full">
       <PromptInput onSubmit={handleSubmit}>
         <PromptInputTextarea
           value={input}
@@ -428,6 +428,12 @@ A radio-style item for single selection. Shows a check when selected, or a lock 
     icon: {
       type: "React.ComponentType<{ className?: string }>",
       description: "Optional icon component for the item.",
+    },
+    indicator: {
+      type: "React.ReactNode",
+      default: "CheckIcon",
+      description:
+        "Custom indicator to show when selected. Renders inside ItemIndicator.",
     },
     title: {
       type: "string",
