@@ -54,7 +54,7 @@ const GeminiInput = () => {
           <PromptInputAction asChild>
             <Button
               type="button"
-              className="size-10 cursor-pointer rounded-full border-none bg-transparent text-[13px] leading-6 font-normal text-[#5D5D5D] hover:bg-gray-200 dark:text-white dark:hover:bg-gray-700"
+              className="size-10 cursor-pointer rounded-full border-none bg-transparent text-[13px] leading-6 font-normal text-[#5D5D5D] transition-transform hover:bg-gray-200 active:scale-97 dark:text-white dark:hover:bg-gray-700"
             >
               <GeminiAdd className="size-5 text-[#5D5D5D]" />
             </Button>
@@ -62,7 +62,7 @@ const GeminiInput = () => {
           <PromptInputAction asChild>
             <Button
               type="button"
-              className="h-10 cursor-pointer gap-1.75 rounded-full border-none bg-transparent text-[13px] leading-6 font-normal text-[#5D5D5D] hover:bg-gray-200 dark:text-white dark:hover:bg-gray-700"
+              className="h-10 cursor-pointer gap-1.75 rounded-full border-none bg-transparent text-[13px] leading-6 font-normal text-[#5D5D5D] transition-transform hover:bg-gray-200 active:scale-97 dark:text-white dark:hover:bg-gray-700"
             >
               <GeminiPageInfo className="size-5 text-[#5D5D5D]" />
               <span className="max-sm:hidden">Tools</span>
@@ -73,7 +73,7 @@ const GeminiInput = () => {
           <PromptInputAction asChild>
             <Button
               type="button"
-              className="h-10 cursor-pointer gap-1.75 rounded-full border-none bg-transparent text-[13px] leading-6 font-normal text-[#5D5D5D] hover:bg-gray-200 dark:text-white dark:hover:bg-gray-700"
+              className="h-10 cursor-pointer gap-1.75 rounded-full border-none bg-transparent text-[13px] leading-6 font-normal text-[#5D5D5D] transition-transform hover:bg-gray-200 active:scale-97 dark:text-white dark:hover:bg-gray-700"
             >
               <span>Fast</span>
               <GeminiCaret className="-mb-0.5 size-5 text-[#5D5D5D]" />
@@ -83,7 +83,7 @@ const GeminiInput = () => {
             <Button
               type="button"
               className={cn(
-                "size-10 cursor-pointer gap-1 rounded-full border-none bg-transparent text-[13px] leading-6 font-normal text-[#5D5D5D] hover:bg-gray-200 disabled:opacity-70 dark:text-white dark:hover:bg-gray-700",
+                "size-10 cursor-pointer gap-1 rounded-full border-none bg-transparent text-[13px] leading-6 font-normal text-[#5D5D5D] transition-transform hover:bg-gray-200 active:scale-97 disabled:opacity-70 dark:text-white dark:hover:bg-gray-700",
                 isLoading && "bg-blue-100 dark:bg-blue-50",
               )}
               disabled={isLoading}

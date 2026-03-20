@@ -42,7 +42,7 @@ export default function PromptInputBasic() {
           <PromptInputAction asChild>
             <Button
               type="button"
-              className="size-8 cursor-pointer rounded-full bg-gray-700 text-white hover:bg-gray-800 disabled:opacity-70 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200"
+              className="size-8 cursor-pointer rounded-full bg-gray-700 text-white transition-transform hover:bg-gray-800 active:scale-97 disabled:opacity-70 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200"
               disabled={isLoading || !input.trim()}
               onClick={() => input.trim() && doSubmit(input)}
             >

@@ -44,7 +44,7 @@ export default function PromptInputDefault() {
           <PromptInputAction asChild>
             <Button
               type="button"
-              className="size-8 cursor-pointer gap-1 rounded-full border-none bg-transparent text-[13px] leading-6 font-normal text-gray-900 hover:bg-gray-200 dark:text-white dark:hover:bg-gray-700"
+              className="size-8 cursor-pointer gap-1 rounded-full border-none bg-transparent text-[13px] leading-6 font-normal text-gray-900 transition-transform hover:bg-gray-200 active:scale-97 dark:text-white dark:hover:bg-gray-700"
             >
               <Paperclip />
             </Button>
@@ -53,11 +53,11 @@ export default function PromptInputDefault() {
         <PromptInputActionGroup>
           <PromptInputAction asChild>
             <Button
-                type="button"
-                className="size-8 cursor-pointer rounded-full bg-gray-700 text-white hover:bg-gray-800 disabled:opacity-70 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200"
-                disabled={isLoading || !input.trim()}
-                onClick={() => input.trim() && doSubmit(input)}
-              >
+              type="button"
+              className="size-8 cursor-pointer rounded-full bg-gray-700 text-white transition-transform hover:bg-gray-800 active:scale-97 disabled:opacity-70 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200"
+              disabled={isLoading || !input.trim()}
+              onClick={() => input.trim() && doSubmit(input)}
+            >
               {isLoading ? (
                 <Square className="size-3.5 fill-current" />
               ) : (
