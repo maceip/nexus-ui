@@ -1,9 +1,9 @@
 import { ImageResponse } from "next/og";
 import { readFile } from "fs/promises";
 import { join } from "path";
-import { SITE_NAME, SITE_DESCRIPTION } from "@/lib/site";
+import { SITE_TITLE, SITE_DESCRIPTION_SHORT } from "@/lib/site";
 
-export const alt = SITE_NAME;
+export const alt = SITE_TITLE;
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -29,11 +29,10 @@ export default async function Image() {
   const svgLeftDataUrl = `data:image/svg+xml;base64,${Buffer.from(svgLeft).toString("base64")}`;
   const svgRightDataUrl = `data:image/svg+xml;base64,${Buffer.from(svgRight).toString("base64")}`;
 
-  const text = `Build Better AI Interfaces ${SITE_DESCRIPTION} nexus-ui.dev`;
-  const [fontRegular, fontMedium, fontBold] = await Promise.all([
+  const text = `${SITE_TITLE} ${SITE_DESCRIPTION_SHORT} nexus-ui.dev`;
+  const [fontRegular, fontMedium] = await Promise.all([
     loadGoogleFont("Inter", 400, text),
     loadGoogleFont("Inter", 500, text),
-    loadGoogleFont("Inter", 700, text),
   ]);
 
   return new ImageResponse(
@@ -44,9 +43,10 @@ export default async function Image() {
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        justifyContent: "center",
+        justifyContent: "flex-start",
         backgroundColor: "#ffffff",
         position: "relative",
+        paddingTop: 80,
       }}
     >
       <img
@@ -78,7 +78,6 @@ export default async function Image() {
           alignItems: "center",
           justifyContent: "center",
           gap: 0,
-          marginTop: -152,
         }}
       >
         <svg
@@ -112,7 +111,7 @@ export default async function Image() {
             textAlign: "center",
           }}
         >
-          Build Better AI Interfaces
+          {SITE_TITLE}
         </h1>
         <p
           style={{
@@ -124,8 +123,7 @@ export default async function Image() {
             marginTop: 8,
           }}
         >
-          Flexible, customizable components engineered for modern AI
-          experiences.
+          {SITE_DESCRIPTION_SHORT}
         </p>
       </div>
 
@@ -155,7 +153,6 @@ export default async function Image() {
       fonts: [
         { name: "Inter", data: fontRegular, style: "normal", weight: 400 },
         { name: "Inter", data: fontMedium, style: "normal", weight: 500 },
-        { name: "Inter", data: fontBold, style: "normal", weight: 700 },
       ],
     },
   );

@@ -94,7 +94,7 @@ export default function HomePage() {
     }, 2000);
   };
   return (
-    <main className="flex h-full min-h-screen w-full overflow-auto pt-12 lg:h-screen lg:pt-0 bg-white dark:bg-gray-900">
+    <main className="flex h-full min-h-screen w-full overflow-auto bg-white pt-12 lg:h-screen lg:pt-0 dark:bg-gray-900">
       <StripedPanel
         className="hidden h-full w-20 shrink-0 lg:block 2xl:w-40"
         borderSide="right"
@@ -104,16 +104,15 @@ export default function HomePage() {
         <div className="flex h-auto w-full flex-col items-center justify-center lg:h-full lg:w-1/2 lg:items-start lg:justify-end">
           <div className="px-auto flex w-fit flex-col items-center gap-4 py-15 lg:items-start lg:p-10">
             <div className="flex flex-col items-center gap-1 lg:items-start">
-              <h1 className="text-2xl leading-[38px] font-medium tracking-[-0.8px] lg:text-[32px] text-gray-900 dark:text-gray-50">
+              <h1 className="text-2xl leading-[38px] font-medium tracking-[-0.8px] text-gray-900 lg:text-[32px] dark:text-gray-50">
                 Build Better AI Interfaces
               </h1>
               <p className="w-[272px] text-center text-sm leading-6 font-[350] text-gray-500 lg:w-[317px] lg:text-left lg:text-base dark:text-gray-400">
-                Flexible, customizable components engineered for modern AI
-                experiences.
+                Beautiful, composable components for building AI-native applications.
               </p>
             </div>
             <Button
-              className="w-fit rounded-full text-sm leading-6 font-normal text-white bg-gray-900 dark:text-gray-900 dark:bg-white"
+              className="w-fit rounded-full bg-gray-900 text-sm leading-6 font-normal text-white dark:bg-white dark:text-gray-900"
               asChild
             >
               <Link href="/docs">Get Started</Link>
@@ -126,7 +125,7 @@ export default function HomePage() {
           borderSide="left"
         >
           <div className="flex h-full w-full flex-col items-center px-4 lg:justify-between lg:px-6">
-            <div className="flex w-full flex-col items-center justify-end rounded-b-[40px] border-x border-b border-gray-200 bg-white p-3 pt-21.5 h-55 lg:h-16/51 lg:p-7 dark:border-gray-800 dark:bg-gray-900">
+            <div className="flex h-55 w-full flex-col items-center justify-end rounded-b-[40px] border-x border-b border-gray-200 bg-white p-3 pt-21.5 lg:h-16/51 lg:p-7 dark:border-gray-800 dark:bg-gray-900">
               {inputComponents[activeTab]}
             </div>
 
@@ -140,7 +139,7 @@ export default function HomePage() {
                     onClick={() => setActiveTab(tab.key)}
                     className={`w-fit cursor-pointer gap-1 rounded-full text-sm leading-6 font-normal ${
                       isActive
-                        ? "bg-gray-200 text-gray-900 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-800 dark:text-white"
+                        ? "bg-gray-200 text-gray-900 hover:bg-gray-200 dark:bg-gray-800 dark:text-white dark:hover:bg-gray-800"
                         : "bg-transparent text-gray-900 hover:bg-gray-200 dark:text-white dark:hover:bg-gray-800"
                     }`}
                   >
@@ -151,7 +150,7 @@ export default function HomePage() {
               })}
             </div>
 
-            <div className="relative w-full overflow-hidden rounded-t-[40px] border-x border-t border-gray-200 bg-white lg:h-31/51 dark:border-gray-800 dark:bg-gray-900 [&_.fd-scroll-container]:max-h-none! lg:[&_.fd-scroll-container]:h-full [&_.lucide-clipboard]:hidden [&_div.absolute.top-3.right-2]:hidden [&_pre]:text-sm [&_pre]:leading-6 [&>figure]:h-full [&>figure]:rounded-none [&>figure]:border-none [&>figure]:bg-transparent [&_.fd-scroll-container]:py-7 [&_.fd-scroll-container]:pr-3.5 [&>figure]:rounded-t-[40px] [&>figure]:shadow-none [&_.fd-scroll-container]:no-scrollbar [&_.fd-scroll-container]:pl-7">
+            <div className="relative w-full overflow-hidden rounded-t-[40px] border-x border-t border-gray-200 bg-white lg:h-31/51 dark:border-gray-800 dark:bg-gray-900 [&_.fd-scroll-container]:no-scrollbar [&_.fd-scroll-container]:max-h-none! [&_.fd-scroll-container]:py-7 [&_.fd-scroll-container]:pr-3.5 [&_.fd-scroll-container]:pl-7 lg:[&_.fd-scroll-container]:h-full [&_.lucide-clipboard]:hidden [&_div.absolute.top-3.right-2]:hidden [&_pre]:text-sm [&_pre]:leading-6 [&>figure]:h-full [&>figure]:rounded-none [&>figure]:rounded-t-[40px] [&>figure]:border-none [&>figure]:bg-transparent [&>figure]:shadow-none">
               <DynamicCodeBlock lang="ts" code={code} />
 
               <button
