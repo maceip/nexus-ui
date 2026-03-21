@@ -325,6 +325,10 @@ Root component. Provides `value`, `onValueChange`, and `items` to children via c
 
 <TypeTable
   type={{
+    className: {
+      type: "string",
+      description: "Additional CSS classes to apply to the root.",
+    },
     value: {
       type: "string",
       description: "The currently selected model value.",
@@ -348,6 +352,10 @@ Supports `asChild` to merge into a child element (e.g. Button).
 
 <TypeTable
   type={{
+    className: {
+      type: "string",
+      description: "Additional CSS classes to apply to the trigger.",
+    },
     variant: {
       type: '"filled" | "outline" | "ghost"',
       default: '"filled"',
@@ -369,6 +377,10 @@ A plain menu item (no selection state). Use for toggles, links, or actions.
 
 <TypeTable
   type={{
+    className: {
+      type: "string",
+      description: "Additional CSS classes to apply to the item.",
+    },
     inset: {
       type: "boolean",
       default: "false",
@@ -384,19 +396,92 @@ A plain menu item (no selection state). Use for toggles, links, or actions.
   }}
 />
 
-### ModelSelectorCheckboxItem
+### ModelSelectorItemTitle
 
-A checkbox-style item for multi-select. Shows a check indicator when `checked` is true.
+A paragraph for the item title. Used internally by CheckboxItem and RadioItem when `title` is provided. Accepts standard `p` element props.
 
 <TypeTable
   type={{
+    className: {
+      type: "string",
+      description: "Additional CSS classes to apply to the title.",
+    },
+  }}
+/>
+
+### ModelSelectorItemDescription
+
+A paragraph for the item description. Used internally by CheckboxItem and RadioItem when `description` is provided. Accepts standard `p` element props.
+
+<TypeTable
+  type={{
+    className: {
+      type: "string",
+      description: "Additional CSS classes to apply to the description.",
+    },
+  }}
+/>
+
+### ModelSelectorItemIcon
+
+A span wrapper for the item icon. Used internally by CheckboxItem and RadioItem when `icon` is provided. Accepts standard `span` element props.
+
+<TypeTable
+  type={{
+    className: {
+      type: "string",
+      description: "Additional CSS classes to apply to the icon wrapper.",
+    },
+  }}
+/>
+
+### ModelSelectorItemIndicator
+
+A span that wraps selection indicators. Renders children inside Radix `ItemIndicator` by default. Use `wrapWithItemIndicator={false}` for always-visible content (e.g. LockIcon when disabled).
+
+<TypeTable
+  type={{
+    className: {
+      type: "string",
+      description: "Additional CSS classes to apply to the indicator wrapper.",
+    },
+    wrapWithItemIndicator: {
+      type: "boolean",
+      default: "true",
+      description:
+        "When false, children render directly without ItemIndicator. Use for always-visible content like LockIcon when disabled.",
+    },
+  }}
+/>
+
+### ModelSelectorCheckboxItem
+
+A checkbox-style item for multi-select. Shows a check indicator when `checked` is true, or a lock icon when `disabled`.
+
+<TypeTable
+  type={{
+    className: {
+      type: "string",
+      description: "Additional CSS classes to apply to the item.",
+    },
     checked: {
       type: "boolean",
       description: "Whether the item is checked.",
     },
+    disabled: {
+      type: "boolean",
+      default: "false",
+      description: "When true, the item is disabled and shows a lock icon.",
+    },
     icon: {
       type: "React.ComponentType<{ className?: string }>",
       description: "Optional icon component for the item.",
+    },
+    indicator: {
+      type: "React.ReactNode",
+      default: "CheckIcon",
+      description:
+        "Custom indicator to show when selected. Renders inside ItemIndicator.",
     },
     title: {
       type: "string",
@@ -415,6 +500,10 @@ A radio-style item for single selection. Shows a check when selected, or a lock 
 
 <TypeTable
   type={{
+    className: {
+      type: "string",
+      description: "Additional CSS classes to apply to the item.",
+    },
     value: {
       type: "string",
       description:
@@ -446,23 +535,12 @@ A radio-style item for single selection. Shows a check when selected, or a lock 
   }}
 />
 
-### ModelSelectorLabel
-
-Section label. Use inside `ModelSelectorGroup` to label a group of items.
-
-<TypeTable
-  type={{
-    inset: {
-      type: "boolean",
-      default: "false",
-      description: "Adds left padding for alignment with inset items.",
-    },
-  }}
-/>
-
 ### Other primitives
 
-`ModelSelectorContent`, `ModelSelectorPortal`, `ModelSelectorGroup`, `ModelSelectorRadioGroup`,
+`ModelSelectorContent`, `ModelSelectorPortal`, `ModelSelectorGroup`, `ModelSelectorLabel`, `ModelSelectorRadioGroup`,
 `ModelSelectorSeparator`, `ModelSelectorSub`, `ModelSelectorSubTrigger`, and `ModelSelectorSubContent` accept the
 same props as their Radix Dropdown Menu counterparts. See the
 [Radix Dropdown Menu documentation](https://www.radix-ui.com/primitives/docs/components/dropdown-menu) for details.
+
+`ModelSelectorItemTitle`, `ModelSelectorItemDescription`, `ModelSelectorItemIcon`, and `ModelSelectorItemIndicator`
+are low-level building blocks used by CheckboxItem and RadioItem. Use them when composing custom item content with `children`.
