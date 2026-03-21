@@ -13,16 +13,16 @@ import { DropdownMenu as DropdownMenuPrimitive } from "radix-ui";
 import { cn } from "@/lib/utils";
 
 const triggerVariants = cva(
-  "inline-flex h-8 cursor-pointer items-center gap-1 rounded-full px-3 font-normal text-gray-900 dark:text-gray-100 outline-none transition-all duration-200 ease-out  [&>span:last-child]:transition-transform [&>span:last-child]:duration-200 data-[state=open]:[&>span:last-child]:rotate-180",
+  "inline-flex h-8 cursor-pointer items-center gap-1 rounded-full px-3 font-normal text-gray-900 dark:text-gray-100 outline-none transition-all duration-200 ease-out [&>span:last-child]:transition-transform [&>span:last-child]:duration-200 data-[state=open]:[&>span:last-child]:rotate-180",
   {
     variants: {
       variant: {
         filled:
-          "bg-gray-100 dark:bg-gray-600 hover:bg-gray-200 dark:hover:bg-gray-700 data-[state=open]:bg-gray-200 dark:data-[state=open]:bg-gray-700",
+          "bg-gray-100 dark:bg-gray-600 hover:bg-gray-200 dark:hover:bg-gray-700 data-[state=open]:bg-gray-100 dark:data-[state=open]:bg-gray-600",
         outline:
-          "border border-gray-200 dark:border-gray-700 bg-transparent hover:bg-gray-100 dark:hover:bg-gray-700 data-[state=open]:bg-gray-100 dark:data-[state=open]:bg-gray-700",
+          "border border-gray-200 dark:border-gray-700 bg-transparent hover:bg-gray-100 dark:hover:bg-gray-700 data-[state=open]:bg-gray-0 dark:data-[state=open]:bg-gray-0",
         ghost:
-          "bg-transparent hover:bg-gray-100 dark:hover:bg-gray-700 data-[state=open]:bg-gray-100 dark:data-[state=open]:bg-gray-700",
+          "bg-transparent hover:bg-gray-100 dark:hover:bg-gray-700 data-[state=open]:bg-gray-0 dark:data-[state=open]:bg-gray-0",
       },
     },
     defaultVariants: {
@@ -118,9 +118,14 @@ function ModelSelectorTrigger({
 
   const defaultContent = (
     <>
-      <span data-slot="model-selector-trigger-content" className="flex items-center gap-1">
+      <span
+        data-slot="model-selector-trigger-content"
+        className="flex items-center gap-1"
+      >
         {selected?.icon && <selected.icon className="size-4 shrink-0" />}
-        <span data-slot="model-selector-trigger-title" className="truncate">{selected?.title ?? value}</span>
+        <span data-slot="model-selector-trigger-title" className="truncate">
+          {selected?.title ?? value}
+        </span>
       </span>
       <span data-slot="model-selector-trigger-chevron">
         <ChevronDownIcon className="size-4 shrink-0" />
@@ -234,8 +239,13 @@ ModelSelectorItemIcon.displayName = "ModelSelectorItemIcon";
 
 function ModelSelectorItemIndicator({
   className,
+  children,
+  wrapWithItemIndicator = true,
   ...props
-}: React.HTMLAttributes<HTMLSpanElement>) {
+}: React.HTMLAttributes<HTMLSpanElement> & {
+  /** When false, children are rendered directly without ItemIndicator. Use for always-visible content (e.g. LockIcon when disabled). */
+  wrapWithItemIndicator?: boolean;
+}) {
   return (
     <span
       data-slot="model-selector-item-indicator"
@@ -244,7 +254,15 @@ function ModelSelectorItemIndicator({
         className,
       )}
       {...props}
-    />
+    >
+      {wrapWithItemIndicator ? (
+        <DropdownMenuPrimitive.ItemIndicator>
+          {children}
+        </DropdownMenuPrimitive.ItemIndicator>
+      ) : (
+        children
+      )}
+    </span>
   );
 }
 
@@ -282,11 +300,16 @@ function ModelSelectorCheckboxItem({
   icon: Icon,
   title,
   description,
+  disabled,
+  indicator,
   ...props
 }: React.ComponentProps<typeof DropdownMenuPrimitive.CheckboxItem> & {
   icon?: React.ComponentType<{ className?: string }>;
   title?: string;
   description?: string;
+  disabled?: boolean;
+  indicator?: React.ReactNode;
+  /** Custom content to show when selected. Renders inside ItemIndicator. Defaults to CheckIcon. */
 }) {
   const defaultContent = (
     <>
@@ -295,9 +318,14 @@ function ModelSelectorCheckboxItem({
           <Icon className="size-4 text-muted-foreground" />
         </ModelSelectorItemIcon>
       )}
-      <div data-slot="model-selector-checkbox-item-content" className="min-w-0 flex-1">
+      <div
+        data-slot="model-selector-checkbox-item-content"
+        className="min-w-0 flex-1"
+      >
         {title != null && (
-          <ModelSelectorItemTitle className="font-medium">{title}</ModelSelectorItemTitle>
+          <ModelSelectorItemTitle className="font-medium">
+            {title}
+          </ModelSelectorItemTitle>
         )}
         {description != null && (
           <ModelSelectorItemDescription className="text-muted-foreground">
@@ -305,11 +333,6 @@ function ModelSelectorCheckboxItem({
           </ModelSelectorItemDescription>
         )}
       </div>
-      <ModelSelectorItemIndicator>
-        <DropdownMenuPrimitive.ItemIndicator>
-          <CheckIcon className="size-4" />
-        </DropdownMenuPrimitive.ItemIndicator>
-      </ModelSelectorItemIndicator>
     </>
   );
 
@@ -324,6 +347,16 @@ function ModelSelectorCheckboxItem({
       {...props}
     >
       {children ?? defaultContent}
+      <ModelSelectorItemIndicator
+        className="right-3 size-4"
+        wrapWithItemIndicator={!disabled}
+      >
+        {disabled ? (
+          <LockIcon className="size-4 opacity-50" />
+        ) : (
+          (indicator ?? <CheckIcon className="size-4" />)
+        )}
+      </ModelSelectorItemIndicator>
     </DropdownMenuPrimitive.CheckboxItem>
   );
 }
@@ -372,7 +405,9 @@ function ModelSelectorRadioItem({
         className="flex min-w-0 flex-1 flex-col gap-0.25"
       >
         {title != null && (
-          <ModelSelectorItemTitle className="text-sm font-normal">{title}</ModelSelectorItemTitle>
+          <ModelSelectorItemTitle className="text-sm font-normal">
+            {title}
+          </ModelSelectorItemTitle>
         )}
         {description != null && (
           <ModelSelectorItemDescription className="font-[350] text-gray-400">
@@ -380,15 +415,6 @@ function ModelSelectorRadioItem({
           </ModelSelectorItemDescription>
         )}
       </div>
-      <ModelSelectorItemIndicator className="right-3 size-4">
-        {disabled ? (
-          <LockIcon className="size-4" />
-        ) : (
-          <DropdownMenuPrimitive.ItemIndicator>
-            {indicator ?? <CheckIcon className="size-4" />}
-          </DropdownMenuPrimitive.ItemIndicator>
-        )}
-      </ModelSelectorItemIndicator>
     </>
   );
 
@@ -404,6 +430,16 @@ function ModelSelectorRadioItem({
       {...props}
     >
       {children ?? defaultContent}
+      <ModelSelectorItemIndicator
+        className="right-3 size-4"
+        wrapWithItemIndicator={!disabled}
+      >
+        {disabled ? (
+          <LockIcon className="size-4 opacity-50" />
+        ) : (
+          (indicator ?? <CheckIcon className="size-4" />)
+        )}
+      </ModelSelectorItemIndicator>
     </DropdownMenuPrimitive.RadioItem>
   );
 }

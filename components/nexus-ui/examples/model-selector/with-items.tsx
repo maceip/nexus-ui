@@ -18,12 +18,6 @@ import { Switch } from "@/components/ui/switch";
 
 const models = [
   {
-    value: "gpt-4",
-    icon: ChatgptIcon,
-    title: "GPT-4",
-    description: "Most capable",
-  },
-  {
     value: "gpt-4o-mini",
     icon: ChatgptIcon,
     title: "GPT-4o Mini",
@@ -34,11 +28,12 @@ const models = [
     icon: ClaudeIcon2,
     title: "Claude 3.5",
     description: "Strong reasoning",
+    disabled: true,
   },
 ];
 
 export default function ModelSelectorWithItems() {
-  const [model, setModel] = React.useState("gpt-4");
+  const [model, setModel] = React.useState("gpt-4o-mini");
   const [extendedThinking, setExtendedThinking] = React.useState(false);
 
   return (
@@ -55,6 +50,7 @@ export default function ModelSelectorWithItems() {
                 icon={m.icon}
                 title={m.title}
                 description={m.description}
+                disabled={m.disabled}
               />
             ))}
           </ModelSelectorRadioGroup>

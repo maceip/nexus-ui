@@ -20,7 +20,7 @@ import V0Icon from "@/components/svgs/v0";
 
 const openaiModels = [
   { value: "gpt-4", icon: ChatgptIcon, title: "GPT-4" },
-  { value: "gpt-4o-mini", icon: ChatgptIcon, title: "GPT-4o Mini" },
+  { value: "gpt-4o-mini", icon: ChatgptIcon, title: "GPT-4o Mini", disabled: true },
 ];
 
 const claudeModels = [
@@ -54,6 +54,7 @@ export default function ModelSelectorWithSub() {
                 value={m.value}
                 icon={m.icon}
                 title={m.title}
+                disabled={m.disabled}
               />
             ))}
           </ModelSelectorRadioGroup>
