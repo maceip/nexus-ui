@@ -45,29 +45,46 @@ export function Navbar({ navItems = [] }: NavbarProps) {
         id="nd-nav"
         className={cn(
           "fixed top-0 z-40 h-14 w-full lg:px-0 2xl:px-0",
-          "bg-transparent backdrop-blur-none lg:backdrop-blur-none dark:bg-gray-900 dark:lg:bg-transparent",
+          "bg-transparent backdrop-blur-none lg:backdrop-blur-none",
           isDocs &&
-            "overflow-hidden border-b border-dashed border-gray-200 px-0 lg:px-0 2xl:px-0 dark:border-white/10",
+            "overflow-hidden rounded-b-[16px] bg-gray-950 px-0 lg:px-0 2xl:px-0",
         )}
       >
         {isDocs && (
           <>
-            <div
-              className="absolute inset-0 dark:hidden"
-              style={{
-                background:
-                  "repeating-linear-gradient(-45deg, #ffffff, #ffffff 14px, #F8F8F8 14px, #F8F8F8 16px)",
-              }}
-              aria-hidden
-            />
-            <div
-              className="absolute inset-0 hidden dark:block"
-              style={{
-                background:
-                  "repeating-linear-gradient(-45deg, #171717, #171717 14px, #1D1D1D 14px, #1D1D1D 16px)",
-              }}
-              aria-hidden
-            />
+            <svg
+              width="100%"
+              height="100%"
+              xmlns="http://www.w3.org/2000/svg"
+              className="hidde absolute inset-0"
+            >
+              <pattern
+                id="pattern-checkers"
+                x="0"
+                y="0"
+                width="100%"
+                height="26"
+                patternUnits="userSpaceOnUse"
+                patternTransform="rotate(-68.23)"
+              >
+                <line
+                  x1="0"
+                  y1="7"
+                  x2="100%"
+                  y2="7"
+                  stroke="#171717"
+                  strokeDasharray="8 4"
+                />
+              </pattern>
+
+              <rect
+                x="0%"
+                y="0"
+                width="100%"
+                height="100%"
+                fill="url(#pattern-checkers)"
+              ></rect>
+            </svg>
           </>
         )}
         <nav
@@ -90,8 +107,7 @@ export function Navbar({ navItems = [] }: NavbarProps) {
 
           <MobileNavTrigger
             onSearch={
-              <SearchToggle className="size-10.5 cursor-pointer rounded-full bg-transparent text-gray-100 hover:text-gray-100 hover:bg-gray-800" />
-              
+              <SearchToggle className="size-10.5 cursor-pointer rounded-full bg-transparent text-gray-100 hover:bg-gray-800 hover:text-gray-100" />
             }
             onMenuOpen={() => setSidebarOpen(true)}
           />
@@ -154,7 +170,7 @@ function DesktopNav({
         className={cn(
           "cursor-pointer rounded-md px-3 py-2 text-sm transition-colors",
           isDocs && !isComponents
-            ? "font-medium text-gray-900 dark:text-gray-400"
+            ? "text-gray-100"
             : "text-gray-400 hover:text-gray-200",
         )}
       >
@@ -165,7 +181,7 @@ function DesktopNav({
         className={cn(
           "cursor-pointer rounded-md px-3 py-2 text-sm transition-colors",
           isComponents
-            ? "font-medium text-gray-900 dark:text-white"
+            ? "text-gray-100"
             : "text-gray-400 hover:text-gray-200",
         )}
       >
@@ -219,12 +235,16 @@ function MobileNavTrigger({
         type="button"
         className={cn(
           buttonVariants({ variant: "ghost", size: "icon" }),
-          "size-10.5 cursor-pointer rounded-full text-gray-100 hover:text-gray-100 hover:bg-gray-800",
+          "size-10.5 cursor-pointer rounded-full text-gray-100 hover:bg-gray-800 hover:text-gray-100",
         )}
         aria-label="Toggle Menu"
         onClick={onMenuOpen}
       >
-        <HugeiconsIcon icon={PanelRightIcon} className="size-4.5" strokeWidth={2} />
+        <HugeiconsIcon
+          icon={PanelRightIcon}
+          className="size-4.5"
+          strokeWidth={2}
+        />
       </button>
     </div>
   );

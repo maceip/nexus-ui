@@ -134,7 +134,7 @@ export default function HomePage() {
                   <Icon className="size-4" />
                   <span
                     className={cn(
-                      "pointer-events-none absolute -bottom-2 left-1/2 -translate-x-1/2 translate-y-full opacity-0 transition-opacity duration-200 group-hover:opacity-100",
+                      "pointer-events-none absolute -bottom-2 text-sm leading-6 font-normal left-1/2 -translate-x-1/2 translate-y-full opacity-0 transition-opacity duration-200 group-hover:opacity-100 text-gray-500 dark:text-white",
                     )}
                   >
                     {tab.label}
