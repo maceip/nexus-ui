@@ -30,7 +30,7 @@ export default function HomePage() {
   };
   return (
     <main className="flex h-full min-h-screen w-full flex-col overflow-auto bg-white pt-0 lg:h-screen lg:pt-0 dark:bg-gray-900">
-      <div className="relative flex h-[352px] w-full shrink-0 flex-col items-center justify-center overflow-hidden rounded-b-[20px] bg-gray-950 lg:h-[480px] lg:rounded-b-[24px] dark:border-b dark:border-b-gray-800">
+      <div className="relative flex h-[352px] w-full shrink-0 flex-col items-center justify-center overflow-hidden rounded-b-[20px] bg-gray-950 lg:h-[480px] lg:rounded-b-[24px] dark:border-b dark:border-b-gray-800 md:border-none">
         <svg
           width="100%"
           height="100%"
