@@ -176,7 +176,11 @@ const ClaudeInput = () => {
 
 export default ClaudeInput;`,
 
-  v0: `import { Button } from "@/components/ui/button";
+  v0: `"use client";
+
+import * as React from "react";
+import { Button } from "@/components/ui/button";
+import { Check } from "lucide-react";
 import PromptInput, {
   PromptInputActions,
   PromptInputAction,
@@ -184,38 +188,84 @@ import PromptInput, {
   PromptInputTextarea,
 } from "@/components/nexus-ui/prompt-input";
 import {
+  ModelSelector,
+  ModelSelectorContent,
+  ModelSelectorGroup,
+  ModelSelectorRadioGroup,
+  ModelSelectorRadioItem,
+  ModelSelectorTrigger,
+  ModelSelectorItemTitle,
+} from "@/components/nexus-ui/model-selector";
+import {
   V0Plus,
-  V0Model,
   V0ArrowUp,
   V0Caret,
+  V0TierAuto,
+  V0TierMini,
+  V0TierPro,
+  V0TierMax,
+  V0TierMaxFast,
 } from "@/components/svgs/v0-icons";
 
+const v0Models = [
+  { value: "auto", title: "v0 Auto", Icon: V0TierAuto },
+  { value: "mini", title: "v0 Mini", Icon: V0TierMini },
+  { value: "pro", title: "v0 Pro", Icon: V0TierPro },
+  { value: "max", title: "v0 Max", Icon: V0TierMax },
+  { value: "max-fast", title: "v0 Max Fast", Icon: V0TierMaxFast },
+] as const;
+
 const V0Input = () => {
+  const [model, setModel] = React.useState("pro");
+  const selected = v0Models.find((m) => m.value === model) ?? v0Models[2];
+  const SelectedIcon = selected.Icon;
   return (
     <PromptInput className="gap-2 rounded-xl p-3 shadow-none">
-      <PromptInputTextarea
-        placeholder="Ask v0 to build..."
-        className="min-h-13.5 px-0 pt-0 pb-2"
-      />
+      <PromptInputTextarea placeholder="Ask v0 to build..." />
       <PromptInputActions className="px-0 py-0">
         <PromptInputActionGroup className="gap-1">
           <PromptInputAction asChild>
-            <Button className="-none size-7 cursor-pointer gap-1 rounded-sm bg-transparent text-[13px] leading-6 font-normal text-[#5D5D5D] hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">
+            <Button type="button" className="size-7 rounded-sm bg-transparent">
               <V0Plus className="size-4" />
             </Button>
           </PromptInputAction>
           <PromptInputAction asChild>
-            <Button className="h-7 cursor-pointer gap-1 rounded-sm bg-transparent text-[13px] leading-6 font-normal text-[#5D5D5D] hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">
-              <V0Model className="mr-0.5 size-4" />
-              <span>v0 Max</span>
-              <V0Caret className="size-4" />
-            </Button>
+            <ModelSelector
+              value={model}
+              onValueChange={setModel}
+              items={v0Models.map(({ value, title, Icon }) => ({
+                value,
+                title,
+                icon: Icon,
+              }))}
+            >
+              <ModelSelectorTrigger variant="ghost" className="h-7 gap-1 rounded-sm">
+                <SelectedIcon className="size-5 shrink-0" />
+                <span>{selected.title}</span>
+                <V0Caret className="size-4" />
+              </ModelSelectorTrigger>
+              <ModelSelectorContent className="rounded-xl border border-neutral-700 bg-neutral-900 p-1.5 text-neutral-100">
+                <ModelSelectorGroup>
+                  <ModelSelectorRadioGroup value={model} onValueChange={setModel}>
+                    {v0Models.map((m) => (
+                      <ModelSelectorRadioItem
+                        key={m.value}
+                        value={m.value}
+                        indicator={<Check className="size-4 text-white" strokeWidth={2.5} />}
+                      >
+                        <m.Icon className="size-8 shrink-0" />
+                        <ModelSelectorItemTitle>{m.title}</ModelSelectorItemTitle>
+                      </ModelSelectorRadioItem>
+                    ))}
+                  </ModelSelectorRadioGroup>
+                </ModelSelectorGroup>
+              </ModelSelectorContent>
+            </ModelSelector>
           </PromptInputAction>
         </PromptInputActionGroup>
-
-        <PromptInputActionGroup className="">
+        <PromptInputActionGroup>
           <PromptInputAction asChild>
-            <Button className="size-7 cursor-pointer gap-1 rounded-sm border border-gray-200 bg-gray-100/50 text-[13px] leading-6 font-normal text-gray-200 dark:border-border-primary dark:bg-gray-700 dark:text-border-primary">
+            <Button type="button" className="size-7 rounded-sm border">
               <V0ArrowUp className="size-4" />
             </Button>
           </PromptInputAction>

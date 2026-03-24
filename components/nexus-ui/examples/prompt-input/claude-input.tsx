@@ -90,14 +90,14 @@ const ClaudeInput = () => {
   return (
     <PromptInput
       onSubmit={doSubmit}
-      className="gap-3 rounded-[20px] p-3.5 shadow-none"
+      className="gap-3 rounded-[20px] p-3.5 shadow-sm"
     >
       <PromptInputTextarea
         value={input}
         onChange={(e) => setInput(e.target.value)}
         placeholder="How can I help you today?"
         disabled={isLoading}
-        className="min-h-12 px-1.5 py-1.5 placeholder:text-[15px] placeholder:font-[350]"
+        className="min-h-12 px-1.5 py-1.5 placeholder:text-[15px] placeholder:font-normal"
       />
       <PromptInputActions className="px-1 py-0">
         <PromptInputActionGroup>
@@ -117,7 +117,7 @@ const ClaudeInput = () => {
             >
               <ModelSelectorTrigger
                 variant="ghost"
-                className="h-8 cursor-pointer gap-1 rounded-sm border-none bg-transparent pr-1.5 pl-2.5 text-[13px] leading-6 font-normal text-gray-900 transition-[color,transform] hover:bg-gray-200 active:scale-97 data-[state=open]:bg-gray-200 dark:text-white dark:hover:bg-gray-900 dark:data-[state=open]:bg-gray-900"
+                className="h-8 cursor-pointer gap-1 rounded-sm border-none bg-transparent pr-1.5 pl-2.5 text-[13px] leading-6 font-normal text-gray-900 transition-all hover:bg-gray-200 active:scale-97 data-[state=open]:bg-gray-200 dark:text-white dark:hover:bg-gray-900 dark:data-[state=open]:bg-gray-900"
               >
                 <span>
                   {[...claudeModels, ...moreModels].find(
@@ -206,7 +206,7 @@ const ClaudeInput = () => {
             <Button
               type="button"
               className={cn(
-                "size-8 cursor-pointer gap-1 rounded-md bg-transparent text-[13px] leading-6 font-normal text-gray-900 transition-[color,transform] hover:bg-gray-200 active:scale-97 disabled:opacity-70 dark:text-white dark:hover:bg-gray-900",
+                "size-8 cursor-pointer gap-1 rounded-md bg-transparent text-[13px] leading-6 font-normal text-gray-900 transition-all hover:bg-gray-200 active:scale-97 disabled:opacity-70 dark:text-white dark:hover:bg-gray-900",
                 input.trim() && "bg-[#df6e3e] dark:bg-[#BC6844]",
                 isLoading &&
                   "border border-gray-300 bg-transparent disabled:opacity-100 dark:border-gray-600 dark:bg-transparent dark:hover:bg-transparent",
