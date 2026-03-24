@@ -1,6 +1,6 @@
 import NexusIcon from "@/components/svgs/nexus";
 import ChatgptIcon from "@/components/svgs/chatgpt";
-import { ClaudeIcon } from "@/components/svgs/claude";
+import { ClaudeIcon2 } from "@/components/svgs/claude";
 import GeminiIcon from "@/components/svgs/gemini";
 import ChatgptInput from "@/components/nexus-ui/examples/prompt-input/chatgpt-input";
 
@@ -12,7 +12,7 @@ import V0Icon from "@/components/svgs/v0";
 export type TabKey = "gemini" | "chatgpt" | "claude" | "v0";
 
 export const tabs: { key: TabKey; label: string; icon: typeof NexusIcon }[] = [
-  { key: "claude", label: "Claude", icon: ClaudeIcon },
+  { key: "claude", label: "Claude", icon: ClaudeIcon2 },
   { key: "v0", label: "v0", icon: V0Icon },
   { key: "gemini", label: "Gemini", icon: GeminiIcon },
   { key: "chatgpt", label: "ChatGPT", icon: ChatgptIcon },
