@@ -12,7 +12,7 @@ import {
 } from "../../components/demo-tabs";
 import { GithubIcon } from "@/components/navbar";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Copy01Icon, Tick01Icon } from "@hugeicons/core-free-icons";
+import { Copy01Icon, Tick02Icon } from "@hugeicons/core-free-icons";
 import { cn } from "@/lib/utils";
 
 export default function HomePage() {
@@ -158,7 +158,7 @@ export default function HomePage() {
             >
               {checked ? (
                 <HugeiconsIcon
-                  icon={Tick01Icon}
+                  icon={Tick02Icon}
                   strokeWidth={1.75}
                   className="size-5"
                 />
