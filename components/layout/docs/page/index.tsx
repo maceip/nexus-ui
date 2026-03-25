@@ -19,6 +19,12 @@ import * as TocClerk from "../../../toc/clerk";
 import { TOCProvider, TOCScrollArea } from "../../../toc";
 import Link from "next/link";
 import { gitConfig } from "@/lib/layout.shared";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  File02Icon,
+  PencilEdit02Icon,
+  AiMagicIcon,
+} from "@hugeicons/core-free-icons";
 
 interface BreadcrumbOptions extends BreadcrumbProps {
   enabled: boolean;
@@ -191,9 +197,7 @@ export function DocsPage({
                 className="inline-flex items-center gap-1.5 text-sm text-gray-400 dark:text-gray-500"
               >
                 <Text className="size-4" />
-                <span className="text-xs leading-4">
-                  On this page
-                </span>
+                <span className="text-xs leading-4">On this page</span>
               </h3>
               <TOCScrollArea>
                 {tocOptions.style === "clerk" ? (
@@ -204,27 +208,40 @@ export function DocsPage({
               </TOCScrollArea>
             </div>
 
-            <div className="mx-auto h-px w-[calc(100%-40px)] bg-gray-100 dark:bg-gray-800"></div>
+            {/* <div className="mx-auto h-px w-[calc(100%-40px)] bg-gray-100 dark:bg-gray-800"></div> */}
 
-            <div className="flex flex-col gap-3 pl-5 transition-colors duration-200 pt-2">
+            <div className="flex flex-col gap-3 rounded-xl bg-gray-100 dark:bg-gray-800 p-4 transition-colors duration-200">
               {markdownUrl && <CopyPageMarkdown markdownUrl={markdownUrl} />}
               {markdownUrl && (
                 <Link
-                  href={markdownUrl.replace(/^\/llms\.mdx\/docs\//, "/docs/") + ".md"}
+                  href={
+                    markdownUrl.replace(/^\/llms\.mdx\/docs\//, "/docs/") +
+                    ".md"
+                  }
                   target="_blank"
                   rel="noreferrer noopener"
-                  className="flex h-4 w-full cursor-pointer items-center justify-start gap-1 bg-transparent px-0! text-[13px] leading-5 font-normal text-gray-400 dark:text-gray-500 hover:bg-transparent hover:text-gray-600 dark:hover:text-gray-300"
+                  className="flex h-4 w-full cursor-pointer items-center justify-start gap-1 bg-transparent px-0! text-[13px] leading-5 font-normal text-gray-500 hover:bg-transparent hover:text-gray-600 dark:text-gray-400 dark:hover:text-gray-300"
                 >
-                  View as markdown <FileText className="size-3 font-normal" />
+                  View as markdown{" "}
+                  <HugeiconsIcon
+                    icon={File02Icon}
+                    strokeWidth={2.5}
+                    className="size-3.5"
+                  />
                 </Link>
               )}
               <Link
                 href={editUrl ?? "#"}
                 target="_blank"
                 rel="noreferrer noopener"
-                className="flex h-4 w-full cursor-pointer items-center justify-start gap-1 bg-transparent px-0! text-[13px] leading-5 font-normal text-gray-400 dark:text-gray-500 hover:bg-transparent hover:text-gray-600 dark:hover:text-gray-300"
+                className="flex h-4 w-full cursor-pointer items-center justify-start gap-1 bg-transparent px-0! text-[13px] leading-5 font-normal text-gray-500 hover:bg-transparent hover:text-gray-600 dark:text-gray-400 dark:hover:text-gray-300"
               >
-                Edit on GitHub <SquarePen className="size-3 font-normal" />
+                Edit on GitHub{" "}
+                <HugeiconsIcon
+                  icon={PencilEdit02Icon}
+                  strokeWidth={2.5}
+                  className="size-3.5"
+                />
               </Link>
               {markdownUrl && (
                 <ViewOptions
@@ -232,7 +249,12 @@ export function DocsPage({
                   githubUrl={editUrl ?? "#"}
                   trigger={
                     <span className="flex h-4 w-full items-center gap-1 text-[13px] leading-5 font-normal">
-                      Ask AI <Sparkles className="size-3 font-normal" />
+                      Ask AI{" "}
+                      <HugeiconsIcon
+                        icon={AiMagicIcon}
+                        strokeWidth={2.5}
+                        className="size-3.5"
+                      />
                     </span>
                   }
                 />
@@ -270,7 +292,10 @@ export function DocsDescription({
   return (
     <p
       {...props}
-      className={cn("mb-8 text-base text-gray-400 dark:text-gray-500", className)}
+      className={cn(
+        "mb-8 text-base text-gray-400 dark:text-gray-500",
+        className,
+      )}
     >
       {children}
     </p>

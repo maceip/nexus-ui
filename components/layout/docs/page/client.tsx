@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import {
   type ComponentProps,
@@ -10,28 +10,41 @@ import {
   useMemo,
   useRef,
   useState,
-} from 'react';
-import { ChevronDown, ChevronLeft, ChevronRight, Copy } from 'lucide-react';
-import Link from 'fumadocs-core/link';
-import { cn } from '../../../../lib/cn';
-import { useI18n } from 'fumadocs-ui/contexts/i18n';
-import { useTreeContext, useTreePath } from 'fumadocs-ui/contexts/tree';
-import type * as PageTree from 'fumadocs-core/page-tree';
-import { usePathname } from 'fumadocs-core/framework';
-import { type BreadcrumbOptions, getBreadcrumbItemsFromPath } from 'fumadocs-core/breadcrumb';
-import { isActive } from '../../../../lib/urls';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../../../ui/collapsible';
-import { useTOCItems } from '../../../toc';
-import { useActiveAnchor } from 'fumadocs-core/toc';
-import { LayoutContext } from '../client';
-import { useFooterItems } from 'fumadocs-ui/utils/use-footer-items';
+} from "react";
+import { ChevronDown, ChevronLeft, ChevronRight, Copy } from "lucide-react";
+import Link from "fumadocs-core/link";
+import { cn } from "../../../../lib/cn";
+import { useI18n } from "fumadocs-ui/contexts/i18n";
+import { useTreeContext, useTreePath } from "fumadocs-ui/contexts/tree";
+import type * as PageTree from "fumadocs-core/page-tree";
+import { usePathname } from "fumadocs-core/framework";
+import {
+  type BreadcrumbOptions,
+  getBreadcrumbItemsFromPath,
+} from "fumadocs-core/breadcrumb";
+import { isActive } from "../../../../lib/urls";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "../../../ui/collapsible";
+import { useTOCItems } from "../../../toc";
+import { useActiveAnchor } from "fumadocs-core/toc";
+import { LayoutContext } from "../client";
+import { useFooterItems } from "fumadocs-ui/utils/use-footer-items";
+import { Copy01Icon, Tick02Icon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 
 const TocPopoverContext = createContext<{
   open: boolean;
   setOpen: (open: boolean) => void;
 } | null>(null);
 
-export function PageTOCPopover({ className, children, ...rest }: ComponentProps<'div'>) {
+export function PageTOCPopover({
+  className,
+  children,
+  ...rest
+}: ComponentProps<"div">) {
   const ref = useRef<HTMLElement>(null);
   const [open, setOpen] = useState(false);
   const { isNavTransparent } = use(LayoutContext)!;
@@ -39,14 +52,15 @@ export function PageTOCPopover({ className, children, ...rest }: ComponentProps<
   const onClick = useEffectEvent((e: Event) => {
     if (!open) return;
 
-    if (ref.current && !ref.current.contains(e.target as HTMLElement)) setOpen(false);
+    if (ref.current && !ref.current.contains(e.target as HTMLElement))
+      setOpen(false);
   });
 
   useEffect(() => {
-    window.addEventListener('click', onClick);
+    window.addEventListener("click", onClick);
 
     return () => {
-      window.removeEventListener('click', onClick);
+      window.removeEventListener("click", onClick);
     };
   }, []);
 
@@ -65,7 +79,7 @@ export function PageTOCPopover({ className, children, ...rest }: ComponentProps<
         onOpenChange={setOpen}
         data-toc-popover=""
         className={cn(
-          'sticky top-(--fd-docs-row-2) z-10 [grid-area:toc-popover] h-(--fd-toc-popover-height) xl:hidden max-xl:layout:[--fd-toc-popover-height:--spacing(10)]',
+          "sticky top-(--fd-docs-row-2) z-10 h-(--fd-toc-popover-height) [grid-area:toc-popover] xl:hidden max-xl:layout:[--fd-toc-popover-height:--spacing(10)]",
           className,
         )}
         {...rest}
@@ -73,9 +87,9 @@ export function PageTOCPopover({ className, children, ...rest }: ComponentProps<
         <header
           ref={ref}
           className={cn(
-            'border-b backdrop-blur-sm transition-colors',
-            (!isNavTransparent || open) && 'bg-fd-background/80',
-            open && 'shadow-lg',
+            "border-b backdrop-blur-sm transition-colors",
+            (!isNavTransparent || open) && "bg-fd-background/80",
+            open && "shadow-lg",
           )}
         >
           {children}
@@ -85,7 +99,10 @@ export function PageTOCPopover({ className, children, ...rest }: ComponentProps<
   );
 }
 
-export function PageTOCPopoverTrigger({ className, ...props }: ComponentProps<'button'>) {
+export function PageTOCPopoverTrigger({
+  className,
+  ...props
+}: ComponentProps<"button">) {
   const { text } = useI18n();
   const { open } = use(TocPopoverContext)!;
   const items = useTOCItems();
@@ -100,7 +117,7 @@ export function PageTOCPopoverTrigger({ className, ...props }: ComponentProps<'b
   return (
     <CollapsibleTrigger
       className={cn(
-        'flex w-full h-10 items-center text-sm text-fd-muted-foreground gap-2.5 px-4 py-2.5 text-start focus-visible:outline-none [&_svg]:size-4 md:px-6',
+        "flex h-10 w-full items-center gap-2.5 px-4 py-2.5 text-start text-sm text-fd-muted-foreground focus-visible:outline-none md:px-6 [&_svg]:size-4",
         className,
       )}
       data-toc-popover-trigger=""
@@ -109,33 +126,41 @@ export function PageTOCPopoverTrigger({ className, ...props }: ComponentProps<'b
       <ProgressCircle
         value={(selected + 1) / Math.max(1, items.length)}
         max={1}
-        className={cn('shrink-0', open && 'text-fd-primary')}
+        className={cn("shrink-0", open && "text-fd-primary")}
       />
-      <span className="grid flex-1 *:my-auto *:row-start-1 *:col-start-1">
+      <span className="grid flex-1 *:col-start-1 *:row-start-1 *:my-auto">
         <span
           className={cn(
-            'truncate transition-[opacity,translate,color]',
-            open && 'text-fd-foreground',
-            showItem && 'opacity-0 -translate-y-full pointer-events-none',
+            "truncate transition-[opacity,translate,color]",
+            open && "text-fd-foreground",
+            showItem && "pointer-events-none -translate-y-full opacity-0",
           )}
         >
           {path?.name ?? text.toc}
         </span>
         <span
           className={cn(
-            'truncate transition-[opacity,translate]',
-            !showItem && 'opacity-0 translate-y-full pointer-events-none',
+            "truncate transition-[opacity,translate]",
+            !showItem && "pointer-events-none translate-y-full opacity-0",
           )}
         >
           {items[selected]?.title}
         </span>
       </span>
-      <ChevronDown className={cn('shrink-0 transition-transform mx-0.5', open && 'rotate-180')} />
+      <ChevronDown
+        className={cn(
+          "mx-0.5 shrink-0 transition-transform",
+          open && "rotate-180",
+        )}
+      />
     </CollapsibleTrigger>
   );
 }
 
-interface ProgressCircleProps extends Omit<React.ComponentProps<'svg'>, 'strokeWidth'> {
+interface ProgressCircleProps extends Omit<
+  React.ComponentProps<"svg">,
+  "strokeWidth"
+> {
   value: number;
   strokeWidth?: number;
   size?: number;
@@ -165,7 +190,7 @@ function ProgressCircle({
     cx: size / 2,
     cy: size / 2,
     r: radius,
-    fill: 'none',
+    fill: "none",
     strokeWidth,
   };
 
@@ -192,12 +217,12 @@ function ProgressCircle({
   );
 }
 
-export function PageTOCPopoverContent(props: ComponentProps<'div'>) {
+export function PageTOCPopoverContent(props: ComponentProps<"div">) {
   return (
     <CollapsibleContent
       data-toc-popover-content=""
       {...props}
-      className={cn('flex flex-col px-4 max-h-[50vh] md:px-6', props.className)}
+      className={cn("flex max-h-[50vh] flex-col px-4 md:px-6", props.className)}
     >
       {props.children}
     </CollapsibleContent>
@@ -207,9 +232,9 @@ export function PageTOCPopoverContent(props: ComponentProps<'div'>) {
 export function PageLastUpdate({
   date: value,
   ...props
-}: Omit<ComponentProps<'p'>, 'children'> & { date: Date }) {
+}: Omit<ComponentProps<"p">, "children"> & { date: Date }) {
   const { text } = useI18n();
-  const [date, setDate] = useState('');
+  const [date, setDate] = useState("");
 
   useEffect(() => {
     // to the timezone of client
@@ -217,14 +242,17 @@ export function PageLastUpdate({
   }, [value]);
 
   return (
-    <p {...props} className={cn('text-sm text-fd-muted-foreground', props.className)}>
+    <p
+      {...props}
+      className={cn("text-sm text-fd-muted-foreground", props.className)}
+    >
       {text.lastUpdate} {date}
     </p>
   );
 }
 
-type Item = Pick<PageTree.Item, 'name' | 'description' | 'url'>;
-export interface FooterProps extends ComponentProps<'div'> {
+type Item = Pick<PageTree.Item, "name" | "description" | "url">;
+export interface FooterProps extends ComponentProps<"div"> {
   /**
    * Items including information for the next and previous page
    */
@@ -234,7 +262,12 @@ export interface FooterProps extends ComponentProps<'div'> {
   };
 }
 
-export function PageFooter({ items, children, className, ...props }: FooterProps) {
+export function PageFooter({
+  items,
+  children,
+  className,
+  ...props
+}: FooterProps) {
   const footerList = useFooterItems();
   const pathname = usePathname();
   const { previous, next } = useMemo(() => {
@@ -253,7 +286,7 @@ export function PageFooter({ items, children, className, ...props }: FooterProps
     <>
       <div
         className={cn(
-          '@container flex justify-between gap-4 mt-15 mb-10',
+          "@container mt-15 mb-10 flex justify-between gap-4",
           className,
         )}
         {...props}
@@ -274,14 +307,14 @@ function FooterItem({ item, index }: { item: Item; index: 0 | 1 }) {
     <Link
       href={item.url}
       className={cn(
-        'flex flex-col w-fit gap-2 rounded-full h-8 px-3 text-sm items-center justify-center text-gray-500 bg-gray-100 transition-colors hover:bg-gray-200 hover:text-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700/50 dark:hover:text-gray-300 dark:text-gray-400 @max-lg:col-span-full',
-        index === 1 && 'text-end',
+        "flex h-8 w-fit flex-col items-center justify-center gap-2 rounded-full bg-gray-100 px-3 text-sm text-gray-500 transition-colors hover:bg-gray-200 hover:text-gray-700 @max-lg:col-span-full dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700/50 dark:hover:text-gray-300",
+        index === 1 && "text-end",
       )}
     >
       <div
         className={cn(
-          'inline-flex items-center gap-1.5 font-[450]',
-          index === 1 && 'flex-row-reverse',
+          "inline-flex items-center gap-1.5 font-[450]",
+          index === 1 && "flex-row-reverse",
         )}
       >
         <Icon className="-mx-1 size-4 shrink-0 rtl:rotate-180" />
@@ -321,15 +354,15 @@ export function CopyPageMarkdown({ markdownUrl }: { markdownUrl: string }) {
       type="button"
       disabled={loading}
       onClick={handleCopy}
-      className="flex h-4 w-full cursor-pointer items-center justify-start gap-1 bg-transparent px-0! text-[13px] leading-5 font-normal text-gray-400 dark:text-gray-500 hover:bg-transparent hover:text-gray-600 dark:hover:text-gray-300 disabled:opacity-50"
+      className="flex h-4 w-full cursor-pointer items-center justify-start gap-1 bg-transparent px-0! text-[13px] leading-5 font-normal text-gray-500 hover:bg-transparent hover:text-gray-600 disabled:opacity-50 dark:text-gray-400 dark:hover:text-gray-300"
     >
-      {copied ? 'Copied!' : 'Copy this page'}
-      <Copy className="size-3 font-normal" />
+      {copied ? "Copied!" : "Copy this page"}
+      <HugeiconsIcon icon={copied ? Tick02Icon : Copy01Icon} strokeWidth={2.5} className="size-3.5" />
     </button>
   );
 }
 
-export type BreadcrumbProps = BreadcrumbOptions & ComponentProps<'div'>;
+export type BreadcrumbProps = BreadcrumbOptions & ComponentProps<"div">;
 
 export function PageBreadcrumb({
   includeRoot,
@@ -352,10 +385,17 @@ export function PageBreadcrumb({
   return (
     <div
       {...props}
-      className={cn('flex items-center gap-1.5 text-sm text-gray-400 dark:text-gray-500', props.className)}
+      className={cn(
+        "flex items-center gap-1.5 text-sm text-gray-400 dark:text-gray-500",
+        props.className,
+      )}
     >
       {items.map((item, i) => {
-        const className = cn('truncate', i === items.length - 1 && 'text-gray-900 dark:text-gray-50 font-medium');
+        const className = cn(
+          "truncate",
+          i === items.length - 1 &&
+            "text-gray-900 dark:text-gray-50 font-medium",
+        );
 
         return (
           <Fragment key={i}>
@@ -363,7 +403,7 @@ export function PageBreadcrumb({
             {item.url ? (
               <Link
                 href={item.url}
-                className={cn(className, 'transition-opacity hover:opacity-80')}
+                className={cn(className, "transition-opacity hover:opacity-80")}
               >
                 {item.name}
               </Link>

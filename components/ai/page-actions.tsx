@@ -220,13 +220,13 @@ export function ViewOptions({
               className: "gap-2 rounded-full border-none bg-gray-100 px-3",
             }),
           trigger &&
-            "cursor-pointer text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 data-[state=open]:text-gray-600 dark:data-[state=open]:text-gray-300",
+            "cursor-pointer text-gray-500 hover:text-gray-600 dark:text-gray-400 dark:hover:text-gray-300 data-[state=open]:text-gray-600 dark:data-[state=open]:text-gray-300",
         )}
       >
         {trigger ?? (
           <>
             Open
-            <ChevronDown className="size-3.5 text-gray-400 dark:text-gray-500" />
+            <ChevronDown className="size-3.5 text-gray-500 dark:text-gray-400" />
           </>
         )}
       </PopoverTrigger>
