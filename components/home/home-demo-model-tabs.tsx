@@ -47,6 +47,8 @@ export function HomeDemoModelTabs({
 }: HomeDemoModelTabsProps) {
   const containerRef = React.useRef<HTMLDivElement>(null);
   const activeTabElementRef = React.useRef<HTMLButtonElement>(null);
+  /** After first successful clip, tab changes use CSS transition. */
+  const clipTransitionReadyRef = React.useRef(false);
 
   const updateClipPath = React.useCallback(() => {
     const container = containerRef.current;
@@ -65,27 +67,27 @@ export function HomeDemoModelTabs({
     const bottom = c.bottom - b.bottom;
     const left = b.left - c.left;
 
-    container.style.clipPath = `inset(${Number((top / c.height) * 100).toFixed(3)}% ${Number((right / c.width) * 100).toFixed(3)}% ${Number((bottom / c.height) * 100).toFixed(3)}% ${Number((left / c.width) * 100).toFixed(3)}% round 9999px)`;
+    const clipPath = `inset(${Number((top / c.height) * 100).toFixed(3)}% ${Number((right / c.width) * 100).toFixed(3)}% ${Number((bottom / c.height) * 100).toFixed(3)}% ${Number((left / c.width) * 100).toFixed(3)}% round 9999px)`;
+
+    const instant = !clipTransitionReadyRef.current;
+    if (instant) {
+      container.style.transition = "none";
+    }
+    container.style.clipPath = clipPath;
+    if (instant) {
+      void container.offsetHeight;
+      container.style.transition = "clip-path 0.25s ease";
+      clipTransitionReadyRef.current = true;
+    }
   }, []);
 
-  React.useEffect(() => {
+  React.useLayoutEffect(() => {
     updateClipPath();
+    const id = requestAnimationFrame(() => {
+      updateClipPath();
+    });
+    return () => cancelAnimationFrame(id);
   }, [value, updateClipPath]);
-
-  React.useEffect(() => {
-    const setupInitialClipPath = () => {
-      const container = containerRef.current;
-      if (container) {
-        container.style.clipPath = "inset(100% 100% 100% 100%)";
-        setTimeout(() => {
-          updateClipPath();
-        }, 10);
-      }
-    };
-
-    const timer = setTimeout(setupInitialClipPath, 0);
-    return () => clearTimeout(timer);
-  }, [updateClipPath]);
 
   React.useEffect(() => {
     const handleResize = () => {
@@ -96,7 +98,7 @@ export function HomeDemoModelTabs({
     return () => {
       window.removeEventListener("resize", handleResize);
     };
-  }, [value, updateClipPath]);
+  }, [updateClipPath]);
 
   return (
     <div

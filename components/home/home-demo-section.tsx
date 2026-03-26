@@ -27,6 +27,17 @@ const copyIconMotion = {
   transition: { duration: 0.15, ease: CLIP_EASE },
 } as const;
 
+const demoSectionFade = {
+  initial: { opacity: 1, y: 0 },
+  animate: { opacity: 1, y: 0 },
+  transition: {
+    duration: 0.25,
+    ease: CLIP_EASE,
+  },
+} as const;
+
+const DEMO_SECTION_STAGGER_S = [0.1, 0.2, 0.3] as const;
+
 export function HomeDemoSection() {
   const [activeModel, setActiveModel] =
     React.useState<HomeDemoSourceKey>("claude");
@@ -100,15 +111,31 @@ export function HomeDemoSection() {
 
   return (
     <div className="flex h-[calc(100vh-352px)] min-h-0 w-full flex-col justify-between gap-6 overflow-hidden px-4 pt-0 pb-4 md:flex-row md:gap-4 md:px-6 md:py-4 lg:h-[calc(100vh-480px)]">
-      <div className="order-2 flex h-fit w-full shrink-0 md:order-1 md:h-full md:min-h-0 md:w-fit md:shrink">
+      <motion.div
+        className="order-2 flex h-fit w-full shrink-0 md:order-1 md:h-full md:min-h-0 md:w-fit md:shrink"
+        initial={demoSectionFade.initial}
+        animate={demoSectionFade.animate}
+        transition={{
+          ...demoSectionFade.transition,
+          delay: DEMO_SECTION_STAGGER_S[0],
+        }}
+      >
         <HomeDemoModelTabs
           tabs={HOME_MODEL_DEMOS}
           value={activeModel}
           onValueChange={setActiveModel}
         />
-      </div>
+      </motion.div>
 
-      <div className="order-1 h-[calc(100%-64px)] min-h-0 w-full sm:h-[200px] md:order-2 md:h-full md:w-1/2">
+      <motion.div
+        className="order-1 h-[calc(100%-64px)] min-h-0 w-full sm:h-[200px] md:order-2 md:h-full md:w-1/2"
+        initial={demoSectionFade.initial}
+        animate={demoSectionFade.animate}
+        transition={{
+          ...demoSectionFade.transition,
+          delay: DEMO_SECTION_STAGGER_S[1],
+        }}
+      >
         <div className="flex h-full w-full flex-col items-center justify-end rounded-b-[20px] bg-gray-100 p-3 md:rounded-[24px] lg:p-6 dark:bg-gray-950">
           <AnimatePresence mode="wait" initial={false}>
             <motion.div
@@ -138,9 +165,17 @@ export function HomeDemoSection() {
             </motion.div>
           </AnimatePresence>
         </div>
-      </div>
+      </motion.div>
 
-      <div className="order-3 hidden min-h-0 w-full flex-1 flex-col overflow-hidden sm:flex md:order-3 md:h-full md:w-1/2 md:flex-none">
+      <motion.div
+        className="order-3 hidden min-h-0 w-full flex-1 flex-col overflow-hidden sm:flex md:order-3 md:h-full md:w-1/2 md:flex-none"
+        initial={demoSectionFade.initial}
+        animate={demoSectionFade.animate}
+        transition={{
+          ...demoSectionFade.transition,
+          delay: DEMO_SECTION_STAGGER_S[2],
+        }}
+      >
         <div className="relative flex h-full min-h-0 w-full flex-col overflow-hidden rounded-[24px] bg-gray-100 dark:bg-gray-950 [&_.fd-scroll-container]:no-scrollbar [&_.fd-scroll-container]:h-full [&_.fd-scroll-container]:max-h-none [&_.fd-scroll-container]:min-h-0 [&_.fd-scroll-container]:overflow-y-auto [&_.fd-scroll-container]:py-7 [&_.fd-scroll-container]:pr-3.5 [&_.fd-scroll-container]:pl-7 [&_.lucide-clipboard]:hidden [&_div.absolute.top-3.right-2]:hidden [&_pre]:text-sm [&_pre]:leading-6 [&>figure]:flex [&>figure]:h-full [&>figure]:min-h-0 [&>figure]:flex-col [&>figure]:rounded-[24px] [&>figure]:border-none [&>figure]:bg-transparent [&>figure]:shadow-none">
           <DynamicCodeBlock lang="ts" code={code} />
 
@@ -196,7 +231,7 @@ export function HomeDemoSection() {
             )}
           />
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 }
