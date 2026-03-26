@@ -1,5 +1,7 @@
 "use client";
-import { Check, ChevronDown, Copy } from "lucide-react";
+import { AnimatePresence, motion } from "motion/react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { Copy01Icon, Tick02Icon } from "@hugeicons/core-free-icons";
 import {
   type ComponentProps,
   createContext,
@@ -18,6 +20,15 @@ import { useCopyButton } from "fumadocs-ui/utils/use-copy-button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 import { mergeRefs } from "../lib/merge-refs";
 import { Button } from "./ui/button";
+
+const COPY_ICON_EASE = [0.33, 1, 0.68, 1] as const;
+
+const copyIconMotion = {
+  initial: { opacity: 0, scale: 0.8, filter: "blur(1px)" },
+  animate: { opacity: 1, scale: 1, filter: "blur(0px)" },
+  exit: { opacity: 0, scale: 0.8, filter: "blur(1px)" },
+  transition: { duration: 0.15, ease: COPY_ICON_EASE },
+} as const;
 
 export interface CodeBlockProps extends ComponentProps<"figure"> {
   /**
@@ -256,7 +267,35 @@ function CopyButton({
         onClick={onClick}
         {...props}
       >
-        {checked ? <Check className="size-4" /> : <Copy className="size-3.5" />}
+        <span className="relative flex size-5 items-center justify-center">
+          <AnimatePresence mode="wait" initial={false}>
+            {checked ? (
+              <motion.span
+                key="tick"
+                {...copyIconMotion}
+                className="flex items-center justify-center"
+              >
+                <HugeiconsIcon
+                  icon={Tick02Icon}
+                  strokeWidth={1.75}
+                  className="size-4.5"
+                />
+              </motion.span>
+            ) : (
+              <motion.span
+                key="copy"
+                {...copyIconMotion}
+                className="flex items-center justify-center"
+              >
+                <HugeiconsIcon
+                  icon={Copy01Icon}
+                  strokeWidth={1.75}
+                  className="size-4"
+                />
+              </motion.span>
+            )}
+          </AnimatePresence>
+        </span>
       </button>
     </div>
   );
