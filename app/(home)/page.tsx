@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { motion } from "motion/react";
 import { Button } from "@/components/ui/button";
 import { GithubIcon } from "@/components/navbar";
 import { HomeDemoSection } from "@/components/home/home-demo-section";
@@ -6,7 +9,7 @@ import { HomeDemoSection } from "@/components/home/home-demo-section";
 export default function HomePage() {
   return (
     <main className="flex h-screen w-full flex-col overflow-auto bg-transparent pt-0 lg:pt-0">
-      <div className="relative flex h-[352px] w-full shrink-0 flex-col items-center justify-center overflow-hidden rounded-b-[20px] bg-gray-950 md:border-none lg:h-[480px] lg:rounded-b-[24px] dark:border-b dark:border-b-gray-800">
+      <div className="relative flex h-[352px] w-full shrink-0 flex-col items-center justify-center overflow-hidden bg-gray-950 md:border-none lg:h-[480px] rounded-b-none dark:border-b dark:border-b-gray-800">
         <svg
           width="100%"
           height="100%"
@@ -41,7 +44,12 @@ export default function HomePage() {
           />
         </svg>
 
-        <div className="px-auto z-10 flex w-fit flex-col items-center justify-center gap-4">
+        <motion.div
+          className="z-10 flex w-fit flex-col items-center justify-center gap-4"
+          // initial={{ opacity: 0 }}
+          // animate={{ opacity: 1 }}
+          // transition={{ duration: 0.5, ease: [0.33, 1, 0.68, 1] }}
+        >
           <div className="flex flex-col items-center justify-center gap-1">
             <h1 className="text-center text-2xl leading-[38px] font-[450] tracking-[-0.8px] text-gray-50 lg:text-[32px]">
               Build Better AI Interfaces
@@ -72,7 +80,7 @@ export default function HomePage() {
               </Link>
             </Button>
           </div>
-        </div>
+        </motion.div>
       </div>
 
       <HomeDemoSection />

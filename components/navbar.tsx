@@ -6,7 +6,7 @@ import { cn } from "@/lib/cn";
 import { SmallThemeToggle } from "./layout/theme-toggle";
 import { LargeSearchToggle, SearchToggle } from "./layout/search-toggle";
 import type { NavItem } from "@/lib/source";
-import { Menu, X } from "lucide-react";
+import { X } from "lucide-react";
 import { buttonVariants } from "./ui/button";
 import { useCallback, useEffect, useState } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -47,7 +47,7 @@ export function Navbar({ navItems = [] }: NavbarProps) {
           "fixed top-0 z-40 h-14 w-full lg:px-0 2xl:px-0",
           "bg-transparent backdrop-blur-none lg:backdrop-blur-none",
           isDocs &&
-            "overflow-hidden rounded-b-[16px] bg-gray-950 px-0 lg:px-0 2xl:px-0",
+            "overflow-hidden rounded-b-none bg-gray-950 px-0 lg:px-0 2xl:px-0",
         )}
       >
         {isDocs && (
