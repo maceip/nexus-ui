@@ -104,6 +104,9 @@
   --sidebar-ring: oklch(0.708 0 0); /* #b5b5b5 */
   --border-primary: #e5e5e5;
   --surface-elevated: #fff;
+  --scrollbar-track: oklch(0.97 0 0);
+  --scrollbar-thumb: oklch(0.82 0 0);
+  --scrollbar-thumb-hover: oklch(0.72 0 0);
 }
 
 .dark {
@@ -140,12 +143,85 @@
   --sidebar-ring: oklch(0.556 0 0);
   --border-primary: oklch(1 0 0 / 10%);
   --surface-elevated: oklch(0.269 0 0);
+  --scrollbar-track: oklch(0.205 0 0);
+  --scrollbar-thumb: oklch(0.42 0 0);
+  --scrollbar-thumb-hover: oklch(0.5 0 0);
 }
 
 @layer base {
   * {
     @apply border-border outline-ring/50;
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
   }
+
+  /*
+   * Force custom scrollbar styling on actual app scrollers.
+   * The app uses inner overflow containers (e.g. main, fd-scroll-container),
+   * so explicit selectors are more reliable than universal-only rules.
+   */
+  html,
+  body,
+  main,
+  .fd-scroll-container {
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+  }
+
+  *::-webkit-scrollbar {
+    width: 12px;
+    height: 12px;
+  }
+
+  html::-webkit-scrollbar,
+  body::-webkit-scrollbar,
+  main::-webkit-scrollbar,
+  .fd-scroll-container::-webkit-scrollbar {
+    width: 12px;
+    height: 12px;
+  }
+
+  *::-webkit-scrollbar-track {
+    background: var(--scrollbar-track);
+  }
+
+  html::-webkit-scrollbar-track,
+  body::-webkit-scrollbar-track,
+  main::-webkit-scrollbar-track,
+  .fd-scroll-container::-webkit-scrollbar-track {
+    background: var(--scrollbar-track);
+  }
+
+  *::-webkit-scrollbar-thumb {
+    background-color: var(--scrollbar-thumb);
+    border-radius: 9999px;
+    border: 3px solid var(--scrollbar-track);
+  }
+
+  html::-webkit-scrollbar-thumb,
+  body::-webkit-scrollbar-thumb,
+  main::-webkit-scrollbar-thumb,
+  .fd-scroll-container::-webkit-scrollbar-thumb {
+    background-color: var(--scrollbar-thumb);
+    border-radius: 9999px;
+    border: 3px solid var(--scrollbar-track);
+  }
+
+  *::-webkit-scrollbar-thumb:hover {
+    background-color: var(--scrollbar-thumb-hover);
+  }
+
+  html::-webkit-scrollbar-thumb:hover,
+  body::-webkit-scrollbar-thumb:hover,
+  main::-webkit-scrollbar-thumb:hover,
+  .fd-scroll-container::-webkit-scrollbar-thumb:hover {
+    background-color: var(--scrollbar-thumb-hover);
+  }
+
+  *::-webkit-scrollbar-corner {
+    background: var(--scrollbar-track);
+  }
+
   html:not(:has([data-page="home"])) {
     scrollbar-gutter: stable;
   }
