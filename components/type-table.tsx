@@ -1,6 +1,7 @@
 "use client";
 
-import { ChevronDown } from "lucide-react";
+import { ArrowDown01Icon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import Link from "fumadocs-core/link";
 import { cva } from "class-variance-authority";
 import { cn } from "../lib/cn";
@@ -145,7 +146,7 @@ function Item({
         ) : (
           <span className="@max-xl:hidden text-gray-900 dark:text-gray-400">{type}</span>
         )}
-        <ChevronDown className="absolute end-2 size-4 text-gray-400 transition-transform group-data-[state=open]:rotate-180 dark:text-gray-500" />
+        <HugeiconsIcon icon={ArrowDown01Icon} strokeWidth={2.0} className="absolute end-2 size-4 text-gray-400 transition-transform group-data-[state=open]:rotate-180 dark:text-gray-500" />
       </CollapsibleTrigger>
       <CollapsibleContent className="bg-gray-50 dark:bg-gray-800">
         <div className="fd-scroll-container grid grid-cols-[1fr_3fr] gap-y-4 overflow-auto border-t px-6 py-3 text-sm">

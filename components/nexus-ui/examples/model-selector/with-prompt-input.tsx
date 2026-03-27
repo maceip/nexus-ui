@@ -20,7 +20,8 @@ import {
 import ChatgptIcon from "@/components/svgs/chatgpt";
 import { ClaudeIcon2 } from "@/components/svgs/claude";
 import GeminiIcon from "@/components/svgs/gemini";
-import { ArrowUp, Image, Mic, Paperclip } from "lucide-react";
+import { ArrowUp02Icon, Mic02Icon, PlusSignIcon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 
 const models = [
   {
@@ -59,12 +60,7 @@ export default function ModelSelectorWithPromptInput() {
         <PromptInputActionGroup>
           <PromptInputAction asChild>
             <Button className="size-8 cursor-pointer rounded-full border-none bg-transparent text-gray-900 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">
-              <Paperclip className="size-4" />
-            </Button>
-          </PromptInputAction>
-          <PromptInputAction asChild>
-            <Button className="size-8 cursor-pointer rounded-full border-none bg-transparent text-gray-900 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">
-              <Image className="size-4" />
+              <HugeiconsIcon icon={PlusSignIcon} strokeWidth={2.0} className="size-4" />
             </Button>
           </PromptInputAction>
         </PromptInputActionGroup>
@@ -99,13 +95,13 @@ export default function ModelSelectorWithPromptInput() {
           </PromptInputAction>
           <PromptInputAction asChild>
             <Button className="size-8 cursor-pointer rounded-full border-none bg-transparent text-gray-900 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">
-              <Mic className="size-4" />
+              <HugeiconsIcon icon={Mic02Icon} strokeWidth={2.0} className="size-4" />
             </Button>
           </PromptInputAction>
 
           <PromptInputAction asChild>
             <Button className="size-8 cursor-pointer rounded-full bg-gray-700 text-white hover:bg-gray-800 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200">
-              <ArrowUp />
+              <HugeiconsIcon icon={ArrowUp02Icon} strokeWidth={2.0} className="size-4" />
             </Button>
           </PromptInputAction>
         </PromptInputActionGroup>

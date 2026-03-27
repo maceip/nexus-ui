@@ -1,6 +1,7 @@
 "use client";
 import { type ReactNode, useMemo, useState } from "react";
-import { Check, ChevronDown, Copy, ArrowUpRight } from "lucide-react";
+import { Tick02Icon, ArrowDown01Icon, Copy01Icon, ArrowUpRight01Icon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { cn } from "@/lib/cn";
 import { useCopyButton } from "fumadocs-ui/utils/use-copy-button";
 import { buttonVariants } from "fumadocs-ui/components/ui/button";
@@ -56,7 +57,7 @@ export function LLMCopyButton({
       )}
       onClick={onClick}
     >
-      {checked ? <Check /> : <Copy />}
+      {checked ? <HugeiconsIcon icon={Tick02Icon} strokeWidth={2.5} className="size-4 text-gray-500 dark:text-gray-400" /> : <HugeiconsIcon icon={Copy01Icon} strokeWidth={2.5} className="size-4 text-gray-500 dark:text-gray-400" />}
       Copy Markdown
     </button>
   );
@@ -226,7 +227,7 @@ export function ViewOptions({
         {trigger ?? (
           <>
             Open
-            <ChevronDown className="size-3.5 text-gray-500 dark:text-gray-400" />
+            <HugeiconsIcon icon={ArrowDown01Icon} strokeWidth={2.5} className="size-3.5 text-gray-500 dark:text-gray-400" />
           </>
         )}
       </PopoverTrigger>
@@ -241,7 +242,7 @@ export function ViewOptions({
           >
             {item.icon}
             {item.title}
-            <ArrowUpRight className="ms-auto size-4 text-gray-400 dark:text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+            <HugeiconsIcon icon={ArrowUpRight01Icon} strokeWidth={2.5} className="ms-auto size-4 text-gray-400 dark:text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
           </a>
         ))}
       </PopoverContent>

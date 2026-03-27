@@ -11,7 +11,6 @@ import {
   useRef,
   useState,
 } from "react";
-import { ChevronDown, ChevronLeft, ChevronRight, Copy } from "lucide-react";
 import Link from "fumadocs-core/link";
 import { cn } from "../../../../lib/cn";
 import { useI18n } from "fumadocs-ui/contexts/i18n";
@@ -32,7 +31,13 @@ import { useTOCItems } from "../../../toc";
 import { useActiveAnchor } from "fumadocs-core/toc";
 import { LayoutContext } from "../client";
 import { useFooterItems } from "fumadocs-ui/utils/use-footer-items";
-import { Copy01Icon, Tick02Icon } from "@hugeicons/core-free-icons";
+import {
+  Copy01Icon,
+  Tick02Icon,
+  ArrowDown01Icon,
+  ArrowRight01Icon,
+  ArrowLeft01Icon,
+} from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 
 const TocPopoverContext = createContext<{
@@ -117,7 +122,7 @@ export function PageTOCPopoverTrigger({
   return (
     <CollapsibleTrigger
       className={cn(
-        "flex h-10 w-full items-center gap-2.5 px-4 py-2.5 text-start text-sm text-fd-muted-foreground focus-visible:outline-none md:px-6 [&_svg]:size-4",
+        "flex h-10 w-full items-center gap-2.0 px-4 py-2.0 text-start text-sm text-fd-muted-foreground focus-visible:outline-none md:px-6 [&_svg]:size-4",
         className,
       )}
       data-toc-popover-trigger=""
@@ -147,7 +152,9 @@ export function PageTOCPopoverTrigger({
           {items[selected]?.title}
         </span>
       </span>
-      <ChevronDown
+      <HugeiconsIcon
+        icon={ArrowDown01Icon}
+        strokeWidth={2.0}
         className={cn(
           "mx-0.5 shrink-0 transition-transform",
           open && "rotate-180",
@@ -301,7 +308,7 @@ export function PageFooter({
 
 function FooterItem({ item, index }: { item: Item; index: 0 | 1 }) {
   const { text } = useI18n();
-  const Icon = index === 0 ? ChevronLeft : ChevronRight;
+  const Icon = index === 0 ? ArrowLeft01Icon : ArrowRight01Icon;
 
   return (
     <Link
@@ -317,7 +324,7 @@ function FooterItem({ item, index }: { item: Item; index: 0 | 1 }) {
           index === 1 && "flex-row-reverse",
         )}
       >
-        <Icon className="-mx-1 size-4 shrink-0 rtl:rotate-180" />
+        <HugeiconsIcon icon={Icon} strokeWidth={2.0} className="-mx-1 size-4 shrink-0 rtl:rotate-180" />
         <p>{item.name}</p>
       </div>
     </Link>
@@ -357,7 +364,11 @@ export function CopyPageMarkdown({ markdownUrl }: { markdownUrl: string }) {
       className="flex h-4 w-full cursor-pointer items-center justify-start gap-1 bg-transparent px-0! text-[13px] leading-5 font-normal text-gray-500 hover:bg-transparent hover:text-gray-600 disabled:opacity-50 dark:text-gray-400 dark:hover:text-gray-300"
     >
       {copied ? "Copied!" : "Copy this page"}
-      <HugeiconsIcon icon={copied ? Tick02Icon : Copy01Icon} strokeWidth={2.5} className="size-3.5" />
+      <HugeiconsIcon
+        icon={copied ? Tick02Icon : Copy01Icon}
+        strokeWidth={2.0}
+        className="size-3.5"
+      />
     </button>
   );
 }
@@ -399,7 +410,7 @@ export function PageBreadcrumb({
 
         return (
           <Fragment key={i}>
-            {i !== 0 && <ChevronRight className="size-3.5 shrink-0" />}
+            {i !== 0 && <HugeiconsIcon icon={ArrowRight01Icon} strokeWidth={2.0} className="size-3.5 shrink-0" />}
             {item.url ? (
               <Link
                 href={item.url}

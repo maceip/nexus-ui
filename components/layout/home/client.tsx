@@ -19,7 +19,8 @@ import type { HomeLayoutProps } from './index';
 import { LargeSearchToggle, SearchToggle } from '../search-toggle';
 import { ThemeToggle } from '../theme-toggle';
 import { LanguageToggle, LanguageToggleText } from '../language-toggle';
-import { ChevronDown, Languages } from 'lucide-react';
+import { ArrowDown01Icon, LanguageCircleIcon } from '@hugeicons/core-free-icons';
+import { HugeiconsIcon } from '@hugeicons/react';
 import { useIsScrollTop } from 'fumadocs-ui/utils/use-is-scroll-top';
 
 export const navItemVariants = cva('[&_svg]:size-4', {
@@ -76,7 +77,7 @@ export function Header({
           (themeSwitch.component ?? <ThemeToggle mode={themeSwitch?.mode} />)}
         {i18n && (
           <LanguageToggle>
-            <Languages className="size-5" />
+            <HugeiconsIcon icon={LanguageCircleIcon} strokeWidth={2.0} className="size-5" />
           </LanguageToggle>
         )}
         <ul className="flex flex-row gap-2 items-center empty:hidden">
@@ -105,7 +106,7 @@ export function Header({
               )}
               onPointerMove={nav.enableHoverToOpen ? undefined : (e) => e.preventDefault()}
             >
-              <ChevronDown className="transition-transform duration-300 group-data-[state=open]:rotate-180" />
+              <HugeiconsIcon icon={ArrowDown01Icon} strokeWidth={2.0} className="transition-transform duration-300 group-data-[state=open]:rotate-180" />
             </NavigationMenuTrigger>
             <NavigationMenuContent className="flex flex-col p-4 sm:flex-row sm:items-center sm:justify-end">
               {menuItems
@@ -124,9 +125,9 @@ export function Header({
                 <div role="separator" className="flex-1" />
                 {i18n && (
                   <LanguageToggle>
-                    <Languages className="size-5" />
+                    <HugeiconsIcon icon={LanguageCircleIcon} strokeWidth={2.0} className="size-5" />
                     <LanguageToggleText />
-                    <ChevronDown className="size-3 text-fd-muted-foreground" />
+                    <HugeiconsIcon icon={ArrowDown01Icon} strokeWidth={2.0} className="size-3 text-fd-muted-foreground" />
                   </LanguageToggle>
                 )}
                 {themeSwitch.enabled !== false &&

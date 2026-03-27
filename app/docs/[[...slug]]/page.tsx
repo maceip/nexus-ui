@@ -15,7 +15,8 @@ import { gitConfig } from "@/lib/layout.shared";
 import { Button } from "@/components/ui/button";
 import { findNeighbour } from "fumadocs-core/page-tree";
 import Link from "next/link";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowLeft01Icon, ArrowRight01Icon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 
 export default async function Page(props: PageProps<"/docs/[[...slug]]">) {
   const params = await props.params;
@@ -46,7 +47,7 @@ export default async function Page(props: PageProps<"/docs/[[...slug]]">) {
                 href={previous.url}
                 aria-label={`Previous: ${previous.name}`}
               >
-                <ChevronLeft className="size-4 text-gray-500 dark:text-gray-400" />
+                <HugeiconsIcon icon={ArrowLeft01Icon} strokeWidth={2.0} className="size-4 text-gray-500 dark:text-gray-400" />
               </Link>
             </Button>
           ) : (
@@ -54,7 +55,7 @@ export default async function Page(props: PageProps<"/docs/[[...slug]]">) {
               disabled
               className="size-7 rounded-full border-none bg-gray-100 opacity-40 dark:bg-gray-800 dark:opacity-40"
             >
-              <ChevronLeft className="size-4 text-gray-400 dark:text-gray-500" />
+              <HugeiconsIcon icon={ArrowLeft01Icon} strokeWidth={2.0} className="size-4 text-gray-400 dark:text-gray-500" />
             </Button>
           )}
           {next ? (
@@ -63,7 +64,7 @@ export default async function Page(props: PageProps<"/docs/[[...slug]]">) {
               className="size-7 rounded-full border-none bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700/50"
             >
               <Link href={next.url} aria-label={`Next: ${next.name}`}>
-                <ChevronRight className="size-4 text-gray-500 dark:text-gray-400" />
+                <HugeiconsIcon icon={ArrowRight01Icon} strokeWidth={2.0} className="size-4 text-gray-500 dark:text-gray-400" />
               </Link>
             </Button>
           ) : (
@@ -71,7 +72,7 @@ export default async function Page(props: PageProps<"/docs/[[...slug]]">) {
               disabled
               className="size-7 rounded-full border-none bg-gray-100 opacity-40 dark:bg-gray-800 dark:opacity-40"
             >
-              <ChevronRight className="size-4 text-gray-400 dark:text-gray-500" />
+              <HugeiconsIcon icon={ArrowRight01Icon} strokeWidth={2.0} className="size-4 text-gray-400 dark:text-gray-500" />
             </Button>
           )}
         </div>

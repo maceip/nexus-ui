@@ -6,11 +6,10 @@ import { cn } from "@/lib/cn";
 import { SmallThemeToggle } from "./layout/theme-toggle";
 import { LargeSearchToggle, SearchToggle } from "./layout/search-toggle";
 import type { NavItem } from "@/lib/source";
-import { X } from "lucide-react";
 import { buttonVariants } from "./ui/button";
 import { useCallback, useEffect, useState } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { PanelRightIcon } from "@hugeicons/core-free-icons";
+import { PanelRightIcon, Cancel01Icon } from "@hugeicons/core-free-icons";
 
 interface NavbarProps {
   navItems?: NavItem[];
@@ -308,7 +307,7 @@ function MobileSidebar({
               aria-label="Close Menu"
               onClick={onClose}
             >
-              <X className="size-5" />
+              <HugeiconsIcon icon={Cancel01Icon} strokeWidth={2.0} className="size-5" />
             </button>
           </div>
         </div>

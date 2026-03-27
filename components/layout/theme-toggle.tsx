@@ -1,10 +1,11 @@
 "use client";
 import { cva } from "class-variance-authority";
-import { Airplay, Moon, Sun } from "lucide-react";
+import { AirplayLineIcon, Moon02Icon, Sun03Icon } from "@hugeicons/core-free-icons";
 import { AnimatePresence, motion } from "motion/react";
 import { useTheme } from "next-themes";
 import { ComponentProps, useEffect, useState } from "react";
 import { cn } from "../../lib/cn";
+import { HugeiconsIcon } from "@hugeicons/react";
 
 const THEME_ICON_EASE = [0.33, 1, 0.68, 1] as const;
 
@@ -25,9 +26,9 @@ const itemVariants = cva("size-6.5 p-1.5 text-fd-muted-foreground", {
 });
 
 const full = [
-  ["light", Sun] as const,
-  ["dark", Moon] as const,
-  ["system", Airplay] as const,
+  ["light", Sun03Icon] as const,
+  ["dark", Moon02Icon] as const,
+  ["system", AirplayLineIcon] as const,
 ];
 
 export function SmallThemeToggle({ className }: { className?: string }) {
@@ -144,7 +145,8 @@ export function ThemeToggle({
           if (key === "system") return;
 
           return (
-            <Icon
+            <HugeiconsIcon
+              icon={Icon}
               key={key}
               fill="currentColor"
               className={cn(itemVariants({ active: value === key }))}
@@ -166,7 +168,7 @@ export function ThemeToggle({
           className={cn(itemVariants({ active: value === key }))}
           onClick={() => setTheme(key)}
         >
-          <Icon className="size-full" fill="currentColor" />
+          <HugeiconsIcon icon={Icon} className="size-full" fill="currentColor" />
         </button>
       ))}
     </div>

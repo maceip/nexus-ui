@@ -1,6 +1,5 @@
 import type { ComponentProps, ReactNode } from "react";
 import { cn } from "../../../../lib/cn";
-import { FileText, Sparkles, SquarePen, Text } from "lucide-react";
 import { ViewOptions } from "../../../ai/page-actions";
 import { Prose } from "../../../ui/prose";
 import {
@@ -24,6 +23,7 @@ import {
   File02Icon,
   PencilEdit02Icon,
   AiMagicIcon,
+  TextAlignLeftIcon
 } from "@hugeicons/core-free-icons";
 
 interface BreadcrumbOptions extends BreadcrumbProps {
@@ -196,7 +196,7 @@ export function DocsPage({
                 id="toc-title"
                 className="inline-flex items-center gap-1.5 text-sm text-gray-400 dark:text-gray-500"
               >
-                <Text className="size-4" />
+                <HugeiconsIcon icon={TextAlignLeftIcon} strokeWidth={2.0} className="size-4" />
                 <span className="text-xs leading-4">On this page</span>
               </h3>
               <TOCScrollArea>

@@ -2,11 +2,12 @@
 
 import * as React from "react";
 import {
-  CheckIcon,
-  ChevronDownIcon,
-  ChevronRightIcon,
-  LockIcon,
-} from "lucide-react";
+  Tick02Icon,
+  ArrowDown01Icon,
+  ArrowRight01Icon,
+  SquareLock01Icon,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { cva, type VariantProps } from "class-variance-authority";
 import { DropdownMenu as DropdownMenuPrimitive } from "radix-ui";
 
@@ -128,7 +129,11 @@ function ModelSelectorTrigger({
         </span>
       </span>
       <span data-slot="model-selector-trigger-chevron">
-        <ChevronDownIcon className="size-4 shrink-0" />
+        <HugeiconsIcon
+          icon={ArrowDown01Icon}
+          strokeWidth={2.0}
+          className="size-4 shrink-0"
+        />
       </span>
     </>
   );
@@ -352,9 +357,19 @@ function ModelSelectorCheckboxItem({
         wrapWithItemIndicator={!disabled}
       >
         {disabled ? (
-          <LockIcon className="size-4 opacity-50" />
+          <HugeiconsIcon
+            icon={SquareLock01Icon}
+            strokeWidth={2.0}
+            className="size-4 opacity-50"
+          />
         ) : (
-          (indicator ?? <CheckIcon className="size-4" />)
+          (indicator ?? (
+            <HugeiconsIcon
+              icon={Tick02Icon}
+              strokeWidth={2.0}
+              className="size-4"
+            />
+          ))
         )}
       </ModelSelectorItemIndicator>
     </DropdownMenuPrimitive.CheckboxItem>
@@ -435,9 +450,19 @@ function ModelSelectorRadioItem({
         wrapWithItemIndicator={!disabled}
       >
         {disabled ? (
-          <LockIcon className="size-4 opacity-50" />
+          <HugeiconsIcon
+            icon={SquareLock01Icon}
+            strokeWidth={2.0}
+            className="size-4 opacity-50"
+          />
         ) : (
-          (indicator ?? <CheckIcon className="size-4" />)
+          (indicator ?? (
+            <HugeiconsIcon
+              icon={Tick02Icon}
+              strokeWidth={2.0}
+              className="size-4"
+            />
+          ))
         )}
       </ModelSelectorItemIndicator>
     </DropdownMenuPrimitive.RadioItem>
@@ -515,7 +540,11 @@ function ModelSelectorSubTrigger({
       {...props}
     >
       {children}
-      <ChevronRightIcon className="ml-auto size-4" />
+      <HugeiconsIcon
+        icon={ArrowRight01Icon}
+        strokeWidth={2.0}
+        className="ml-auto size-4"
+      />
     </DropdownMenuPrimitive.SubTrigger>
   );
 }

@@ -7,7 +7,8 @@ import { createPageTreeRenderer } from "../sidebar/page-tree";
 import { createLinkItemRenderer } from "../sidebar/link-item";
 import { buttonVariants } from "../../ui/button";
 import { SearchToggle } from "../search-toggle";
-import { Sidebar as SidebarIcon } from "lucide-react";
+import { PanelRightIcon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { mergeRefs } from "../../../lib/merge-refs";
 
 const itemVariants = cva(
@@ -90,7 +91,7 @@ export function SidebarContent({
                 }),
               )}
             >
-              <SidebarIcon />
+              <HugeiconsIcon icon={PanelRightIcon} strokeWidth={2.0} className="size-4.5" />
             </Base.SidebarCollapseTrigger>
             <SearchToggle className="rounded-lg" hideIfDisabled />
           </div>

@@ -2,12 +2,12 @@
 
 import type * as PageTree from 'fumadocs-core/page-tree';
 import { type ComponentProps, type HTMLAttributes, type ReactNode, useMemo } from 'react';
-import { Languages, Sidebar as SidebarIcon } from 'lucide-react';
+import { LanguageCircleIcon, PanelRightIcon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { cn } from '../../../lib/cn';
 import { buttonVariants } from '../../ui/button';
 import {
   Sidebar,
-  SidebarCollapseTrigger,
   SidebarContent,
   SidebarDrawer,
   SidebarLinkItem,
@@ -189,7 +189,7 @@ export function DocsLayout({
               </div>
               {i18n && (
                 <LanguageToggle>
-                  <Languages className="size-4.5" />
+                  <HugeiconsIcon icon={LanguageCircleIcon} strokeWidth={2.5} className="size-4.5" />
                   <LanguageToggleText />
                 </LanguageToggle>
               )}
@@ -204,7 +204,7 @@ export function DocsLayout({
                   }),
                 )}
               >
-                <SidebarIcon />
+                <HugeiconsIcon icon={PanelRightIcon} strokeWidth={2.5} className="size-4.5" />
               </SidebarTrigger>
             </div>
             {tabs.length > 0 && <SidebarTabsDropdown options={tabs} />}
@@ -246,7 +246,7 @@ export function DocsLayout({
                         }),
                       )}
                     >
-                      <SidebarIcon />
+                      <HugeiconsIcon icon={PanelRightIcon} strokeWidth={2.5} className="size-4.5" />
                     </SidebarTrigger>
                   )}
                 </LayoutHeader>
