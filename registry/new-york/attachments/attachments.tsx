@@ -14,7 +14,6 @@ import {
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 
-import { mergeRefs } from "@/lib/merge-refs";
 import { cn } from "@/lib/utils";
 
 // ——— Metadata schema (single source) ———
@@ -110,11 +109,13 @@ function fileIconFor(item: AttachmentMeta) {
   return File02Icon;
 }
 
-function inferCardSubtitleMode(data: AttachmentMeta): "size" | "kind" {
+function inferCardSubtitleMode(
+  attachment: AttachmentMeta,
+): "size" | "kind" {
   if (
-    data.size != null &&
-    Number.isFinite(data.size) &&
-    data.size > 0
+    attachment.size != null &&
+    Number.isFinite(attachment.size) &&
+    attachment.size > 0
   ) {
     return "size";
   }
@@ -143,10 +144,10 @@ type AttachmentVariant = NonNullable<
 
 function attachmentShellClass(
   variant: AttachmentVariant,
-  data: AttachmentMeta,
+  attachment: AttachmentMeta,
 ): string {
   if (variant === "box") {
-    if (data.type === "image" && data.url) return "";
+    if (attachment.type === "image" && attachment.url) return "";
     return "bg-gray-100 dark:bg-gray-700";
   }
   return "border-gray-100 bg-gray-100 dark:border-gray-700 dark:bg-gray-700";
@@ -157,6 +158,13 @@ function attachmentShellClass(
 type AttachmentsContextValue = {
   inputRef: React.RefObject<HTMLInputElement | null>;
   openPicker: () => void;
+  attachments: AttachmentMeta[];
+  onAttachmentsChange: (next: AttachmentMeta[]) => void;
+  accept?: string;
+  multiple: boolean;
+  maxFiles?: number;
+  maxSize?: number;
+  disabled: boolean;
 };
 
 const AttachmentsContext =
@@ -174,7 +182,7 @@ function useAttachmentsContext(component: string) {
 
 type AttachmentItemContextValue = {
   variant: AttachmentVariant;
-  data: AttachmentMeta;
+  attachment: AttachmentMeta;
   onRemove?: () => void;
 };
 
@@ -191,46 +199,135 @@ function useAttachmentItemContext(component: string) {
   return ctx;
 }
 
-type AttachmentsProps = {
+export type AttachmentsProps = {
+  attachments: AttachmentMeta[];
+  onAttachmentsChange: (attachments: AttachmentMeta[]) => void;
+  accept?: string;
+  /** @default true */
+  multiple?: boolean;
+  maxFiles?: number;
+  /** Maximum file size per file in bytes */
+  maxSize?: number;
+  disabled?: boolean;
+  /** Fires after the internal file handler (same event; `target.files` still available). */
+  onFileInputChange?: React.ChangeEventHandler<HTMLInputElement>;
   children?: React.ReactNode;
 };
 
-function Attachments({ children }: AttachmentsProps) {
+function Attachments({
+  attachments,
+  onAttachmentsChange,
+  accept,
+  multiple = true,
+  maxFiles,
+  maxSize,
+  disabled = false,
+  onFileInputChange,
+  children,
+}: AttachmentsProps) {
   const inputRef = React.useRef<HTMLInputElement | null>(null);
   const openPicker = React.useCallback(() => {
+    if (disabled) return;
     inputRef.current?.click();
-  }, []);
+  }, [disabled]);
+
+  const handleInputChange = React.useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const list = e.target.files;
+      if (!list?.length || disabled) {
+        e.target.value = "";
+        onFileInputChange?.(e);
+        return;
+      }
+
+      let incoming = Array.from(list);
+      if (!multiple) {
+        incoming = incoming.slice(0, 1);
+      }
+
+      const withinSize =
+        maxSize != null
+          ? incoming.filter((f) => f.size <= maxSize)
+          : incoming;
+
+      const room =
+        maxFiles != null
+          ? Math.max(0, maxFiles - attachments.length)
+          : Number.POSITIVE_INFINITY;
+
+      const take =
+        room === Number.POSITIVE_INFINITY
+          ? withinSize
+          : withinSize.slice(0, room);
+
+      const newMetas = take.map((file) =>
+        toAttachmentMeta(file, {
+          objectUrl: file.type.startsWith("image/")
+            ? URL.createObjectURL(file)
+            : undefined,
+        }),
+      );
+
+      if (newMetas.length > 0) {
+        onAttachmentsChange([...attachments, ...newMetas]);
+      }
+
+      onFileInputChange?.(e);
+      e.target.value = "";
+    },
+    [
+      disabled,
+      multiple,
+      maxSize,
+      maxFiles,
+      attachments,
+      onAttachmentsChange,
+      onFileInputChange,
+    ],
+  );
 
   const value = React.useMemo<AttachmentsContextValue>(
-    () => ({ inputRef, openPicker }),
-    [],
+    () => ({
+      inputRef,
+      openPicker,
+      attachments,
+      onAttachmentsChange,
+      accept,
+      multiple,
+      maxFiles,
+      maxSize,
+      disabled,
+    }),
+    [
+      attachments,
+      onAttachmentsChange,
+      accept,
+      multiple,
+      maxFiles,
+      maxSize,
+      disabled,
+      openPicker,
+    ],
   );
 
   return (
     <AttachmentsContext.Provider value={value}>
+      <input
+        ref={inputRef}
+        type="file"
+        data-slot="attachments-input"
+        className="sr-only"
+        aria-hidden
+        tabIndex={-1}
+        accept={accept}
+        multiple={multiple}
+        disabled={disabled}
+        onChange={handleInputChange}
+      />
       {children}
     </AttachmentsContext.Provider>
   );
 }
-
-type AttachmentInputProps = React.ComponentProps<"input">;
-
-const AttachmentInput = React.forwardRef<HTMLInputElement, AttachmentInputProps>(
-  function AttachmentInput(
-    { className, type = "file", ...props },
-    ref,
-  ) {
-    const { inputRef } = useAttachmentsContext("AttachmentInput");
-    return (
-      <input
-        ref={mergeRefs(inputRef, ref)}
-        type={type}
-        className={cn("sr-only", className)}
-        {...props}
-      />
-    );
-  },
-);
 
 type AttachmentTriggerProps = React.ComponentProps<"button"> & {
   asChild?: boolean;
@@ -243,14 +340,15 @@ function AttachmentTrigger({
   onClick,
   ...props
 }: AttachmentTriggerProps) {
-  const { inputRef } = useAttachmentsContext("AttachmentTrigger");
+  const { inputRef, disabled } = useAttachmentsContext("AttachmentTrigger");
 
   const handleClick = React.useCallback(
     (e: React.MouseEvent<HTMLButtonElement>) => {
       onClick?.(e);
+      if (disabled) return;
       inputRef.current?.click();
     },
-    [onClick, inputRef],
+    [onClick, inputRef, disabled],
   );
 
   if (asChild) {
@@ -317,9 +415,11 @@ type AttachmentProps = Omit<
 > & {
   variant?: AttachmentVariant;
   /** Attachment metadata; drives preview and properties. */
-  data: AttachmentMeta;
+  attachment: AttachmentMeta;
+  /** Upload progress 0–100; shows a bottom bar when set */
+  progress?: number;
   onRemove?: () => void;
-  /** Card secondary line; inferred from `data.size` when omitted. */
+  /** Card secondary line; inferred from `attachment.size` when omitted. */
   cardSubtitle?: "size" | "kind";
   children?: React.ReactNode;
 };
@@ -327,7 +427,8 @@ type AttachmentProps = Omit<
 function Attachment({
   className,
   variant = "box",
-  data,
+  attachment,
+  progress,
   onRemove,
   cardSubtitle: cardSubtitleProp,
   children,
@@ -335,15 +436,17 @@ function Attachment({
 }: AttachmentProps) {
   const cardSubtitle =
     variant === "card"
-      ? (cardSubtitleProp ?? inferCardSubtitleMode(data))
+      ? (cardSubtitleProp ?? inferCardSubtitleMode(attachment))
       : undefined;
 
   const ctxValue = React.useMemo<AttachmentItemContextValue>(
-    () => ({ variant: variant ?? "box", data, onRemove }),
-    [variant, data, onRemove],
+    () => ({ variant: variant ?? "box", attachment, onRemove }),
+    [variant, attachment, onRemove],
   );
 
-  const shell = attachmentShellClass(variant ?? "box", data);
+  const shell = attachmentShellClass(variant ?? "box", attachment);
+  const showProgress =
+    progress != null && Number.isFinite(progress);
 
   const defaultLayout =
     variant === "box" ? (
@@ -385,6 +488,9 @@ function Attachment({
       >
         {variant === "pill" ? <AttachmentPillFadeLayer /> : null}
         {children ?? defaultLayout}
+        {showProgress ? (
+          <AttachmentProgress value={progress} />
+        ) : null}
       </div>
     </AttachmentItemContext.Provider>
   );
@@ -417,9 +523,11 @@ function AttachmentPreview({
   variant: variantProp,
   ...props
 }: AttachmentPreviewProps) {
-  const { variant, data } = useAttachmentItemContext("AttachmentPreview");
+  const { variant, attachment } = useAttachmentItemContext(
+    "AttachmentPreview",
+  );
   const v = variantProp ?? variant;
-  const isImage = data.type === "image" && Boolean(data.url);
+  const isImage = attachment.type === "image" && Boolean(attachment.url);
   const pillPlainIcon =
     v === "pill" && !isImage
       ? "border-0 bg-transparent dark:bg-transparent"
@@ -428,10 +536,10 @@ function AttachmentPreview({
   const iconClass = v === "pill" ? "size-5" : "size-7";
 
   const content = (() => {
-    if (isImage && data.url) {
+    if (isImage && attachment.url) {
       return (
         <img
-          src={data.url}
+          src={attachment.url}
           alt=""
           className="size-full object-cover"
         />
@@ -439,7 +547,7 @@ function AttachmentPreview({
     }
     return (
       <HugeiconsIcon
-        icon={fileIconFor(data)}
+        icon={fileIconFor(attachment)}
         strokeWidth={1.5}
         className={iconClass}
       />
@@ -487,7 +595,7 @@ function AttachmentRemove({
   "aria-label": ariaLabelProp,
   ...props
 }: AttachmentRemoveProps) {
-  const { variant, data, onRemove } = useAttachmentItemContext(
+  const { variant, attachment, onRemove } = useAttachmentItemContext(
     "AttachmentRemove",
   );
   const position =
@@ -495,7 +603,7 @@ function AttachmentRemove({
     (variant === "box" ? "corner" : "center-end");
 
   const ariaLabel =
-    ariaLabelProp ?? `Remove ${data.name ?? "attachment"}`;
+    ariaLabelProp ?? `Remove ${attachment.name ?? "attachment"}`;
 
   const handleClick = React.useCallback(
     (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -564,14 +672,14 @@ function AttachmentProperty({
   className,
   ...props
 }: AttachmentPropertyProps) {
-  const { data } = useAttachmentItemContext("AttachmentProperty");
+  const { attachment } = useAttachmentItemContext("AttachmentProperty");
   let text: string;
   if (mode === "name") {
-    text = data.name ?? "";
+    text = attachment.name ?? "";
   } else if (mode === "size") {
-    text = formatBytes(data.size) ?? "—";
+    text = formatBytes(attachment.size) ?? "—";
   } else {
-    text = kindLabel(data) ?? "—";
+    text = kindLabel(attachment) ?? "—";
   }
 
   const isTitle = mode === "name";
@@ -621,7 +729,6 @@ function AttachmentProgress({
 }
 
 Attachments.displayName = "Attachments";
-AttachmentInput.displayName = "AttachmentInput";
 AttachmentTrigger.displayName = "AttachmentTrigger";
 AttachmentList.displayName = "AttachmentList";
 Attachment.displayName = "Attachment";
@@ -633,7 +740,6 @@ AttachmentProgress.displayName = "AttachmentProgress";
 
 export {
   Attachments,
-  AttachmentInput,
   AttachmentTrigger,
   AttachmentList,
   Attachment,

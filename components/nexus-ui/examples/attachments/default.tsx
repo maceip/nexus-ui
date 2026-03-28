@@ -1,7 +1,6 @@
 import {
   Attachment,
   AttachmentList,
-  Attachments,
   type AttachmentMeta,
 } from "@/components/nexus-ui/attachments";
 
@@ -76,37 +75,35 @@ const pillAttachments: AttachmentMeta[] = [
 function AttachmentsDefault() {
   return (
     <div className="flex flex-col items-center justify-center gap-4">
-      <Attachments>
-        <AttachmentList>
-          {boxAttachments.map((item) => (
-            <Attachment
-              key={`box-${item.name}-${item.type}-${item.mimeType}`}
-              variant="box"
-              data={item}
-            />
-          ))}
-        </AttachmentList>
+      <AttachmentList>
+        {boxAttachments.map((item) => (
+          <Attachment
+            key={`box-${item.name}-${item.type}-${item.mimeType}`}
+            variant="box"
+            attachment={item}
+          />
+        ))}
+      </AttachmentList>
 
-        <AttachmentList>
-          {cardAttachments.map((item) => (
-            <Attachment
-              key={`card-${item.name}-${item.mimeType}`}
-              variant="card"
-              data={item}
-            />
-          ))}
-        </AttachmentList>
+      <AttachmentList>
+        {cardAttachments.map((item) => (
+          <Attachment
+            key={`card-${item.name}-${item.mimeType}`}
+            variant="card"
+            attachment={item}
+          />
+        ))}
+      </AttachmentList>
 
-        <AttachmentList>
-          {pillAttachments.map((item) => (
-            <Attachment
-              key={`pill-${item.name}-${item.mimeType}`}
-              variant="pill"
-              data={item}
-            />
-          ))}
-        </AttachmentList>
-      </Attachments>
+      <AttachmentList>
+        {pillAttachments.map((item) => (
+          <Attachment
+            key={`pill-${item.name}-${item.mimeType}`}
+            variant="pill"
+            attachment={item}
+          />
+        ))}
+      </AttachmentList>
     </div>
   );
 }
