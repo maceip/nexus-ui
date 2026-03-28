@@ -6,6 +6,8 @@
     "skills",
     "roadmap",
     "---Components---",
+
+    "components/attachments",
     "components/model-selector",
     "components/prompt-input",
     "components/suggestions"

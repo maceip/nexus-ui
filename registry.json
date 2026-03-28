@@ -34,11 +34,35 @@
       ]
     },
     {
+      "name": "attachments",
+      "type": "registry:ui",
+      "title": "Attachments",
+      "description": "Composable file-attachment UI for inputs and messages with box, pill, and card variants.",
+      "dependencies": [
+        "@radix-ui/react-slot",
+        "class-variance-authority",
+        "@hugeicons/react",
+        "@hugeicons/core-free-icons"
+      ],
+      "registryDependencies": [],
+      "files": [
+        {
+          "path": "registry/new-york/attachments/attachments.tsx",
+          "type": "registry:file",
+          "target": "~/components/nexus-ui/attachments.tsx"
+        }
+      ]
+    },
+    {
       "name": "model-selector",
       "type": "registry:ui",
       "title": "Model Selector",
       "description": "A dropdown for selecting an AI model with radio groups, sub-menus, and custom items.",
-      "dependencies": ["radix-ui", "@hugeicons/react", "@hugeicons/core-free-icons"],
+      "dependencies": [
+        "radix-ui",
+        "@hugeicons/react",
+        "@hugeicons/core-free-icons"
+      ],
       "registryDependencies": [],
       "files": [
         {

@@ -1,0 +1,21 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "attachments",
+  "title": "Attachments",
+  "description": "Composable file-attachment UI for inputs and messages with box, pill, and card variants.",
+  "dependencies": [
+    "@radix-ui/react-slot",
+    "class-variance-authority",
+    "@hugeicons/react",
+    "@hugeicons/core-free-icons"
+  ],
+  "registryDependencies": [],
+  "files": [
+    {
+      "path": "registry/new-york/attachments/attachments.tsx",
+      "type": "registry:file",
+      "target": "~/components/nexus-ui/attachments.tsx"
+    }
+  ],
+  "type": "registry:ui"
+}
