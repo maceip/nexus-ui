@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { PlusSignIcon } from "@hugeicons/core-free-icons";
+import { ArrowUp02Icon, PlusSignIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 
 import {
@@ -61,26 +61,35 @@ function AttachmentsWithPromptInput() {
     );
   }, [syncAttachments]);
 
+  const handleSubmit = React.useCallback(
+    (value: string) => {
+      const trimmed = value.trim();
+      if (!trimmed && attachmentsRef.current.length === 0) return;
+      setMessage("");
+      syncAttachments([]);
+    },
+    [syncAttachments],
+  );
+
+  const canSend =
+    message.trim().length > 0 || attachments.length > 0;
+
   return (
     <div className="mx-auto w-full max-w-xl">
-      <PromptInput
-        onSubmit={() => {
-          setMessage("");
-          syncAttachments([]);
-        }}
-      >
-        <Attachments
+       <Attachments
           attachments={attachments}
           onAttachmentsChange={syncAttachments}
           accept="*/*"
           multiple
-        >
+        > 
+        <PromptInput onSubmit={handleSubmit}>
+      
           {attachments.length > 0 ? (
-            <AttachmentList className="px-3 pt-3">
+            <AttachmentList className="min-h-0 flex-nowrap justify-start overflow-x-auto overflow-y-hidden px-4 pt-4">
               {attachments.map((item) => (
                 <Attachment
                   key={attachmentKey(item)}
-                  variant="pill"
+                  variant="card"
                   attachment={item}
                   onRemove={() => removeAttachment(item)}
                 />
@@ -112,16 +121,24 @@ function AttachmentsWithPromptInput() {
               </PromptInputAction>
             </PromptInputActionGroup>
             <PromptInputActionGroup>
-              <Button
-                type="submit"
-                className="h-9 rounded-full px-4 text-sm font-medium"
-              >
-                Send
-              </Button>
+              <PromptInputAction asChild>
+                <Button
+                  type="button"
+                  className="size-8 cursor-pointer rounded-full bg-gray-700 text-white transition-transform hover:bg-gray-800 active:scale-97 disabled:opacity-70 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200"
+                  disabled={!canSend}
+                  onClick={() => handleSubmit(message)}
+                >
+                  <HugeiconsIcon
+                    icon={ArrowUp02Icon}
+                    strokeWidth={2.0}
+                    className="size-4"
+                  />
+                </Button>
+              </PromptInputAction>
             </PromptInputActionGroup>
           </PromptInputActions>
-        </Attachments>
-      </PromptInput>
+      </PromptInput>  
+       </Attachments>
     </div>
   );
 }

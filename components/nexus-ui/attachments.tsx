@@ -370,7 +370,7 @@ function AttachmentList({ className, role, ...props }: AttachmentListProps) {
       data-slot="attachment-list"
       role={role ?? "list"}
       className={cn(
-        "flex w-full max-w-full min-w-0 flex-wrap items-center justify-center gap-2 overflow-x-auto overscroll-x-contain pb-0.5 [scrollbar-width:thin]",
+        "flex w-full max-w-full min-w-0 flex-wrap items-center justify-center gap-2.5 overflow-x-auto overscroll-x-contain pb-0.5 [scrollbar-width:thin] [scrollbar-color:var(--scrollbar-thumb)_transparent] [&::-webkit-scrollbar-thumb]:border-transparent [&::-webkit-scrollbar-track]:bg-transparent",
         className,
       )}
       {...props}
@@ -585,7 +585,7 @@ function AttachmentRemove({
   const { variant, attachment, onRemove } =
     useAttachmentItemContext("AttachmentRemove");
   const position =
-    positionProp ?? (variant === "box" ? "corner" : "center-end");
+    positionProp ?? (variant === "pill" ? "center-end" : "corner");
 
   const ariaLabel =
     ariaLabelProp ?? `Remove ${attachment.name ?? "attachment"}`;
