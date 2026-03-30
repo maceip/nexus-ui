@@ -2,7 +2,7 @@
   "$schema": "https://ui.shadcn.com/schema/registry-item.json",
   "name": "attachments",
   "title": "Attachments",
-  "description": "Composable file-attachment UI for inputs and messages with box, pill, and card variants.",
+  "description": "Composable file-attachment UI for inputs and messages with compact, inline, and detailed variants.",
   "dependencies": [
     "@radix-ui/react-slot",
     "class-variance-authority",

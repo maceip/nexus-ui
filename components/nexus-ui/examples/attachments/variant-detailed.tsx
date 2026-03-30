@@ -30,18 +30,19 @@ const items: AttachmentMeta[] = [
   {
     type: "file",
     name: "DEMO.pptx",
-    mimeType: "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+    mimeType:
+      "application/vnd.openxmlformats-officedocument.presentationml.presentation",
   },
 ];
 
-function AttachmentsVariantCard() {
+function AttachmentsVariantDetailed() {
   return (
     <div className="flex flex-col items-center justify-center gap-4">
       <AttachmentList>
         {items.map((item) => (
           <Attachment
             key={`${item.name}-${item.mimeType}`}
-            variant="card"
+            variant="detailed"
             attachment={item}
           />
         ))}
@@ -50,4 +51,4 @@ function AttachmentsVariantCard() {
   );
 }
 
-export default AttachmentsVariantCard;
+export default AttachmentsVariantDetailed;

@@ -33,14 +33,14 @@ const items: AttachmentMeta[] = [
   },
 ];
 
-function AttachmentsVariantPill() {
+function AttachmentsVariantInline() {
   return (
     <div className="flex flex-col items-center justify-center gap-4">
       <AttachmentList>
         {items.map((item) => (
           <Attachment
             key={`${item.name}-${item.mimeType}`}
-            variant="pill"
+            variant="inline"
             attachment={item}
           />
         ))}
@@ -49,4 +49,4 @@ function AttachmentsVariantPill() {
   );
 }
 
-export default AttachmentsVariantPill;
+export default AttachmentsVariantInline;

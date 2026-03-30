@@ -26,7 +26,7 @@ function AttachmentsDefault() {
         {items.map((item) => (
           <Attachment
             key={`${item.name}-${item.type}-${item.mimeType}`}
-            variant="box"
+            variant="compact"
             attachment={item}
           />
         ))}

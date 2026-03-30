@@ -207,7 +207,7 @@ function AttachmentsWithPromptInput() {
                 return (
                   <Attachment
                     key={key}
-                    variant="card"
+                    variant="detailed"
                     attachment={item}
                     progress={progress}
                     onRemove={() => removeAttachment(item)}

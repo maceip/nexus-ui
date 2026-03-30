@@ -15,7 +15,7 @@ function AttachmentsWithProgress() {
   return (
     <div className="flex flex-col items-center justify-center gap-4">
       <AttachmentList>
-        <Attachment variant="card" attachment={item} progress={62} />
+        <Attachment variant="detailed" attachment={item} progress={62} />
       </AttachmentList>
     </div>
   );

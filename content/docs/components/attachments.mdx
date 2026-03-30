@@ -4,12 +4,12 @@ description: Composable file attachments for chat inputs and messages with previ
 ---
 
 import AttachmentsDefault from "@/components/nexus-ui/examples/attachments/default";
-import AttachmentsVariantCard from "@/components/nexus-ui/examples/attachments/variant-card";
-import AttachmentsVariantPill from "@/components/nexus-ui/examples/attachments/variant-pill";
+import AttachmentsVariantDetailed from "@/components/nexus-ui/examples/attachments/variant-detailed";
+import AttachmentsVariantInline from "@/components/nexus-ui/examples/attachments/variant-inline";
 import AttachmentsWithPromptInput from "@/components/nexus-ui/examples/attachments/with-prompt-input";
 import AttachmentsWithProgress from "@/components/nexus-ui/examples/attachments/with-progress";
 
-Composable attachment UI for chat and messaging: thumbnails or type icons, remove actions, optional upload progress, and a controlled `Attachments` root that owns the hidden file input and pairs with `AttachmentTrigger`.
+Composable attachment UI for chat and messaging: thumbnails or type icons, remove actions, optional upload progress, and a controlled `Attachments` root that owns the hidden file input and pairs with `AttachmentTrigger`. The demo above uses the default **`compact`** (square) variant; **inline** and **detailed** layouts are shown below.
 
 <DemoWithCode src="components/nexus-ui/examples/attachments/default.tsx">
   <AttachmentsDefault />
@@ -81,7 +81,7 @@ import {
     {attachments.map((a) => (
       <Attachment
         key={`${a.name}-${a.size}`}
-        variant="pill"
+        variant="inline"
         attachment={a}
         onRemove={() =>
           setAttachments((prev) => prev.filter((x) => x !== a))
@@ -96,20 +96,20 @@ import {
 
 ## Examples
 
-### Card variant
+### Detailed variant
 
 Wider tile with thumbnail, file name, and a second line: formatted **size** when **`attachment.size`** is set, otherwise a **kind** label inferred from MIME type or extension.
 
-<DemoWithCode src="components/nexus-ui/examples/attachments/variant-card.tsx">
-  <AttachmentsVariantCard />
+<DemoWithCode src="components/nexus-ui/examples/attachments/variant-detailed.tsx">
+  <AttachmentsVariantDetailed />
 </DemoWithCode>
 
-### Pill variant
+### Inline variant
 
-Compact inline chip with thumbnail and file name. A hover fade sits over the trailing edge so long names can share space with the remove control.
+Compact horizontal chip with thumbnail and file name. A hover fade sits over the trailing edge so long names can share space with the remove control.
 
-<DemoWithCode src="components/nexus-ui/examples/attachments/variant-pill.tsx">
-  <AttachmentsVariantPill />
+<DemoWithCode src="components/nexus-ui/examples/attachments/variant-inline.tsx">
+  <AttachmentsVariantInline />
 </DemoWithCode>
 
 ### Upload progress
@@ -236,7 +236,7 @@ export default function ChatWithAttachments() {
               {attachments.map((item) => (
                 <Attachment
                   key={attachmentKey(item)}
-                  variant="pill"
+                  variant="inline"
                   attachment={item}
                   onRemove={() =>
                     setAttachments((prev) =>
@@ -400,10 +400,10 @@ One attachment tile. Chooses a default layout from **`variant`** unless **`child
 <TypeTable
   type={{
     variant: {
-      type: '"box" | "card" | "pill"',
-      default: '"box"',
+      type: '"compact" | "inline" | "detailed"',
+      default: '"compact"',
       description:
-        "`box`: square preview; `card`: row with metadata; `pill`: compact chip with optional fade for long names.",
+        "`compact`: square preview; `inline`: horizontal chip with optional fade for long names; `detailed`: row with metadata.",
     },
     attachment: {
       type: "AttachmentMeta",
@@ -417,10 +417,10 @@ One attachment tile. Chooses a default layout from **`variant`** unless **`child
       type: "() => void",
       description: "Called when the default remove control is activated.",
     },
-    cardSubtitle: {
+    detailedSubtitle: {
       type: '"size" | "kind"',
       description:
-        "`card` only. Second line of text; when omitted, inferred from whether `attachment.size` is a positive number.",
+        "`detailed` only. Second line of text; when omitted, inferred from whether `attachment.size` is a positive number.",
     },
     children: {
       type: "React.ReactNode",
@@ -440,7 +440,7 @@ Preview region inside an **`Attachment`**: raster image when **`thumbnailUrl`** 
 <TypeTable
   type={{
     variant: {
-      type: '"box" | "card" | "pill"',
+      type: '"compact" | "inline" | "detailed"',
       description:
         "Optional override for preview framing; defaults to the parent `Attachment` variant.",
     },
@@ -465,7 +465,7 @@ Remove control for the current attachment. Default **`aria-label`** uses **`atta
     position: {
       type: '"corner" | "center-end"',
       description:
-        "Icon position; defaults to `corner` for `box` and `center-end` for `card` / `pill`.",
+        "Icon position; defaults to `corner` for `compact` and `detailed`, and `center-end` for `inline`.",
     },
     className: {
       type: "string",
@@ -480,7 +480,7 @@ Remove control for the current attachment. Default **`aria-label`** uses **`atta
 
 ### AttachmentInfo
 
-Column wrapper for card title and subtitle text. Pure layout; extends **`React.HTMLAttributes<HTMLDivElement>`**.
+Column wrapper for title and subtitle text in the **detailed** layout. Pure layout; extends **`React.HTMLAttributes<HTMLDivElement>`**.
 
 <TypeTable
   type={{

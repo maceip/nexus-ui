@@ -99,7 +99,7 @@ function iconForAttachmentType(type: AttachmentMeta["type"]) {
   }
 }
 
-function inferCardSubtitleMode(attachment: AttachmentMeta): "size" | "kind" {
+function inferDetailedSubtitleMode(attachment: AttachmentMeta): "size" | "kind" {
   if (
     attachment.size != null &&
     Number.isFinite(attachment.size) &&
@@ -115,13 +115,16 @@ const attachmentVariants = cva(
   {
     variants: {
       variant: {
-        box: "relative flex size-15 shrink-0 items-center justify-center",
-        pill: "relative flex h-8 w-auto min-w-0 max-w-full shrink-0 items-center justify-start p-1 pr-2",
-        card: "relative flex h-15 w-[181px] max-w-full shrink-0 items-center justify-start p-2",
+        compact:
+          "relative flex size-15 shrink-0 items-center justify-center",
+        inline:
+          "relative flex h-8 w-auto min-w-0 max-w-full shrink-0 items-center justify-start p-1 pr-2",
+        detailed:
+          "relative flex h-15 w-[181px] max-w-full shrink-0 items-center justify-start p-2",
       },
     },
     defaultVariants: {
-      variant: "box",
+      variant: "compact",
     },
   },
 );
@@ -134,7 +137,7 @@ function attachmentShellClass(
   variant: AttachmentVariant,
   attachment: AttachmentMeta,
 ): string {
-  if (variant === "box") {
+  if (variant === "compact") {
     const hasRasterPreview =
       Boolean(attachment.thumbnailUrl) ||
       (attachment.type === "image" && Boolean(attachment.url));
@@ -378,14 +381,14 @@ function AttachmentList({ className, role, ...props }: AttachmentListProps) {
   );
 }
 
-function AttachmentPillFadeLayer({
+function AttachmentInlineFadeLayer({
   className,
   ...props
 }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
       aria-hidden
-      data-slot="attachment-pill-fade"
+      data-slot="attachment-inline-fade"
       className={cn(
         "pointer-events-none absolute top-1/2 right-0 h-8 w-10 -translate-y-1/2 bg-linear-to-l from-gray-100 from-65% to-transparent opacity-0 transition-opacity group-hover:opacity-100 dark:from-gray-700",
         className,
@@ -405,8 +408,8 @@ type AttachmentProps = Omit<
   /** Upload progress 0–100; shows a bottom bar when set */
   progress?: number;
   onRemove?: () => void;
-  /** Card secondary line; inferred from `attachment.size` when omitted. */
-  cardSubtitle?: "size" | "kind";
+  /** Detailed layout: second line; inferred from `attachment.size` when omitted. */
+  detailedSubtitle?: "size" | "kind";
   /**
    * When set, replaces the default layout.
    */
@@ -415,34 +418,34 @@ type AttachmentProps = Omit<
 
 function Attachment({
   className,
-  variant = "box",
+  variant = "compact",
   attachment,
   progress,
   onRemove,
-  cardSubtitle: cardSubtitleProp,
+  detailedSubtitle: detailedSubtitleProp,
   children,
   ...props
 }: AttachmentProps) {
-  const cardSubtitle =
-    variant === "card"
-      ? (cardSubtitleProp ?? inferCardSubtitleMode(attachment))
+  const detailedSubtitle =
+    variant === "detailed"
+      ? (detailedSubtitleProp ?? inferDetailedSubtitleMode(attachment))
       : undefined;
 
   const ctxValue = React.useMemo<AttachmentItemContextValue>(
-    () => ({ variant: variant ?? "box", attachment, onRemove }),
+    () => ({ variant: variant ?? "compact", attachment, onRemove }),
     [variant, attachment, onRemove],
   );
 
-  const shell = attachmentShellClass(variant ?? "box", attachment);
+  const shell = attachmentShellClass(variant ?? "compact", attachment);
   const showProgress = progress != null && Number.isFinite(progress);
 
   const defaultLayout =
-    variant === "box" ? (
+    variant === "compact" ? (
       <>
         <AttachmentRemove />
         <AttachmentPreview />
       </>
-    ) : variant === "card" ? (
+    ) : variant === "detailed" ? (
       <>
         <AttachmentRemove />
         <div className="flex min-w-0 items-center gap-2">
@@ -450,7 +453,7 @@ function Attachment({
           <AttachmentInfo>
             <AttachmentProperty as="name" />
             <AttachmentProperty
-              as={cardSubtitle === "size" ? "size" : "kind"}
+              as={detailedSubtitle === "size" ? "size" : "kind"}
             />
           </AttachmentInfo>
         </div>
@@ -474,7 +477,7 @@ function Attachment({
         className={cn(attachmentVariants({ variant }), shell, className)}
         {...props}
       >
-        {variant === "pill" ? <AttachmentPillFadeLayer /> : null}
+        {variant === "inline" ? <AttachmentInlineFadeLayer /> : null}
         {children ?? defaultLayout}
         {showProgress ? <AttachmentProgress value={progress} /> : null}
       </div>
@@ -487,13 +490,16 @@ const attachmentPreviewVariants = cva(
   {
     variants: {
       variant: {
-        box: "absolute inset-0 size-full rounded-[inherit] border-0 bg-transparent dark:bg-transparent",
-        pill: "size-6 rounded-[4px] border border-gray-200 dark:border-gray-600",
-        card: "size-11 rounded-[6px] border border-gray-200 dark:border-gray-600",
+        compact:
+          "absolute inset-0 size-full rounded-[inherit] border-0 bg-transparent dark:bg-transparent",
+        inline:
+          "size-6 rounded-[4px] border border-gray-200 dark:border-gray-600",
+        detailed:
+          "size-11 rounded-[6px] border border-gray-200 dark:border-gray-600",
       },
     },
     defaultVariants: {
-      variant: "box",
+      variant: "compact",
     },
   },
 );
@@ -517,12 +523,12 @@ function AttachmentPreview({
       ? attachment.url
       : undefined);
   const showRaster = Boolean(rasterSrc);
-  const pillPlainIcon =
-    v === "pill" && !showRaster
+  const inlinePlainIcon =
+    v === "inline" && !showRaster
       ? "border-0 bg-transparent dark:bg-transparent"
       : "";
 
-  const iconClass = v === "pill" ? "size-5" : "size-7";
+  const iconClass = v === "inline" ? "size-5" : "size-7";
 
   const content = (() => {
     if (rasterSrc) {
@@ -547,7 +553,7 @@ function AttachmentPreview({
       data-slot="attachment-preview"
       className={cn(
         attachmentPreviewVariants({ variant: v }),
-        pillPlainIcon,
+        inlinePlainIcon,
         className,
         "relative",
       )}
@@ -591,7 +597,7 @@ function AttachmentRemove({
   const { variant, attachment, onRemove } =
     useAttachmentItemContext("AttachmentRemove");
   const position =
-    positionProp ?? (variant === "pill" ? "center-end" : "corner");
+    positionProp ?? (variant === "inline" ? "center-end" : "corner");
 
   const ariaLabel =
     ariaLabelProp ?? `Remove ${attachment.name ?? "attachment"}`;
