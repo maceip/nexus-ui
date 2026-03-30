@@ -176,7 +176,7 @@ function DesktopNav({
         Docs
       </Link>
       <Link
-        href="/docs/components/prompt-input"
+        href="/docs/components/attachments"
         className={cn(
           "cursor-pointer rounded-md px-3 py-2 text-sm transition-colors",
           isComponents ? "text-gray-100" : "text-gray-400 hover:text-gray-200",

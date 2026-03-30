@@ -133,7 +133,7 @@ export function PageTOCPopoverTrigger({
         max={1}
         className={cn("shrink-0", open && "text-fd-primary")}
       />
-      <span className="grid flex-1 *:col-start-1 *:row-start-1 *:my-auto">
+      <span className="grid flex-1 *:col-start-1 *:row-start-1 *:my-auto pl-2">
         <span
           className={cn(
             "truncate transition-[opacity,translate,color]",
