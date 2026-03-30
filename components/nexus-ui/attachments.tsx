@@ -526,7 +526,12 @@ function AttachmentPreview({
 
   const content = (() => {
     if (rasterSrc) {
-      return <img src={rasterSrc} alt="" className="size-full object-cover" />;
+      return (
+        <>
+          <div className="absolute inset-0 z-0 size-full animate-pulse bg-gray-200 dark:bg-gray-900" />
+          <img src={rasterSrc} alt="" className="relative z-1 size-full object-cover" />
+        </>
+      );
     }
     return (
       <HugeiconsIcon
@@ -544,6 +549,7 @@ function AttachmentPreview({
         attachmentPreviewVariants({ variant: v }),
         pillPlainIcon,
         className,
+        "relative",
       )}
       {...props}
     >

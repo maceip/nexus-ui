@@ -112,20 +112,20 @@ Compact inline chip with thumbnail and file name. A hover fade sits over the tra
   <AttachmentsVariantPill />
 </DemoWithCode>
 
-### With Prompt Input
-
-Wrap **[Prompt Input](/docs/components/prompt-input) with `Attachments`** (not the other way around) so **`AttachmentTrigger`**, the list, and the textarea stay in one **`Attachments`** tree. That layout also scales to **drag-and-drop on a wider chat or page shell**: you can lift **`Attachments`** around the whole column and still reuse **`onAttachmentsChange`** / **`toAttachmentMeta`** for drops outside the prompt box.
-
-<DemoWithCode src="components/nexus-ui/examples/attachments/with-prompt-input.tsx">
-  <AttachmentsWithPromptInput />
-</DemoWithCode>
-
 ### Upload progress
 
 Pass **`progress`** (`0`–`100`) on **`Attachment`** to show a thin bar along the bottom of the tile. Omit it when the upload finishes.
 
 <DemoWithCode src="components/nexus-ui/examples/attachments/with-progress.tsx">
   <AttachmentsWithProgress />
+</DemoWithCode>
+
+### With Prompt Input
+
+Wrap **[Prompt Input](/docs/components/prompt-input) with `Attachments`** (not the other way around) so **`AttachmentTrigger`**, the list, and the textarea stay in one **`Attachments`** tree. That layout also scales to **drag-and-drop on a wider chat or page shell**: you can lift **`Attachments`** around the whole column and still reuse **`onAttachmentsChange`** / **`toAttachmentMeta`** for drops outside the prompt box.
+
+<DemoWithCode src="components/nexus-ui/examples/attachments/with-prompt-input.tsx">
+  <AttachmentsWithPromptInput />
 </DemoWithCode>
 
 ## Vercel AI SDK Integration

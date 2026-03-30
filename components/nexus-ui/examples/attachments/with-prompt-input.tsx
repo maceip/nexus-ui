@@ -1,7 +1,11 @@
 "use client";
 
 import * as React from "react";
-import { ArrowUp02Icon, PlusSignIcon } from "@hugeicons/core-free-icons";
+import {
+  ArrowUp02Icon,
+  PlusSignIcon,
+  SquareIcon,
+} from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 
 import {
@@ -23,9 +27,12 @@ function attachmentKey(a: AttachmentMeta) {
   return `${a.name ?? ""}-${a.size ?? ""}-${a.mimeType ?? ""}-${a.url ?? ""}`;
 }
 
+type InputStatus = "idle" | "loading" | "error" | "submitted";
+
 function AttachmentsWithPromptInput() {
   const [message, setMessage] = React.useState("");
   const [attachments, setAttachments] = React.useState<AttachmentMeta[]>([]);
+  const [status, setStatus] = React.useState<InputStatus>("idle");
   /** Per-attachment demo progress; only keys for newly added files are set. */
   const [progressByKey, setProgressByKey] = React.useState<
     Record<string, number>
@@ -165,14 +172,21 @@ function AttachmentsWithPromptInput() {
 
   const handleSubmit = React.useCallback(
     (value: string) => {
+      if (status === "loading") return;
       const trimmed = value.trim();
       if (!trimmed && attachmentsRef.current.length === 0) return;
       setMessage("");
       syncAttachments([]);
+      setStatus("loading");
+      window.setTimeout(() => {
+        setStatus("submitted");
+        window.setTimeout(() => setStatus("idle"), 800);
+      }, 2500);
     },
-    [syncAttachments],
+    [syncAttachments, status],
   );
 
+  const isLoading = status === "loading";
   const canSend = message.trim().length > 0 || attachments.length > 0;
 
   return (
@@ -206,6 +220,7 @@ function AttachmentsWithPromptInput() {
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             placeholder="Message with attachments…"
+            disabled={isLoading}
           />
           <PromptInputActions>
             <PromptInputActionGroup>
@@ -231,14 +246,22 @@ function AttachmentsWithPromptInput() {
                 <Button
                   type="button"
                   className="size-8 cursor-pointer rounded-full bg-gray-700 text-white transition-transform hover:bg-gray-800 active:scale-97 disabled:opacity-70 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200"
-                  disabled={!canSend}
+                  disabled={isLoading || !canSend}
                   onClick={() => handleSubmit(message)}
                 >
-                  <HugeiconsIcon
-                    icon={ArrowUp02Icon}
-                    strokeWidth={2.0}
-                    className="size-4"
-                  />
+                  {isLoading ? (
+                    <HugeiconsIcon
+                      icon={SquareIcon}
+                      strokeWidth={2.0}
+                      className="size-3.5 fill-current"
+                    />
+                  ) : (
+                    <HugeiconsIcon
+                      icon={ArrowUp02Icon}
+                      strokeWidth={2.0}
+                      className="size-4"
+                    />
+                  )}
                 </Button>
               </PromptInputAction>
             </PromptInputActionGroup>
