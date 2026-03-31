@@ -99,7 +99,9 @@ function iconForAttachmentType(type: AttachmentMeta["type"]) {
   }
 }
 
-function inferDetailedSubtitleMode(attachment: AttachmentMeta): "size" | "kind" {
+function inferDetailedSubtitleMode(
+  attachment: AttachmentMeta,
+): "size" | "kind" {
   if (
     attachment.size != null &&
     Number.isFinite(attachment.size) &&
@@ -115,12 +117,11 @@ const attachmentVariants = cva(
   {
     variants: {
       variant: {
-        compact:
-          "relative flex size-15 shrink-0 items-center justify-center",
+        compact: "relative flex size-15 shrink-0 items-center justify-center",
         inline:
-          "relative flex h-8 w-auto min-w-0 max-w-full shrink-0 items-center justify-start p-1 pr-2",
+          "relative flex h-8 w-auto min-w-0 max-w-[200px] shrink-0 items-center justify-start p-1 pr-2",
         detailed:
-          "relative flex h-15 w-[181px] max-w-full shrink-0 items-center justify-start p-2",
+          "relative flex h-15 w-auto min-w-[200px] max-w-[250px] shrink-0 items-center justify-start p-2 pr-3",
       },
     },
     defaultVariants: {
@@ -373,7 +374,7 @@ function AttachmentList({ className, role, ...props }: AttachmentListProps) {
       data-slot="attachment-list"
       role={role ?? "list"}
       className={cn(
-        "flex w-full max-w-full min-w-0 flex-wrap items-center justify-center gap-2 overflow-x-auto overscroll-x-contain pb-0.5 [scrollbar-width:thin]",
+        "flex w-full max-w-full min-w-0 flex-wrap items-center justify-center gap-2.5 overflow-x-auto overscroll-x-contain pb-0.5 [scrollbar-color:var(--scrollbar-thumb)_transparent] [scrollbar-width:thin] [&::-webkit-scrollbar-thumb]:border-transparent [&::-webkit-scrollbar-track]:bg-transparent",
         className,
       )}
       {...props}
@@ -381,16 +382,22 @@ function AttachmentList({ className, role, ...props }: AttachmentListProps) {
   );
 }
 
-function AttachmentInlineFadeLayer({
+type AttachmentOverflowFadeLayerProps = React.HTMLAttributes<HTMLDivElement> & {
+  variant: "inline" | "detailed";
+};
+
+function AttachmentOverflowFadeLayer({
   className,
+  variant,
   ...props
-}: React.HTMLAttributes<HTMLDivElement>) {
+}: AttachmentOverflowFadeLayerProps) {
   return (
     <div
       aria-hidden
-      data-slot="attachment-inline-fade"
+      data-slot="attachment-overflow-fade"
       className={cn(
-        "pointer-events-none absolute top-1/2 right-0 h-8 w-10 -translate-y-1/2 bg-linear-to-l from-gray-100 from-65% to-transparent opacity-0 transition-opacity group-hover:opacity-100 dark:from-gray-700",
+        "pointer-events-none absolute top-1/2 right-0 w-10 -translate-y-1/2 bg-linear-to-l from-gray-100 from-65% to-transparent opacity-0 transition-opacity group-hover:opacity-100 dark:from-gray-700",
+        variant === "detailed" ? "h-15" : "h-8",
         className,
       )}
       {...props}
@@ -477,7 +484,9 @@ function Attachment({
         className={cn(attachmentVariants({ variant }), shell, className)}
         {...props}
       >
-        {variant === "inline" ? <AttachmentInlineFadeLayer /> : null}
+        {variant === "inline" || variant === "detailed" ? (
+          <AttachmentOverflowFadeLayer variant={variant} />
+        ) : null}
         {children ?? defaultLayout}
         {showProgress ? <AttachmentProgress value={progress} /> : null}
       </div>
@@ -510,42 +519,6 @@ type AttachmentPreviewProps = Omit<
 > &
   Partial<VariantProps<typeof attachmentPreviewVariants>>;
 
-/** Raster preview: pulse placeholder until `img` fires load (new mount per `src` via parent key). */
-function AttachmentRasterImage({ src }: { src: string }) {
-  const [loaded, setLoaded] = React.useState(false);
-  const imgRef = React.useRef<HTMLImageElement | null>(null);
-
-  React.useLayoutEffect(() => {
-    const el = imgRef.current;
-    if (el?.complete && el.naturalWidth > 0) {
-      setLoaded(true);
-    }
-  }, []);
-
-  return (
-    <div className="relative size-full min-h-0 overflow-hidden rounded-[inherit]">
-      <div
-        aria-hidden
-        className={cn(
-          "absolute inset-0 z-0 animate-pulse bg-gray-200 dark:bg-gray-700",
-          loaded && "hidden",
-        )}
-      />
-      <img
-        ref={imgRef}
-        src={src}
-        alt=""
-        className={cn(
-          "relative z-10 size-full object-cover transition-opacity duration-200",
-          loaded ? "opacity-100" : "opacity-0",
-        )}
-        onLoad={() => setLoaded(true)}
-        onError={() => setLoaded(true)}
-      />
-    </div>
-  );
-}
-
 function AttachmentPreview({
   className,
   variant: variantProp,
@@ -568,7 +541,16 @@ function AttachmentPreview({
 
   const content = (() => {
     if (rasterSrc) {
-      return <AttachmentRasterImage key={rasterSrc} src={rasterSrc} />;
+      return (
+        <>
+          <div className="absolute inset-0 z-0 size-full animate-pulse bg-gray-200 dark:bg-gray-900" />
+          <img
+            src={rasterSrc}
+            alt=""
+            className="relative z-1 size-full object-cover"
+          />
+        </>
+      );
     }
     return (
       <HugeiconsIcon
@@ -586,6 +568,7 @@ function AttachmentPreview({
         attachmentPreviewVariants({ variant: v }),
         inlinePlainIcon,
         className,
+        "relative",
       )}
       {...props}
     >
@@ -595,7 +578,7 @@ function AttachmentPreview({
 }
 
 const removeButtonVariants = cva(
-  "z-10 flex size-4.5 cursor-pointer items-center justify-center rounded-full bg-gray-100 text-gray-400 opacity-0 transition-all group-hover:opacity-100 hover:bg-gray-200 hover:text-gray-500 active:scale-97 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600 dark:hover:text-gray-100",
+  "z-10 flex size-4.5 cursor-pointer items-center justify-center rounded-full bg-gray-100 text-gray-400 sm:opacity-0 transition-all group-hover:opacity-100 hover:bg-gray-200 hover:text-gray-500 active:scale-97 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600 dark:hover:text-gray-100",
   {
     variants: {
       position: {

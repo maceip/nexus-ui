@@ -99,7 +99,9 @@ function iconForAttachmentType(type: AttachmentMeta["type"]) {
   }
 }
 
-function inferDetailedSubtitleMode(attachment: AttachmentMeta): "size" | "kind" {
+function inferDetailedSubtitleMode(
+  attachment: AttachmentMeta,
+): "size" | "kind" {
   if (
     attachment.size != null &&
     Number.isFinite(attachment.size) &&
@@ -115,12 +117,11 @@ const attachmentVariants = cva(
   {
     variants: {
       variant: {
-        compact:
-          "relative flex size-15 shrink-0 items-center justify-center",
+        compact: "relative flex size-15 shrink-0 items-center justify-center",
         inline:
-          "relative flex h-8 w-auto min-w-0 max-w-full shrink-0 items-center justify-start p-1 pr-2",
+          "relative flex h-8 w-auto min-w-0 max-w-[200px] shrink-0 items-center justify-start p-1 pr-2",
         detailed:
-          "relative flex h-15 w-[181px] max-w-full shrink-0 items-center justify-start p-2",
+          "relative flex h-15 w-auto min-w-[200px] max-w-[250px] shrink-0 items-center justify-start p-2 pr-3",
       },
     },
     defaultVariants: {
@@ -381,16 +382,22 @@ function AttachmentList({ className, role, ...props }: AttachmentListProps) {
   );
 }
 
-function AttachmentInlineFadeLayer({
+type AttachmentOverflowFadeLayerProps = React.HTMLAttributes<HTMLDivElement> & {
+  variant: "inline" | "detailed";
+};
+
+function AttachmentOverflowFadeLayer({
   className,
+  variant,
   ...props
-}: React.HTMLAttributes<HTMLDivElement>) {
+}: AttachmentOverflowFadeLayerProps) {
   return (
     <div
       aria-hidden
-      data-slot="attachment-inline-fade"
+      data-slot="attachment-overflow-fade"
       className={cn(
-        "pointer-events-none absolute top-1/2 right-0 h-8 w-10 -translate-y-1/2 bg-linear-to-l from-gray-100 from-65% to-transparent opacity-0 transition-opacity group-hover:opacity-100 dark:from-gray-700",
+        "pointer-events-none absolute top-1/2 right-0 w-10 -translate-y-1/2 bg-linear-to-l from-gray-100 from-65% to-transparent opacity-0 transition-opacity group-hover:opacity-100 dark:from-gray-700",
+        variant === "detailed" ? "h-15" : "h-8",
         className,
       )}
       {...props}
@@ -477,7 +484,9 @@ function Attachment({
         className={cn(attachmentVariants({ variant }), shell, className)}
         {...props}
       >
-        {variant === "inline" ? <AttachmentInlineFadeLayer /> : null}
+        {variant === "inline" || variant === "detailed" ? (
+          <AttachmentOverflowFadeLayer variant={variant} />
+        ) : null}
         {children ?? defaultLayout}
         {showProgress ? <AttachmentProgress value={progress} /> : null}
       </div>
@@ -535,7 +544,11 @@ function AttachmentPreview({
       return (
         <>
           <div className="absolute inset-0 z-0 size-full animate-pulse bg-gray-200 dark:bg-gray-900" />
-          <img src={rasterSrc} alt="" className="relative z-1 size-full object-cover" />
+          <img
+            src={rasterSrc}
+            alt=""
+            className="relative z-1 size-full object-cover"
+          />
         </>
       );
     }
