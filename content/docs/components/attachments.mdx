@@ -98,7 +98,7 @@ import {
 
 ### Detailed variant
 
-Wider tile with thumbnail, file name, and a second line: formatted **size** when **`attachment.size`** is set, otherwise a **kind** label inferred from MIME type or extension.
+Wider tile with thumbnail, file name, and a second line: formatted **size** when **`attachment.size`** is set, otherwise a **kind** label from the file extension (uppercased, e.g. **PDF**, **XLSX**).
 
 <DemoWithCode src="components/nexus-ui/examples/attachments/variant-detailed.tsx">
   <AttachmentsVariantDetailed />
@@ -303,7 +303,7 @@ The AI SDK [attachments guide](https://ai-sdk.dev/docs/ai-sdk-ui/chatbot#attachm
 
 Controlled root: holds **`AttachmentMeta[]`**, wires **`onAttachmentsChange`**, renders a screen-reader-only **`input type="file"`**, and exposes context for **`AttachmentTrigger`**. Renders the input first, then **`children`**. Must wrap every **`AttachmentTrigger`** that opens its picker.
 
-Object URLs created by this picker (**`URL.createObjectURL`** for image, video, and audio **`File`**s) are tracked and **`URL.revokeObjectURL`** when an attachment leaves the list or when **`Attachments`** unmounts. Blob URLs you attach yourself (outside this flow) are not revoked by the component.
+Object URLs created by this picker (**`URL.createObjectURL`** for every **`File`** chosen) are tracked and **`URL.revokeObjectURL`** when an attachment leaves the list or when **`Attachments`** unmounts. Blob URLs you attach yourself (outside this flow) are not revoked by the component. Only image and video tiles use **`url`** for built-in previews; other types keep the file icon.
 
 <TypeTable
   type={{
@@ -508,14 +508,14 @@ Column wrapper for title and subtitle text in the **detailed** layout. Pure layo
 
 ### AttachmentProperty
 
-Renders a single line of text from **`attachment`**: file **name**, formatted **size**, or a **kind** label (for example PDF) from MIME type or extension. The **`as`** prop selects which field to show.
+Renders a single line of text from **`attachment`**: file **name**, formatted **size**, or a **kind** label from the filename extension (uppercased). The **`as`** prop selects which field to show.
 
 <TypeTable
   type={{
     as: {
       type: '"name" | "size" | "kind"',
       description:
-        "`name`: file name; `size`: formatted `attachment.size`; `kind`: short type label when available.",
+        "`name`: file name; `size`: formatted `attachment.size`; `kind`: uppercased extension when the name has one.",
     },
     className: {
       type: "string",
@@ -562,7 +562,7 @@ export interface AttachmentMeta {
 
 ### toAttachmentMeta
 
-Maps a browser **`File`** to **`AttachmentMeta`**. Sets **`type`** from **`file.type`**, and sets **`url`** from **`options.objectUrl`** when provided. The **`Attachments`** picker supplies object URLs for image, video, and audio files (video previews use a muted **`video`** element in tile layouts).
+Maps a browser **`File`** to **`AttachmentMeta`**. Sets **`type`** from **`file.type`**, and sets **`url`** from **`options.objectUrl`** when provided. The **`Attachments`** picker passes a blob **`url`** for every picked file; tile previews use **`url`** for images and a muted **`video`** element for videos.
 
 ```ts
 export function toAttachmentMeta(

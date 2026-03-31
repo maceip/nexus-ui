@@ -59,18 +59,6 @@ export function toAttachmentMeta(
   };
 }
 
-function previewObjectUrlForFile(file: File): string | undefined {
-  const mime = file.type?.toLowerCase() ?? "";
-  if (
-    mime.startsWith("image/") ||
-    mime.startsWith("video/") ||
-    mime.startsWith("audio/")
-  ) {
-    return URL.createObjectURL(file);
-  }
-  return undefined;
-}
-
 function formatBytes(bytes?: number): string | undefined {
   if (bytes == null || !Number.isFinite(bytes)) return undefined;
   const units = ["B", "KB", "MB", "GB"] as const;
@@ -84,28 +72,15 @@ function formatBytes(bytes?: number): string | undefined {
   return `${rounded} ${units[i]}`;
 }
 
+/** Uppercased file extension for the detailed subtitle (no leading dot); `undefined` if there is no usable extension. */
 function kindLabel(item: AttachmentMeta): string | undefined {
-  const mime = item.mimeType?.toLowerCase() ?? "";
-  if (mime.includes("pdf")) return "PDF";
-  if (
-    mime.includes("word") ||
-    mime.includes("msword") ||
-    mime.includes("officedocument.wordprocessing")
-  )
-    return "DOC";
-  if (
-    mime.includes("presentation") ||
-    mime.includes("powerpoint") ||
-    mime.includes("ms-powerpoint")
-  )
-    return "PPTX";
-  if (mime.includes("text/plain")) return "TXT";
-  const ext = item.name?.split(".").pop()?.toLowerCase();
-  if (ext === "pdf") return "PDF";
-  if (ext === "doc" || ext === "docx") return "DOC";
-  if (ext === "ppt" || ext === "pptx") return ext.toUpperCase();
-  if (ext === "txt") return "TXT";
-  return undefined;
+  const name = item.name?.trim();
+  if (!name) return undefined;
+  const dot = name.lastIndexOf(".");
+  if (dot <= 0 || dot >= name.length - 1) return undefined;
+  const ext = name.slice(dot + 1).toLowerCase();
+  if (!ext || ext.length > 16) return undefined;
+  return ext.toUpperCase();
 }
 
 function iconForAttachmentType(type: AttachmentMeta["type"]) {
@@ -135,7 +110,7 @@ function inferDetailedSubtitleMode(
 }
 
 const attachmentVariants = cva(
-  "group relative cursor-default overflow-hidden rounded-[6px] border border-gray-100 text-gray-400 dark:border-gray-700 dark:text-gray-300",
+  "group relative cursor-default overflow-hidden rounded-[6px] border border-gray-100 bg-gray-100 text-gray-400 dark:border-gray-700 dark:bg-gray-700 dark:text-gray-300",
   {
     variants: {
       variant: {
@@ -155,21 +130,6 @@ const attachmentVariants = cva(
 type AttachmentVariant = NonNullable<
   VariantProps<typeof attachmentVariants>["variant"]
 >;
-
-function attachmentShellClass(
-  variant: AttachmentVariant,
-  attachment: AttachmentMeta,
-): string {
-  if (variant === "compact") {
-    const hasRasterPreview =
-      Boolean(attachment.thumbnailUrl) ||
-      (attachment.type === "image" && Boolean(attachment.url)) ||
-      (attachment.type === "video" && Boolean(attachment.url));
-    if (hasRasterPreview) return "";
-    return "bg-gray-100 dark:bg-gray-700";
-  }
-  return "border-gray-100 bg-gray-100 dark:border-gray-700 dark:bg-gray-700";
-}
 
 // ——— Context ———
 
@@ -293,9 +253,7 @@ function Attachments({
       }
 
       const tooLarge =
-        maxSize != null
-          ? incoming.filter((f) => f.size > maxSize)
-          : [];
+        maxSize != null ? incoming.filter((f) => f.size > maxSize) : [];
 
       const withinSize =
         maxSize != null ? incoming.filter((f) => f.size <= maxSize) : incoming;
@@ -326,8 +284,8 @@ function Attachments({
       }
 
       const newMetas = take.map((file) => {
-        const objectUrl = previewObjectUrlForFile(file);
-        if (objectUrl) managedBlobUrlsRef.current.add(objectUrl);
+        const objectUrl = URL.createObjectURL(file);
+        managedBlobUrlsRef.current.add(objectUrl);
         return toAttachmentMeta(file, { objectUrl });
       });
 
@@ -516,7 +474,6 @@ function Attachment({
     [variant, attachment, onRemove],
   );
 
-  const shell = attachmentShellClass(variant ?? "compact", attachment);
   const showProgress = progress != null && Number.isFinite(progress);
 
   const defaultLayout =
@@ -554,7 +511,7 @@ function Attachment({
         data-slot="attachment"
         data-variant={variant}
         role="listitem"
-        className={cn(attachmentVariants({ variant }), shell, className)}
+        className={cn(attachmentVariants({ variant }), className)}
         {...props}
       >
         {variant === "inline" || variant === "detailed" ? (
@@ -605,9 +562,7 @@ function AttachmentPreview({
       ? attachment.url
       : undefined);
   const videoSrc =
-    !attachment.thumbnailUrl &&
-    attachment.type === "video" &&
-    attachment.url
+    !attachment.thumbnailUrl && attachment.type === "video" && attachment.url
       ? attachment.url
       : undefined;
   const showRaster = Boolean(rasterSrc);
