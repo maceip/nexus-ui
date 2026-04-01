@@ -200,74 +200,74 @@ function AttachmentsWithPromptInputAndDrop() {
       >
         <AttachmentsDropOverlay />
         <PromptInput onSubmit={handleSubmit}>
-            {attachments.length > 0 ? (
-              <AttachmentList className="min-h-0 flex-nowrap justify-start overflow-x-auto overflow-y-hidden px-4 pt-4 [scrollbar-color:var(--scrollbar-thumb)_transparent] [&::-webkit-scrollbar-thumb]:border-transparent [&::-webkit-scrollbar-track]:bg-transparent">
-                {attachments.map((item) => {
-                  const key = attachmentKey(item);
-                  const progress = progressByKey[key];
-                  return (
-                    <Attachment
-                      key={key}
-                      variant="detailed"
-                      attachment={item}
-                      progress={progress}
-                      onRemove={() => removeAttachment(item)}
-                    />
-                  );
-                })}
-              </AttachmentList>
-            ) : null}
-            <PromptInputTextarea
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              placeholder="Message with attachments…"
-              disabled={isLoading}
-            />
-            <PromptInputActions>
-              <PromptInputActionGroup>
-                <PromptInputAction>
-                  <AttachmentTrigger asChild>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="size-8 cursor-pointer rounded-full border-none bg-transparent text-gray-900 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700"
-                    >
-                      <HugeiconsIcon
-                        icon={PlusSignIcon}
-                        strokeWidth={2.0}
-                        className="size-4"
-                      />
-                    </Button>
-                  </AttachmentTrigger>
-                </PromptInputAction>
-              </PromptInputActionGroup>
-              <PromptInputActionGroup>
-                <PromptInputAction asChild>
+          {attachments.length > 0 ? (
+            <AttachmentList className="min-h-0 flex-nowrap justify-start overflow-x-auto overflow-y-hidden px-4 pt-4 [scrollbar-color:var(--scrollbar-thumb)_transparent] [&::-webkit-scrollbar-thumb]:border-transparent [&::-webkit-scrollbar-track]:bg-transparent">
+              {attachments.map((item) => {
+                const key = attachmentKey(item);
+                const progress = progressByKey[key];
+                return (
+                  <Attachment
+                    key={key}
+                    variant="detailed"
+                    attachment={item}
+                    progress={progress}
+                    onRemove={() => removeAttachment(item)}
+                  />
+                );
+              })}
+            </AttachmentList>
+          ) : null}
+          <PromptInputTextarea
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            placeholder="Message with attachments…"
+            disabled={isLoading}
+          />
+          <PromptInputActions>
+            <PromptInputActionGroup>
+              <PromptInputAction>
+                <AttachmentTrigger asChild>
                   <Button
                     type="button"
-                    className="size-8 cursor-pointer rounded-full bg-gray-700 text-white transition-transform hover:bg-gray-800 active:scale-97 disabled:opacity-70 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200"
-                    disabled={isLoading || !canSend}
-                    onClick={() => handleSubmit(message)}
+                    variant="ghost"
+                    size="icon"
+                    className="size-8 cursor-pointer rounded-full border-none bg-transparent text-gray-900 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700"
                   >
-                    {isLoading ? (
-                      <HugeiconsIcon
-                        icon={SquareIcon}
-                        strokeWidth={2.0}
-                        className="size-3.5 fill-current"
-                      />
-                    ) : (
-                      <HugeiconsIcon
-                        icon={ArrowUp02Icon}
-                        strokeWidth={2.0}
-                        className="size-4"
-                      />
-                    )}
+                    <HugeiconsIcon
+                      icon={PlusSignIcon}
+                      strokeWidth={2.0}
+                      className="size-4"
+                    />
                   </Button>
-                </PromptInputAction>
-              </PromptInputActionGroup>
-            </PromptInputActions>
-          </PromptInput>
+                </AttachmentTrigger>
+              </PromptInputAction>
+            </PromptInputActionGroup>
+            <PromptInputActionGroup>
+              <PromptInputAction asChild>
+                <Button
+                  type="button"
+                  className="size-8 cursor-pointer rounded-full bg-gray-700 text-white transition-transform hover:bg-gray-800 active:scale-97 disabled:opacity-70 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200"
+                  disabled={isLoading || !canSend}
+                  onClick={() => handleSubmit(message)}
+                >
+                  {isLoading ? (
+                    <HugeiconsIcon
+                      icon={SquareIcon}
+                      strokeWidth={2.0}
+                      className="size-3.5 fill-current"
+                    />
+                  ) : (
+                    <HugeiconsIcon
+                      icon={ArrowUp02Icon}
+                      strokeWidth={2.0}
+                      className="size-4"
+                    />
+                  )}
+                </Button>
+              </PromptInputAction>
+            </PromptInputActionGroup>
+          </PromptInputActions>
+        </PromptInput>
       </Attachments>
     </div>
   );
