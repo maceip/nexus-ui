@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { createPortal } from "react-dom";
 import { Slot } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
 import {
@@ -9,6 +10,7 @@ import {
   File02Icon,
   Video02Icon,
   MusicNote02Icon,
+  Upload01Icon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 
@@ -31,13 +33,15 @@ export interface AttachmentMeta {
   data?: Blob | ArrayBuffer;
 }
 
-/** Files not appended by the picker: oversized, over `maxFiles`, or extra when `multiple` is false. */
+/** Files not appended by the picker: oversized, over `maxFiles`, extra when `multiple` is false, or outside `accept`. */
 export type AttachmentsRejectedFiles = {
   tooLarge: File[];
   /** Within size but did not fit under `maxFiles`. */
   overMaxFiles: File[];
   /** Ignored because `multiple` is false. */
   truncatedByMultiple: File[];
+  /** Did not match the root `accept` string (drop path or permissive pickers). */
+  notAccepted: File[];
 };
 
 export function toAttachmentMeta(
@@ -57,6 +61,38 @@ export function toAttachmentMeta(
     mimeType: file.type || undefined,
     size: file.size,
   };
+}
+
+/** Best-effort match for an HTML `accept` attribute (comma tokens: `.pdf`, `image/*`, exact MIME). */
+function fileMatchesAccept(file: File, accept: string): boolean {
+  const trimmed = accept.trim();
+  if (!trimmed || trimmed === "*/*") return true;
+  const tokens = trimmed
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  const type = (file.type ?? "").toLowerCase();
+  const name = file.name ?? "";
+  const extWithDot =
+    name.lastIndexOf(".") > 0
+      ? name.slice(name.lastIndexOf(".")).toLowerCase()
+      : "";
+
+  for (const token of tokens) {
+    const t = token.toLowerCase();
+    if (t === "*/*") return true;
+    if (t.startsWith(".")) {
+      if (extWithDot === t) return true;
+      continue;
+    }
+    if (t.endsWith("/*")) {
+      const prefix = t.slice(0, -1);
+      if (type.startsWith(prefix)) return true;
+      continue;
+    }
+    if (type && type === t) return true;
+  }
+  return false;
 }
 
 function formatBytes(bytes?: number): string | undefined {
@@ -133,11 +169,19 @@ type AttachmentVariant = NonNullable<
 
 // ——— Context ———
 
-type AttachmentsContextValue = {
+/** Public context value from **`useAttachments()`** (also used internally by **`Attachments`**). */
+export type AttachmentsContextValue = {
   inputRef: React.RefObject<HTMLInputElement | null>;
   /** Stable id on the hidden file input (labels, tests, or custom `aria-*`). */
   inputId: string;
   openPicker: () => void;
+  /**
+   * Append files with the same limits and `onFilesRejected` behavior as the native picker.
+   * For drag-and-drop or paste, call this from your handler.
+   */
+  appendFiles: (files: File[]) => void;
+  /** True while a file drag is active over the document (when `windowDrop` is enabled). */
+  isDraggingFile: boolean;
   attachments: AttachmentMeta[];
   onAttachmentsChange: (next: AttachmentMeta[]) => void;
   accept?: string;
@@ -192,6 +236,11 @@ export type AttachmentsProps = {
    * Called when some selected files are not appended (oversized, over `maxFiles`, or trimmed because `multiple` is false).
    */
   onFilesRejected?: (detail: AttachmentsRejectedFiles) => void;
+  /**
+   * Register `dragover` / `drop` on `document` so files can be dropped anywhere.
+   * @default true
+   */
+  windowDrop?: boolean;
   children?: React.ReactNode;
 };
 
@@ -205,11 +254,13 @@ function Attachments({
   disabled = false,
   onFileInputChange,
   onFilesRejected,
+  windowDrop = true,
   children,
 }: AttachmentsProps) {
   const inputRef = React.useRef<HTMLInputElement | null>(null);
   const inputId = React.useId();
   const managedBlobUrlsRef = React.useRef<Set<string>>(new Set());
+  const [isDraggingFile, setIsDraggingFile] = React.useState(false);
 
   React.useLayoutEffect(() => {
     const inUse = new Set<string>();
@@ -239,16 +290,19 @@ function Attachments({
     inputRef.current?.click();
   }, [disabled]);
 
-  const handleInputChange = React.useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const list = e.target.files;
-      if (!list?.length || disabled) {
-        onFileInputChange?.(e);
-        e.target.value = "";
-        return;
+  const appendFilesFromList = React.useCallback(
+    (rawFiles: File[]) => {
+      if (disabled || rawFiles.length === 0) return;
+
+      let incoming = [...rawFiles];
+      const notAccepted =
+        accept != null && accept !== "" && accept !== "*/*"
+          ? incoming.filter((f) => !fileMatchesAccept(f, accept))
+          : [];
+      if (accept != null && accept !== "" && accept !== "*/*") {
+        incoming = incoming.filter((f) => fileMatchesAccept(f, accept));
       }
 
-      let incoming = Array.from(list);
       let truncatedByMultiple: File[] = [];
       if (!multiple && incoming.length > 1) {
         truncatedByMultiple = incoming.slice(1);
@@ -275,11 +329,13 @@ function Attachments({
         room === Number.POSITIVE_INFINITY ? [] : withinSize.slice(room);
 
       if (
+        notAccepted.length > 0 ||
         tooLarge.length > 0 ||
         overMaxFiles.length > 0 ||
         truncatedByMultiple.length > 0
       ) {
         onFilesRejected?.({
+          notAccepted,
           tooLarge,
           overMaxFiles,
           truncatedByMultiple,
@@ -295,27 +351,92 @@ function Attachments({
       if (newMetas.length > 0) {
         onAttachmentsChange([...attachments, ...newMetas]);
       }
-
-      onFileInputChange?.(e);
-      e.target.value = "";
     },
     [
       disabled,
+      accept,
       multiple,
       maxSize,
       maxFiles,
       attachments,
       onAttachmentsChange,
-      onFileInputChange,
       onFilesRejected,
     ],
   );
+
+  const handleInputChange = React.useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const list = e.target.files;
+      if (!list?.length || disabled) {
+        onFileInputChange?.(e);
+        e.target.value = "";
+        return;
+      }
+
+      appendFilesFromList(Array.from(list));
+      onFileInputChange?.(e);
+      e.target.value = "";
+    },
+    [disabled, appendFilesFromList, onFileInputChange],
+  );
+
+  React.useEffect(() => {
+    if (disabled || !windowDrop) {
+      setIsDraggingFile(false);
+      return;
+    }
+
+    const hasFiles = (e: DragEvent) =>
+      Boolean(
+        e.dataTransfer?.types?.length &&
+        [...e.dataTransfer.types].includes("Files"),
+      );
+
+    const onDragEnter = (e: DragEvent) => {
+      if (!hasFiles(e)) return;
+      setIsDraggingFile(true);
+    };
+
+    const onDragLeave = (e: DragEvent) => {
+      if (!hasFiles(e)) return;
+      const next = e.relatedTarget as Node | null;
+      if (next && document.contains(next)) return;
+      setIsDraggingFile(false);
+    };
+
+    const onDragOver = (e: DragEvent) => {
+      if (!hasFiles(e)) return;
+      e.preventDefault();
+      e.dataTransfer!.dropEffect = "copy";
+    };
+
+    const onDrop = (e: DragEvent) => {
+      e.preventDefault();
+      setIsDraggingFile(false);
+      const list = e.dataTransfer?.files;
+      if (!list?.length) return;
+      appendFilesFromList(Array.from(list));
+    };
+
+    document.addEventListener("dragenter", onDragEnter);
+    document.addEventListener("dragleave", onDragLeave);
+    document.addEventListener("dragover", onDragOver);
+    document.addEventListener("drop", onDrop);
+    return () => {
+      document.removeEventListener("dragenter", onDragEnter);
+      document.removeEventListener("dragleave", onDragLeave);
+      document.removeEventListener("dragover", onDragOver);
+      document.removeEventListener("drop", onDrop);
+    };
+  }, [disabled, windowDrop, appendFilesFromList]);
 
   const value = React.useMemo<AttachmentsContextValue>(
     () => ({
       inputRef,
       inputId,
       openPicker,
+      appendFiles: appendFilesFromList,
+      isDraggingFile,
       attachments,
       onAttachmentsChange,
       accept,
@@ -326,6 +447,8 @@ function Attachments({
     }),
     [
       inputId,
+      appendFilesFromList,
+      isDraggingFile,
       attachments,
       onAttachmentsChange,
       accept,
@@ -355,6 +478,96 @@ function Attachments({
       {children}
     </AttachmentsContext.Provider>
   );
+}
+
+/** Access **`Attachments`** context: **`appendFiles`**, **`isDraggingFile`**, **`openPicker`**, controlled state, and limits. Must be used under **`Attachments`**. */
+export function useAttachments(): AttachmentsContextValue {
+  return useAttachmentsContext("useAttachments");
+}
+
+export type AttachmentsDropOverlayProps = Omit<
+  React.HTMLAttributes<HTMLDivElement>,
+  "children"
+> & {
+  /**
+   * `fullscreen` portals to `document.body` and covers the viewport.
+   * `contained` fills the nearest positioned ancestor — wrap a **`relative`** container (e.g. prompt shell).
+   * @default "fullscreen"
+   */
+  variant?: "fullscreen" | "contained";
+  children?: React.ReactNode;
+};
+
+export function AttachmentsDropOverlay({
+  variant = "fullscreen",
+  className,
+  children,
+  ...props
+}: AttachmentsDropOverlayProps) {
+  const { isDraggingFile, disabled, maxSize } = useAttachmentsContext(
+    "AttachmentsDropOverlay",
+  );
+  const [mounted, setMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const open = mounted && !disabled && isDraggingFile;
+
+  React.useEffect(() => {
+    if (!open || variant !== "fullscreen") return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [open, variant]);
+
+  if (!open) return null;
+
+  const maxSizeLabel = maxSize != null ? formatBytes(maxSize) : undefined;
+
+  const inner = (
+    <div
+      data-slot="attachments-drop-overlay"
+      role="presentation"
+      aria-hidden
+      className={cn(
+        "pointer-events-none bg-white/20 backdrop-blur-sm dark:bg-gray-900/50",
+        variant === "fullscreen"
+          ? "fixed inset-0 z-50 flex items-center justify-center"
+          : "absolute inset-0 z-10 flex items-center justify-center rounded-[inherit]",
+        className,
+      )}
+      {...props}
+    >
+      {children ?? (
+        <div className="flex flex-col items-center gap-3">
+          <HugeiconsIcon
+            icon={Upload01Icon}
+            className="size-5 text-gray-900 dark:text-gray-100"
+          />
+
+          <div className="flex flex-col items-center gap-1">
+            <p className="text-sm font-[350] text-gray-900 dark:text-gray-100">
+              Drop files here to add as attachment
+            </p>
+            {maxSizeLabel ? (
+              <p className="text-xs font-[350] text-gray-500 dark:text-gray-400">
+                Maximum {maxSizeLabel} per file
+              </p>
+            ) : null}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
+  if (variant === "fullscreen") {
+    return createPortal(inner, document.body);
+  }
+  return inner;
 }
 
 type AttachmentTriggerProps = React.ComponentProps<"button"> & {
@@ -809,6 +1022,7 @@ function AttachmentProgress({
 }
 
 Attachments.displayName = "Attachments";
+AttachmentsDropOverlay.displayName = "AttachmentsDropOverlay";
 AttachmentTrigger.displayName = "AttachmentTrigger";
 AttachmentList.displayName = "AttachmentList";
 Attachment.displayName = "Attachment";

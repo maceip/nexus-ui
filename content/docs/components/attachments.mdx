@@ -7,6 +7,7 @@ import AttachmentsDefault from "@/components/nexus-ui/examples/attachments/defau
 import AttachmentsVariantDetailed from "@/components/nexus-ui/examples/attachments/variant-detailed";
 import AttachmentsVariantInline from "@/components/nexus-ui/examples/attachments/variant-inline";
 import AttachmentsWithPromptInput from "@/components/nexus-ui/examples/attachments/with-prompt-input";
+import AttachmentsWithPromptInputAndDrop from "@/components/nexus-ui/examples/attachments/with-prompt-input-drop";
 import AttachmentsWithProgress from "@/components/nexus-ui/examples/attachments/with-progress";
 
 Composable attachment UI for chat and messaging: thumbnails or type icons, remove actions, optional upload progress, and a controlled `Attachments` root that owns the hidden file input and pairs with `AttachmentTrigger`. The demo above uses the default **`compact`** (square) variant; **inline** and **detailed** layouts are shown below.
@@ -61,9 +62,12 @@ bunx shadcn@latest add @nexus-ui/attachments
 ```tsx keepBackground
 import {
   Attachments,
+  AttachmentsDropOverlay,
   AttachmentTrigger,
   AttachmentList,
   Attachment,
+  useAttachments,
+  type AttachmentsContextValue,
 } from "@/components/nexus-ui/attachments";
 ```
 
@@ -122,10 +126,18 @@ Pass **`progress`** (`0`–`100`) on **`Attachment`** to show a thin bar along t
 
 ### With Prompt Input
 
-Wrap **[Prompt Input](/docs/components/prompt-input) with `Attachments`** (not the other way around) so **`AttachmentTrigger`**, the list, and the textarea stay in one **`Attachments`** tree. That layout also scales to **drag-and-drop on a wider chat or page shell**: you can lift **`Attachments`** around the whole column and still reuse **`onAttachmentsChange`** / **`toAttachmentMeta`** for drops outside the prompt box.
+Wrap **[Prompt Input](/docs/components/prompt-input) with `Attachments`** (not the other way around) so **`AttachmentTrigger`**, the list, and the textarea stay in one **`Attachments`** tree. By default, **`Attachments`** registers **`document`** drag-and-drop so files can be dropped anywhere; use **`AttachmentsDropOverlay`** for optional visual feedback (**`fullscreen`** or **`contained`**).
 
 <DemoWithCode src="components/nexus-ui/examples/attachments/with-prompt-input.tsx">
   <AttachmentsWithPromptInput />
+</DemoWithCode>
+
+### With Prompt Input and drop
+
+Extends the example above with **`AttachmentsDropOverlay`** (fullscreen) while dragging files. Drops use the same **`appendFiles`** pipeline as the picker (**`accept`**, **`maxFiles`**, **`maxSize`**, **`onFilesRejected`**).
+
+<DemoWithCode src="components/nexus-ui/examples/attachments/with-prompt-input-drop.tsx">
+  <AttachmentsWithPromptInputAndDrop />
 </DemoWithCode>
 
 ## Vercel AI SDK Integration
@@ -301,7 +313,7 @@ The AI SDK [attachments guide](https://ai-sdk.dev/docs/ai-sdk-ui/chatbot#attachm
 
 ### Attachments
 
-Controlled root: holds **`AttachmentMeta[]`**, wires **`onAttachmentsChange`**, renders a screen-reader-only **`input type="file"`**, and exposes context for **`AttachmentTrigger`**. Renders the input first, then **`children`**. Must wrap every **`AttachmentTrigger`** that opens its picker.
+Controlled root: holds **`AttachmentMeta[]`**, wires **`onAttachmentsChange`**, renders a screen-reader-only **`input type="file"`**, registers **`document`** drag-and-drop when **`windowDrop`** is true (default), and exposes context for **`AttachmentTrigger`**, **`appendFiles`**, and **`isDraggingFile`**. Renders the input first, then **`children`**. Must wrap every **`AttachmentTrigger`** that opens its picker.
 
 Object URLs created by this picker (**`URL.createObjectURL`** for every **`File`** chosen) are tracked and **`URL.revokeObjectURL`** when an attachment leaves the list or when **`Attachments`** unmounts. Blob URLs you attach yourself (outside this flow) are not revoked by the component. Only image and video tiles use **`url`** for built-in previews; other types keep the file icon.
 
@@ -319,7 +331,8 @@ Object URLs created by this picker (**`URL.createObjectURL`** for every **`File`
     },
     accept: {
       type: "string",
-      description: "Passed to the file input `accept` attribute.",
+      description:
+        "Passed to the file input `accept` attribute. Also used to filter dropped files when using drag-and-drop.",
     },
     multiple: {
       type: "boolean",
@@ -348,7 +361,13 @@ Object URLs created by this picker (**`URL.createObjectURL`** for every **`File`
     onFilesRejected: {
       type: "(detail: AttachmentsRejectedFiles) => void",
       description:
-        "Optional. When the user selects files that are not all appended: oversize (`tooLarge`), over `maxFiles` (`overMaxFiles`), or extra files when `multiple` is false (`truncatedByMultiple`).",
+        "Optional. When files are not all appended: outside `accept` (`notAccepted`), oversize (`tooLarge`), over `maxFiles` (`overMaxFiles`), or extra when `multiple` is false (`truncatedByMultiple`).",
+    },
+    windowDrop: {
+      type: "boolean",
+      default: "true",
+      description:
+        "When true, registers `dragover` / `drop` on `document` so files can be dropped anywhere in the page.",
     },
     children: {
       type: "React.ReactNode",
@@ -360,11 +379,61 @@ Object URLs created by this picker (**`URL.createObjectURL`** for every **`File`
 
 ```ts
 export type AttachmentsRejectedFiles = {
+  notAccepted: File[];
   tooLarge: File[];
   overMaxFiles: File[];
   truncatedByMultiple: File[];
 };
 ```
+
+### `useAttachments`
+
+Returns the full **`Attachments`** context (same source as internal primitives). Use **`isDraggingFile`** for custom drag chrome, **`appendFiles`** for custom drop targets, **`openPicker`** / **`inputRef`** for advanced wiring. Throws if used outside **`Attachments`**.
+
+```ts
+export type AttachmentsContextValue = {
+  inputRef: React.RefObject<HTMLInputElement | null>;
+  inputId: string;
+  openPicker: () => void;
+  appendFiles: (files: File[]) => void;
+  isDraggingFile: boolean;
+  attachments: AttachmentMeta[];
+  onAttachmentsChange: (next: AttachmentMeta[]) => void;
+  accept?: string;
+  multiple: boolean;
+  maxFiles?: number;
+  maxSize?: number;
+  disabled: boolean;
+};
+
+export function useAttachments(): AttachmentsContextValue;
+```
+
+### `AttachmentsDropOverlay`
+
+Optional visual layer when **`isDraggingFile`** is true. **`variant="fullscreen"`** (default) portals to **`document.body`** and covers the viewport; **`variant="contained"`** uses **`absolute inset-0`** — place inside a **`relative`** wrapper (e.g. prompt shell). **`pointer-events-none`** so drops still reach **`document`**. Default content is short copy; override with **`children`**. Must be rendered **inside** **`Attachments`**.
+
+<TypeTable
+  type={{
+    variant: {
+      type: '"fullscreen" | "contained"',
+      default: '"fullscreen"',
+      description:
+        "`fullscreen`: portal to `document.body`, fixed full viewport. `contained`: absolute fill of the positioned parent.",
+    },
+    children: {
+      type: "React.ReactNode",
+      description:
+        "Overlay content; default is a short “Drop files to attach” line.",
+    },
+    className: {
+      type: "string",
+      description: "Merged with the overlay shell classes.",
+    },
+  }}
+/>
+
+Also extends **`React.HTMLAttributes<HTMLDivElement>`** (for example **`style`**, **`id`**) except **`children`** is typed explicitly above.
 
 ### AttachmentTrigger
 
