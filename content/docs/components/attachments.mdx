@@ -10,7 +10,7 @@ import AttachmentsVariantPasted from "@/components/nexus-ui/examples/attachments
 import AttachmentsWithPromptInput from "@/components/nexus-ui/examples/attachments/with-prompt-input";
 import AttachmentsWithProgress from "@/components/nexus-ui/examples/attachments/with-progress";
 
-Composable attachment UI for chat and messaging: thumbnails or type icons, remove actions, optional upload progress, and a controlled `Attachments` root that owns the hidden file input and pairs with `AttachmentTrigger`. The demo above uses the default **`compact`** (square) variant; **inline**, **detailed**, and **pasted** (long clipboard text) layouts are shown below.
+Composable attachment UI for chat and messaging: thumbnails, type icons, or a **pasted-text** excerpt depending on **`Attachment`** **`variant`**, plus remove actions and optional upload progress. A controlled **`Attachments`** root owns the hidden file input and **`AttachmentTrigger`**; opt in to page drop (**`windowDrop`**, **`AttachmentsDropOverlay`**) and paste or custom flows via **`useAttachments`** and **`appendFiles`**.
 
 <DemoWithCode src="components/nexus-ui/examples/attachments/default.tsx">
   <AttachmentsDefault />
@@ -98,6 +98,8 @@ import {
 
 `AttachmentTrigger` and any other component that calls the file picker **must** be rendered **inside** `Attachments` so they receive context from the same provider as the hidden input.
 
+The module also exports **`filesFromDataTransfer`**, **`toAttachmentMeta`**, **`AppendFilesOptions`**, and **`useAttachments`** for paste/drop and advanced wiring (see **With Prompt Input** and the **`useAttachments`** section).
+
 ## Examples
 
 ### Detailed variant
@@ -118,7 +120,7 @@ Compact horizontal chip with thumbnail and file name. A hover fade sits over the
 
 ### Pasted text variant
 
-For **large pasted plain text** (e.g. from **`appendFiles([file], { paste: true })`** after **`⌘V`** in your prompt), use **`variant="pasted"`** with **`AttachmentMeta.source === "paste"`**. The tile shows a short excerpt and a **Pasted** footer with remove.
+For **large pasted plain text** (e.g. from **`appendFiles([file], { paste: true })`** after pasting into your prompt), use **`variant="pasted"`** with **`AttachmentMeta.source === "paste"`**. The tile shows a short excerpt and a **Pasted** footer with remove.
 
 <DemoWithCode src="components/nexus-ui/examples/attachments/variant-pasted.tsx">
   <AttachmentsVariantPasted />
@@ -126,7 +128,7 @@ For **large pasted plain text** (e.g. from **`appendFiles([file], { paste: true 
 
 ### Upload progress
 
-Pass **`progress`** (`0`–`100`) on **`Attachment`** to show a thin bar along the bottom of the tile. Omit it when the upload finishes.
+Pass **`progress`** (`0`–`100`) on **`Attachment`** to show a thin bar along the bottom of the tile for **`compact`**, **`inline`**, and **`detailed`**. The **`pasted`** variant does not render that bar (omit **`progress`** or it is ignored). Omit **`progress`** when the upload finishes.
 
 <DemoWithCode src="components/nexus-ui/examples/attachments/with-progress.tsx">
   <AttachmentsWithProgress />
@@ -190,7 +192,7 @@ import { ArrowUp02Icon, PlusSignIcon, SquareIcon } from "@hugeicons/core-free-ic
 import { HugeiconsIcon } from "@hugeicons/react";
 
 function attachmentKey(a: AttachmentMeta) {
-  return `${a.name ?? ""}-${a.size ?? ""}-${a.mimeType ?? ""}-${a.url ?? ""}`;
+  return `${a.name ?? ""}-${a.size ?? ""}-${a.mimeType ?? ""}-${a.source ?? ""}-${a.url ?? ""}`;
 }
 
 function toFileParts(items: AttachmentMeta[]): FileUIPart[] {
@@ -462,7 +464,7 @@ Horizontal, scrollable row for attachment tiles. Sets **`role="list"`** by defau
 
 ### Attachment
 
-One attachment tile. Chooses a default layout from **`variant`** unless **`children`** is provided. Renders **`AttachmentProgress`** when **`progress`** is a finite number.
+One attachment tile. Chooses a default layout from **`variant`** unless **`children`** is provided. Renders **`AttachmentProgress`** when **`progress`** is a finite number **except** for **`variant="pasted"`**, which keeps the tile progress-free.
 
 <TypeTable
   type={{
@@ -478,7 +480,8 @@ One attachment tile. Chooses a default layout from **`variant`** unless **`child
     },
     progress: {
       type: "number",
-      description: "0–100; shows a bottom progress bar when set and finite.",
+      description:
+        "0–100; bottom progress bar when set and finite. Not shown for `pasted`.",
     },
     onRemove: {
       type: "() => void",
@@ -591,7 +594,7 @@ Renders a single line of text from **`attachment`**: file **name**, formatted **
 
 ### AttachmentProgress
 
-Thin horizontal progress bar meant to sit along the bottom edge of a tile. Usually passed indirectly via **`Attachment`** **`progress`**. **`value`** is clamped to **0–100**.
+Thin horizontal progress bar along the bottom edge of a tile for **`compact`**, **`inline`**, and **`detailed`**. Usually passed via **`Attachment`** **`progress`**. Not used in the default **`pasted`** layout. **`value`** is clamped to **0–100**.
 
 <TypeTable
   type={{
@@ -630,7 +633,7 @@ export interface AttachmentMeta {
 
 Returns the full **`Attachments`** context (same source as internal primitives). Use **`isDraggingFile`** for custom drag chrome when **`windowDrop`** is on, **`appendFiles`** for custom drop targets (or your own **`onDrop`** handlers), **`openPicker`** / **`inputRef`** for advanced wiring. Throws if used outside **`Attachments`**.
 
-```ts
+```ts noCollapse
 export type AppendFilesOptions = {
   paste?: boolean;
 };
