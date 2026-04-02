@@ -63,6 +63,25 @@ export function toAttachmentMeta(
   };
 }
 
+/**
+ * `File`s from a `DataTransfer` (paste **`clipboardData`** or drop **`dataTransfer`**).
+ * Prefer **`items`** so pasted screenshots and copied images resolve reliably; falls back to **`files`**.
+ */
+export function filesFromDataTransfer(data: DataTransfer | null): File[] {
+  if (!data) return [];
+  const out: File[] = [];
+  if (data.items?.length) {
+    for (const item of data.items) {
+      if (item.kind !== "file") continue;
+      const f = item.getAsFile();
+      if (f) out.push(f);
+    }
+  }
+  if (out.length > 0) return out;
+  if (data.files?.length) return Array.from(data.files);
+  return [];
+}
+
 /** Best-effort match for an HTML `accept` attribute (comma tokens: `.pdf`, `image/*`, exact MIME). */
 function fileMatchesAccept(file: File, accept: string): boolean {
   const trimmed = accept.trim();

@@ -125,7 +125,7 @@ Pass **`progress`** (`0`–`100`) on **`Attachment`** to show a thin bar along t
 
 ### With Prompt Input
 
-Wrap **[Prompt Input](/docs/components/prompt-input) with `Attachments`** (not the other way around) so **`AttachmentTrigger`**, the list, and the textarea stay in one **`Attachments`** tree. Enable **`windowDrop`** for page-level drag-and-drop (same validation as the picker: **`accept`**, **`maxFiles`**, **`maxSize`**, **`onFilesRejected`**). This example turns that on and adds **`AttachmentsDropOverlay`** (default **`fullscreen`**) for drag feedback—use **`variant="contained"`** inside a **`relative`** shell for in-box chrome only.
+Wrap **[Prompt Input](/docs/components/prompt-input) with `Attachments`** (not the other way around) so **`AttachmentTrigger`**, the list, and the textarea stay in one **`Attachments`** tree. Enable **`windowDrop`** for page-level drag-and-drop (same validation as the picker: **`accept`**, **`maxFiles`**, **`maxSize`**, **`onFilesRejected`**). This example turns that on and adds **`AttachmentsDropOverlay`** (default **`fullscreen`**) for drag feedback—use **`variant="contained"`** inside a **`relative`** shell for in-box chrome only. Pasting images into the prompt is wired with **`onPaste`** on the textarea: **`filesFromDataTransfer(e.clipboardData)`** and **`useAttachments().appendFiles`** (see **`with-prompt-input.tsx`**).
 
 <DemoWithCode src="components/nexus-ui/examples/attachments/with-prompt-input.tsx">
   <AttachmentsWithPromptInput />

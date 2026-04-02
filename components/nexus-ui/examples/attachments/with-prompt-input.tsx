@@ -14,6 +14,8 @@ import {
   Attachments,
   AttachmentsDropOverlay,
   AttachmentTrigger,
+  filesFromDataTransfer,
+  useAttachments,
   type AttachmentMeta,
 } from "@/components/nexus-ui/attachments";
 import PromptInput, {
@@ -31,6 +33,32 @@ function attachmentKey(a: AttachmentMeta) {
 type InputStatus = "idle" | "loading" | "error" | "submitted";
 
 const maxAttachmentSize = 500 * 1024 * 1024;
+
+/** Must render under **`Attachments`** — uses **`appendFiles`** from context. */
+function PromptInputTextareaWithImagePaste(
+  props: React.ComponentProps<typeof PromptInputTextarea>,
+) {
+  const { appendFiles, disabled } = useAttachments();
+  const { onPaste, ...textareaProps } = props;
+
+  const handlePaste = React.useCallback(
+    (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+      onPaste?.(e);
+      if (e.defaultPrevented) return;
+      const images = filesFromDataTransfer(e.clipboardData).filter((f) =>
+        f.type.startsWith("image/"),
+      );
+      if (images.length === 0 || disabled) return;
+      e.preventDefault();
+      appendFiles(images);
+    },
+    [appendFiles, disabled, onPaste],
+  );
+
+  return (
+    <PromptInputTextarea {...textareaProps} onPaste={handlePaste} />
+  );
+}
 
 function AttachmentsWithPromptInput() {
   const [message, setMessage] = React.useState("");
@@ -222,7 +250,7 @@ function AttachmentsWithPromptInput() {
               })}
             </AttachmentList>
           ) : null}
-          <PromptInputTextarea
+          <PromptInputTextareaWithImagePaste
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             placeholder="Message with attachments…"
