@@ -12,6 +12,7 @@ import {
   Attachment,
   AttachmentList,
   Attachments,
+  AttachmentsDropOverlay,
   AttachmentTrigger,
   type AttachmentMeta,
 } from "@/components/nexus-ui/attachments";
@@ -28,6 +29,8 @@ function attachmentKey(a: AttachmentMeta) {
 }
 
 type InputStatus = "idle" | "loading" | "error" | "submitted";
+
+const maxAttachmentSize = 500 * 1024 * 1024;
 
 function AttachmentsWithPromptInput() {
   const [message, setMessage] = React.useState("");
@@ -197,7 +200,10 @@ function AttachmentsWithPromptInput() {
         onAttachmentsChange={syncAttachments}
         accept="*/*"
         multiple
+        maxSize={maxAttachmentSize}
+        windowDrop
       >
+        <AttachmentsDropOverlay />
         <PromptInput onSubmit={handleSubmit}>
           {attachments.length > 0 ? (
             <AttachmentList className="min-h-0 flex-nowrap justify-start overflow-x-auto overflow-y-hidden px-4 pt-4 [scrollbar-color:var(--scrollbar-thumb)_transparent] [&::-webkit-scrollbar-thumb]:border-transparent [&::-webkit-scrollbar-track]:bg-transparent">

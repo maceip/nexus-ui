@@ -552,6 +552,7 @@ function AttachmentsDemo() {
               onAttachmentsChange={syncAttachments}
               accept="*/*"
               multiple
+              windowDrop
             >
               <PromptInput onSubmit={handleSubmit} className="shadow-sm">
                 <div

@@ -238,7 +238,8 @@ export type AttachmentsProps = {
   onFilesRejected?: (detail: AttachmentsRejectedFiles) => void;
   /**
    * Register `dragover` / `drop` on `document` so files can be dropped anywhere.
-   * @default true
+   * Pair with **`AttachmentsDropOverlay`** or **`useAttachments().appendFiles`** if you build a custom drop target.
+   * @default false
    */
   windowDrop?: boolean;
   children?: React.ReactNode;
@@ -254,7 +255,7 @@ function Attachments({
   disabled = false,
   onFileInputChange,
   onFilesRejected,
-  windowDrop = true,
+  windowDrop = false,
   children,
 }: AttachmentsProps) {
   const inputRef = React.useRef<HTMLInputElement | null>(null);
