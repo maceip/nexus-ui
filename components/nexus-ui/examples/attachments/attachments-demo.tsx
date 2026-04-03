@@ -19,7 +19,10 @@ import {
   Attachment,
   AttachmentList,
   Attachments,
+  AttachmentsDropOverlay,
   AttachmentTrigger,
+  filesFromDataTransfer,
+  useAttachments,
   type AttachmentMeta,
 } from "@/components/nexus-ui/attachments";
 import {
@@ -54,7 +57,50 @@ import GeminiIcon from "@/components/svgs/gemini";
 import { cn } from "@/lib/utils";
 
 function attachmentKey(a: AttachmentMeta) {
-  return `${a.name ?? ""}-${a.size ?? ""}-${a.mimeType ?? ""}-${a.url ?? ""}`;
+  return `${a.name ?? ""}-${a.size ?? ""}-${a.mimeType ?? ""}-${a.source ?? ""}-${a.url ?? ""}`;
+}
+
+const maxAttachmentSize = 500 * 1024 * 1024;
+
+/** Plain-text paste longer than this becomes a **`source: "paste"`** attachment (`variant="pasted"`). */
+const pasteTextAsFileMinChars = 2000;
+
+/** Must render under **`Attachments`** — uses **`appendFiles`** from context. */
+function PromptInputTextareaWithPaste(
+  props: React.ComponentProps<typeof PromptInputTextarea>,
+) {
+  const { appendFiles, disabled } = useAttachments();
+  const { onPaste, ...textareaProps } = props;
+
+  const handlePaste = React.useCallback(
+    (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+      onPaste?.(e);
+      if (e.defaultPrevented || disabled) return;
+
+      const imageFiles = filesFromDataTransfer(e.clipboardData).filter((f) =>
+        f.type.startsWith("image/"),
+      );
+      if (imageFiles.length > 0) {
+        e.preventDefault();
+        appendFiles(imageFiles);
+        return;
+      }
+
+      const text = e.clipboardData.getData("text/plain");
+      if (text.length >= pasteTextAsFileMinChars) {
+        e.preventDefault();
+        appendFiles(
+          [new File([text], "pasted-text.txt", { type: "text/plain" })],
+          { paste: true },
+        );
+      }
+    },
+    [appendFiles, disabled, onPaste],
+  );
+
+  return (
+    <PromptInputTextarea {...textareaProps} onPaste={handlePaste} />
+  );
 }
 
 const models = [
@@ -239,7 +285,7 @@ function AttachmentsDemo() {
   React.useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if (!e.metaKey) return;
-      if (e.key !== "h" && e.key !== "H") return;
+      if (e.key !== "d" && e.key !== "D") return;
       e.preventDefault();
       setAttachmentLayoutTabsVisible((v) => !v);
     };
@@ -372,6 +418,9 @@ function AttachmentsDemo() {
     );
 
     for (const key of newKeys) {
+      const added = attachments.find((a) => attachmentKey(a) === key);
+      if (added?.source === "paste") continue;
+
       clearKeyTimers(key);
 
       setProgressByKey((p) => ({ ...p, [key]: 0 }));
@@ -552,8 +601,10 @@ function AttachmentsDemo() {
               onAttachmentsChange={syncAttachments}
               accept="*/*"
               multiple
+              maxSize={maxAttachmentSize}
               windowDrop
             >
+              <AttachmentsDropOverlay />
               <PromptInput onSubmit={handleSubmit} className="shadow-sm">
                 <div
                   className={attachmentStripShellTransitionClass}
@@ -570,12 +621,15 @@ function AttachmentsDemo() {
                         {attachmentStripItems.map((item) => {
                           const key = attachmentKey(item);
                           const progress = progressByKey[key];
+                          const isPasted = item.source === "paste";
                           return (
                             <Attachment
                               key={key}
-                              variant={attachmentVariant}
+                              variant={
+                                isPasted ? "pasted" : attachmentVariant
+                              }
                               attachment={item}
-                              progress={progress}
+                              progress={isPasted ? undefined : progress}
                               onRemove={() => removeAttachment(item)}
                             />
                           );
@@ -584,7 +638,7 @@ function AttachmentsDemo() {
                     ) : null}
                   </div>
                 </div>
-                <PromptInputTextarea
+                <PromptInputTextareaWithPaste
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
                   placeholder="How can I help you today?"
