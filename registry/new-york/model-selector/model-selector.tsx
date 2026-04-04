@@ -6,6 +6,7 @@ import {
   ArrowDown01Icon,
   ArrowRight01Icon,
   SquareLock01Icon,
+  Search01Icon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { cva, type VariantProps } from "class-variance-authority";
@@ -38,10 +39,30 @@ export type ModelItemData = {
   description?: string;
 };
 
+function matchesModelItemFilter(
+  filterQuery: string,
+  fields: {
+    value?: string;
+    title?: string | null;
+    description?: string | null;
+  },
+) {
+  const q = filterQuery.trim().toLowerCase();
+  if (!q) return true;
+  if (fields.value != null && fields.value.toLowerCase().includes(q)) {
+    return true;
+  }
+  if (fields.title?.toLowerCase().includes(q)) return true;
+  if (fields.description?.toLowerCase().includes(q)) return true;
+  return false;
+}
+
 const ModelSelectorContext = React.createContext<{
   value: string;
   onValueChange: (value: string) => void;
   items: Map<string, ModelItemData>;
+  filterQuery: string;
+  setFilterQuery: (query: string) => void;
 } | null>(null);
 
 function useModelSelectorContext() {
@@ -59,6 +80,7 @@ function ModelSelector({
   onValueChange,
   items: itemsProp,
   children,
+  onOpenChange,
   ...props
 }: Omit<
   React.ComponentProps<typeof DropdownMenuPrimitive.Root>,
@@ -77,14 +99,34 @@ function ModelSelector({
     return m;
   }, [itemsProp]);
 
+  const [filterQuery, setFilterQuery] = React.useState("");
+
+  const handleOpenChange = React.useCallback(
+    (open: boolean) => {
+      onOpenChange?.(open);
+      if (!open) setFilterQuery("");
+    },
+    [onOpenChange],
+  );
+
   const ctx = React.useMemo(
-    () => ({ value, onValueChange, items }),
-    [value, onValueChange, items],
+    () => ({
+      value,
+      onValueChange,
+      items,
+      filterQuery,
+      setFilterQuery,
+    }),
+    [value, onValueChange, items, filterQuery],
   );
 
   return (
     <ModelSelectorContext.Provider value={ctx}>
-      <DropdownMenuPrimitive.Root data-slot="model-selector" {...props}>
+      <DropdownMenuPrimitive.Root
+        data-slot="model-selector"
+        onOpenChange={handleOpenChange}
+        {...props}
+      >
         {children}
       </DropdownMenuPrimitive.Root>
     </ModelSelectorContext.Provider>
@@ -124,7 +166,10 @@ function ModelSelectorTrigger({
         className="flex items-center gap-1"
       >
         {selected?.icon && <selected.icon className="size-4 shrink-0" />}
-        <span data-slot="model-selector-trigger-title" className="truncate text-sm">
+        <span
+          data-slot="model-selector-trigger-title"
+          className="truncate text-sm"
+        >
           {selected?.title ?? value}
         </span>
       </span>
@@ -176,7 +221,7 @@ function ModelSelectorContent({
         data-slot="model-selector-content"
         sideOffset={sideOffset}
         className={cn(
-          "z-50 max-h-(--radix-dropdown-menu-content-available-height) min-w-48 origin-(--radix-dropdown-menu-content-transform-origin) overflow-x-hidden overflow-y-auto rounded-lg border border-gray-200 bg-white p-1 text-popover-foreground shadow-modal duration-200 ease-out data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-[state=closed]:overflow-hidden data-[state=closed]:duration-0 dark:border-gray-700 dark:bg-gray-600 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
+          "z-50 max-h-[min(var(--model-selector-content-max-height,500px),var(--radix-dropdown-menu-content-available-height))] min-h-40 min-w-48 origin-(--radix-dropdown-menu-content-transform-origin) overflow-x-hidden overflow-y-auto overscroll-none rounded-lg border border-gray-200 bg-white p-1 text-popover-foreground shadow-modal duration-200 ease-out data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-[state=closed]:overflow-hidden data-[state=closed]:duration-0 dark:border-gray-700 dark:bg-gray-600 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
           className,
         )}
         {...props}
@@ -186,6 +231,100 @@ function ModelSelectorContent({
 }
 
 ModelSelectorContent.displayName = "ModelSelectorContent";
+
+const ModelSelectorSearch = React.forwardRef<
+  HTMLInputElement,
+  React.ComponentProps<"input">
+>(function ModelSelectorSearch(
+  {
+    className,
+    type = "text",
+    onKeyDown,
+    onPointerDown,
+    onChange,
+    autoComplete = "off",
+    ...props
+  },
+  ref,
+) {
+  const { filterQuery, setFilterQuery } = useModelSelectorContext();
+  return (
+    <div
+      data-slot="model-selector-search-wrapper"
+      className="sticky top-0 z-10 bg-white py-1 dark:bg-gray-600"
+      onPointerDown={(e) => {
+        e.preventDefault();
+      }}
+    >
+      <HugeiconsIcon
+        icon={Search01Icon}
+        className="absolute top-1/2 left-2.75 -mt-0.5 size-4 -translate-y-1/2 text-gray-500 dark:text-gray-400"
+        strokeWidth={2}
+      />
+      <input
+        ref={ref}
+        type={type}
+        data-slot="model-selector-search"
+        autoComplete={autoComplete}
+        className={cn(
+          "inline-flex h-8 w-full items-center gap-2 rounded-[6px] bg-gray-100 p-1.5 ps-8.5 pe-2 text-[13px] leading-6 font-[350] text-gray-500 transition-all placeholder:text-gray-500 hover:bg-gray-200/50 focus-visible:ring-2 focus-visible:outline-0 focus-visible:ring-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:placeholder:text-gray-400 dark:focus-visible:ring-gray-500",
+          className,
+        )}
+        onKeyDown={(e) => {
+          onKeyDown?.(e);
+          if (e.key === "Escape") return;
+          e.stopPropagation();
+        }}
+        onPointerDown={(e) => {
+          onPointerDown?.(e);
+          e.stopPropagation();
+        }}
+        {...props}
+        value={filterQuery}
+        onChange={(e) => {
+          setFilterQuery(e.target.value);
+          onChange?.(e);
+        }}
+      />
+    </div>
+  );
+});
+
+ModelSelectorSearch.displayName = "ModelSelectorSearch";
+
+function ModelSelectorEmpty({
+  className,
+  children,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement>) {
+  const { filterQuery, items } = useModelSelectorContext();
+  const q = filterQuery.trim();
+  const hasCatalogMatch = React.useMemo(() => {
+    if (!q || items.size === 0) return true;
+    for (const [value, data] of items) {
+      if (
+        matchesModelItemFilter(q, {
+          value,
+          title: data.title,
+          description: data.description,
+        })
+      ) {
+        return true;
+      }
+    }
+    return false;
+  }, [q, items]);
+
+  if (!q || hasCatalogMatch) return null;
+
+  return (
+    <div data-slot="model-selector-empty" className={cn("flex h-27 w-full items-center justify-center px-3 py-2 text-center text-[13px] font-[350] text-gray-500 dark:text-gray-400", className)} {...props}>
+      {children ?? "No models found"}
+    </div>
+  );
+}
+
+ModelSelectorEmpty.displayName = "ModelSelectorEmpty";
 
 function ModelSelectorGroup({
   ...props
@@ -316,6 +455,15 @@ function ModelSelectorCheckboxItem({
   indicator?: React.ReactNode;
   /** Custom content to show when selected. Renders inside ItemIndicator. Defaults to CheckIcon. */
 }) {
+  const { filterQuery } = useModelSelectorContext();
+  const hasFilterableText = title != null || description != null;
+  if (
+    hasFilterableText &&
+    !matchesModelItemFilter(filterQuery, { title, description })
+  ) {
+    return null;
+  }
+
   const defaultContent = (
     <>
       {Icon && (
@@ -349,6 +497,7 @@ function ModelSelectorCheckboxItem({
         className,
       )}
       checked={checked}
+      disabled={disabled}
       {...props}
     >
       {children ?? defaultContent}
@@ -408,6 +557,17 @@ function ModelSelectorRadioItem({
   /** Custom content to show when selected. Renders inside ItemIndicator. Defaults to CheckIcon. */
   indicator?: React.ReactNode;
 }) {
+  const { filterQuery } = useModelSelectorContext();
+  if (
+    !matchesModelItemFilter(filterQuery, {
+      value,
+      title,
+      description,
+    })
+  ) {
+    return null;
+  }
+
   const defaultContent = (
     <>
       {Icon && (
@@ -559,7 +719,7 @@ function ModelSelectorSubContent({
     <DropdownMenuPrimitive.SubContent
       data-slot="model-selector-sub-content"
       className={cn(
-        "z-50 min-w-32 origin-(--radix-dropdown-menu-content-transform-origin) overflow-hidden rounded-lg border border-gray-200 bg-white p-1 text-popover-foreground shadow-modal duration-200 ease-out data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-[state=closed]:duration-0 dark:border-gray-700 dark:bg-gray-600 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
+        "z-50 min-w-32 origin-(--radix-dropdown-menu-content-transform-origin) overflow-hidden overscroll-none rounded-lg border border-gray-200 bg-white p-1 text-popover-foreground shadow-modal duration-200 ease-out data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-[state=closed]:duration-0 dark:border-gray-700 dark:bg-gray-600 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
         className,
       )}
       {...props}
@@ -574,6 +734,8 @@ export {
   ModelSelectorPortal,
   ModelSelectorTrigger,
   ModelSelectorContent,
+  ModelSelectorSearch,
+  ModelSelectorEmpty,
   ModelSelectorGroup,
   ModelSelectorLabel,
   ModelSelectorItemTitle,
