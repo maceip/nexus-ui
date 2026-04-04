@@ -152,7 +152,7 @@ Place the model selector in a `PromptInputActionGroup` alongside attach, image, 
 
 ### With Search
 
-Put `ModelSelectorSearch` first in `ModelSelectorContent`; the root owns the query and clears it when the menu closes (`onOpenChange` still runs if you pass it). Radio items filter on `value`, `title`, and `description`; checkbox items on `title` and `description` only; plain `ModelSelectorItem` rows are not filtered. Optional search `onChange` runs after internal updates. `ModelSelectorEmpty` needs root `items` to show no-match copy (default: No models found).
+Place `ModelSelectorSearch` first in `ModelSelectorContent`; the root owns the query and clears it when the menu closes (`onOpenChange` still runs if you pass it). Radio items filter on `value`, `title`, and `description`; checkbox items on `title` and `description` only; plain `ModelSelectorItem` rows are not filtered. Optional search `onChange` runs after internal updates. `ModelSelectorEmpty` needs root `items` to show no-match copy (default: No models found).
 
 <DemoWithCode src="components/nexus-ui/examples/model-selector/with-search.tsx">
   <ModelSelectorWithSearch />
@@ -391,6 +391,36 @@ Supports `asChild` to merge into a child element (e.g. Button).
   }}
 />
 
+### ModelSelectorSearch
+
+A search input bound to the root filter query; radio and checkbox items hide when they do not match. Place at the top of `ModelSelectorContent`. Accepts standard `<input>` props.
+
+<TypeTable
+  type={{
+    className: {
+      type: "string",
+      description: "Additional CSS classes for the input element.",
+    },
+  }}
+/>
+
+### ModelSelectorEmpty
+
+Shown when the query is non-empty, `items` is set on the root, and none of those entries match the filter. Otherwise hidden. Default copy: No models found. Accepts standard `<div>` props.
+
+<TypeTable
+  type={{
+    className: {
+      type: "string",
+      description: "Additional CSS classes for the message.",
+    },
+    children: {
+      type: "React.ReactNode",
+      description: "Optional. Replaces the default No models found copy.",
+    },
+  }}
+/>
+
 ### ModelSelectorItem
 
 A plain menu item (no selection state). Use for toggles, links, or actions.
@@ -514,36 +544,6 @@ A checkbox-style item for multi-select. Shows a check indicator when `checked` i
   }}
 />
 
-### ModelSelectorSearch
-
-A search input bound to the root filter query; radio and checkbox items hide when they do not match. Place at the top of `ModelSelectorContent`. Accepts standard `<input>` props.
-
-<TypeTable
-  type={{
-    className: {
-      type: "string",
-      description: "Additional CSS classes for the input element.",
-    },
-  }}
-/>
-
-### ModelSelectorEmpty
-
-Shown when the query is non-empty, `items` is set on the root, and none of those entries match the filter. Otherwise hidden. Default copy: No models found. Accepts standard `<div>` props.
-
-<TypeTable
-  type={{
-    className: {
-      type: "string",
-      description: "Additional CSS classes for the message.",
-    },
-    children: {
-      type: "React.ReactNode",
-      description: "Optional. Replaces the default No models found copy.",
-    },
-  }}
-/>
-
 ### ModelSelectorRadioItem
 
 A radio-style item for single selection. Shows a check when selected, or a lock icon when `disabled`.
@@ -591,8 +591,6 @@ A radio-style item for single selection. Shows a check when selected, or a lock 
 `ModelSelectorSeparator`, `ModelSelectorSub`, `ModelSelectorSubTrigger`, and `ModelSelectorSubContent` accept the
 same props as their Radix Dropdown Menu counterparts. See the
 [Radix Dropdown Menu documentation](https://www.radix-ui.com/primitives/docs/components/dropdown-menu) for details.
-
-`ModelSelectorContent` caps height with `min(var(--model-selector-content-max-height, 311px), var(--radix-dropdown-menu-content-available-height))`. Override the design max (before the viewport limit) by setting the custom property on `className`, e.g. `[--model-selector-content-max-height:500px]`.
 
 `ModelSelectorItemTitle`, `ModelSelectorItemDescription`, `ModelSelectorItemIcon`, and `ModelSelectorItemIndicator`
 are low-level building blocks used by CheckboxItem and RadioItem. Use them when composing custom item content with `children`.
