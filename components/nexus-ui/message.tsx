@@ -217,7 +217,7 @@ function MessageAvatar({
   className,
 }: MessageAvatarProps) {
   return (
-    <Avatar size={size} className={cn("shrink-0", className)}>
+    <Avatar size={size} className={cn("shrink-0 size-7", className)}>
       <AvatarImage src={src} alt={alt} className="my-0!" />
       <AvatarFallback delayMs={delayMs} className="my-0! shrink-0">
         {fallback}
