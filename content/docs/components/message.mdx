@@ -119,6 +119,22 @@ Render **`AttachmentList`** / **`Attachment`** inside **`MessageStack`** above *
   <MessageRichText />
 </DemoWithCode>
 
+#### How **MessageMarkdown** uses Streamdown
+
+It is a thin wrapper around **[Streamdown](https://github.com/vercel/streamdown)** with the same component props, so you can pass **`children`**, **`className`**, and other **`Streamdown`** options as needed.
+
+Nexus applies shared **prose-style** **`className`** tokens for headings, body text, links, lists, and inline code. **Shiki** highlights fenced code with **`github-light`** and **`github-dark`**.
+
+**Plugins** from **`@streamdown/code`**, **`@streamdown/math`**, **`@streamdown/mermaid`**, and **`@streamdown/cjk`** enable code blocks, math, diagrams, and CJK-friendly typography. A few **MDX components** are overridden—especially **tables**—so wide content fits the chat bubble layout.
+
+Streamdown parses markdown into HTML that relies on utility classes shipped inside **`streamdown`** and those plugin packages. That model works well for **streaming** assistant output so you do not hand-build the markup.
+
+#### Tailwind **@source** after install
+
+Installing **Message** with the **shadcn CLI** should merge **Tailwind `@source`** lines into the CSS file from **`components.json`** so those classes are **not purged**. With a **manual** install, that merge does not run by default.
+
+After either path, **open your global CSS** and **confirm** the **`@source`** entries for **`streamdown`** and **`@streamdown/*`** are present, and that **`../node_modules`** still resolves to the project root from that file’s folder. If anything is missing or the depth is wrong, markdown can look unstyled or code and diagrams can break.
+
 ## Vercel AI SDK Integration
 
 Render [`useChat`](https://ai-sdk.dev/docs/reference/ai-sdk-ui/use-chat) messages with **Message** by reading each **[`UIMessage`](https://ai-sdk.dev/docs/reference/ai-sdk-core/ui-message)** **`parts`** array. Join **`text`** parts for **MessageMarkdown** (streaming updates apply as the SDK appends or grows **`TextUIPart`** content).
