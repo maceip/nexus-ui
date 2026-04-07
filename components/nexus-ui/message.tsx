@@ -11,27 +11,25 @@ import { mermaid } from "@streamdown/mermaid";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 
-/** Typography (prose) classes for MessageMarkdown — mirrors `components/ui/prose.tsx`. */
+/** Typography (prose) classes for MessageMarkdown. **/
 const messageMarkdownProseClasses = [
   "prose prose-invert max-w-none text-gray-900 dark:text-gray-200 font-normal text-sm leading-6",
   // headings
-  "prose-headings:scroll-mt-28 lg:prose-headings:scroll-mt-24 prose-headings:text-gray-900 dark:prose-headings:text-gray-50 prose-headings:font-[450] prose-headings:leading-5.5 prose-h2:tracking-[-0.45px] prose-headings:mb-4 prose-headings:mt-8 prose-h1:text-2xl prose-h2:text-lg prose-h3:text-base prose-h3:leading-4.5 prose-h3:tracking-[-0.4px] prose-h4:text-sm prose-h5:text-xs prose-h6:text-xs",
+  "prose-headings:font-[450] prose-headings:leading-5.5 prose-h2:tracking-[-0.45px] prose-headings:mb-4 prose-headings:mt-6 prose-h1:text-2xl prose-h2:text-lg prose-h3:text-base prose-h3:leading-4.5 prose-h3:tracking-[-0.4px] prose-h4:text-sm prose-h5:text-xs prose-h6:text-xs",
   // heading links
   "prose-headings:[&_a]:no-underline prose-headings:[&_a]:shadow-none prose-headings:[&_a]:text-inherit",
   // body text
-  "prose-p:mb-4 prose-p:mt-4",
+  "prose-p:mb-1 prose-p:mt-4",
   // lead
   "prose-lead:text-gray-900 dark:prose-lead:text-gray-50",
   // links
-  "prose-a:text-gray-900 dark:prose-a:text-gray-50 prose-a:font-normal",
-  // link underline
-  "prose-a:underline prose-a:underline-offset-3",
+  "prose-a:text-gray-900 dark:prose-a:text-gray-50 prose-a:font-normal prose-a:underline prose-a:underline-offset-3",
   // strong
   "prose-strong:text-gray-900 dark:prose-strong:text-gray-50 prose-strong:font-normal",
   // code
-  "prose-code:text-gray-900 dark:prose-code:text-gray-50 prose-code:bg-gray-100 dark:prose-code:bg-gray-800 prose-code:px-1.5 prose-code:border-none prose-code:rounded-md prose-code:font-[450]",
+  "prose-code:text-[13px] prose-code:text-gray-900 dark:prose-code:text-gray-50 prose-code:bg-gray-100 dark:prose-code:bg-gray-800 prose-code:px-1.5 prose-code:border-none prose-code:rounded-md prose-code:font-[450]",
   // lists
-  "prose-li:my-[-0.5px] prose-li:marker:text-gray-200 dark:prose-li:marker:text-gray-700",
+  "prose-li:my-[-0.5px] prose-li:marker:text-gray-200 dark:prose-li:marker:text-gray-700 prose-ul:my-0 prose-ol:my-0",
 ] as const;
 
 type MessageFrom = "user" | "assistant";
@@ -97,7 +95,7 @@ function MessageStack({ className, ...props }: MessageStackProps) {
       data-slot="message-stack"
       className={cn(
         "flex w-auto flex-col gap-2",
-        from === "user" ? "items-end" : "items-start",
+        from === "user" ? "items-end" : "items-start prose-lead:text-gray-900 prose-strong:text-gray-900",
         className,
       )}
       {...props}
