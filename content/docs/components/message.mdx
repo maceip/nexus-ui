@@ -119,6 +119,74 @@ Render **`AttachmentList`** / **`Attachment`** inside **`MessageStack`** above *
   <MessageRichText />
 </DemoWithCode>
 
+## Vercel AI SDK Integration
+
+Render [`useChat`](https://ai-sdk.dev/docs/reference/ai-sdk-ui/use-chat) messages with **Message** by reading each **[`UIMessage`](https://ai-sdk.dev/docs/reference/ai-sdk-core/ui-message)** **`parts`** array. Join **`text`** parts for **MessageMarkdown** (streaming updates apply as the SDK appends or grows **`TextUIPart`** content).
+
+See [Prompt Input](/docs/components/prompt-input#vercel-ai-sdk-integration) for a minimal **`POST /api/chat`** route with **`streamText`** and **`toUIMessageStreamResponse`**. For user turns that include uploads, map **`file`** parts to **[Attachments](/docs/components/attachments)** (or your own preview) in addition to text—**[Attachments](/docs/components/attachments#vercel-ai-sdk-integration)** covers **`sendMessage`** with **`files`**.
+
+<Steps>
+<Step>
+<h3>Install the AI SDK</h3>
+
+```bash
+npm install ai @ai-sdk/react @ai-sdk/openai
+```
+
+</Step>
+<Step>
+<h3>Create your chat API route</h3>
+
+Use the same handler as in the Prompt Input docs: **`messages: await convertToModelMessages(messages)`** and **`return result.toUIMessageStreamResponse()`**.
+
+</Step>
+<Step>
+<h3>Map `messages` to Message</h3>
+
+Use **`isTextUIPart`** from **`ai`** so you only aggregate **`type: "text"`** segments. Skip **`system`** turns unless you surface them deliberately. Assistant messages can also include **reasoning**, **tool**, **source**, and other part types—extend this loop when you need those in the UI.
+
+```tsx
+"use client";
+
+import { useChat } from "@ai-sdk/react";
+import { DefaultChatTransport, isTextUIPart, type UIMessage } from "ai";
+import {
+  Message,
+  MessageStack,
+  MessageContent,
+  MessageMarkdown,
+} from "@/components/nexus-ui/message";
+
+function textFromMessage(message: UIMessage) {
+  return message.parts.filter(isTextUIPart).map((p) => p.text).join("");
+}
+
+export default function ChatThread() {
+  const { messages } = useChat({
+    transport: new DefaultChatTransport({ api: "/api/chat" }),
+  });
+
+  return (
+    <div className="flex flex-col gap-4">
+      {messages
+        .filter((m) => m.role !== "system")
+        .map((m) => (
+          <Message key={m.id} from={m.role === "user" ? "user" : "assistant"}>
+            <MessageStack>
+              <MessageContent>
+                <MessageMarkdown>{textFromMessage(m)}</MessageMarkdown>
+              </MessageContent>
+            </MessageStack>
+          </Message>
+        ))}
+    </div>
+  );
+}
+```
+
+</Step>
+</Steps>
+
 ## API Reference
 
 ### Message
