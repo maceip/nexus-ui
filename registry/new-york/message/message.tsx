@@ -75,7 +75,7 @@ function Message({
         aria-label={ariaLabel}
         aria-labelledby={ariaLabelledBy}
         className={cn(
-          "flex w-auto max-w-[90%] items-start gap-2",
+          "flex w-full max-w-[90%] items-start gap-2",
           from === "user" ? "ms-auto" : "me-auto",
           className,
         )}
@@ -97,7 +97,7 @@ function MessageStack({ className, ...props }: MessageStackProps) {
     <div
       data-slot="message-stack"
       className={cn(
-        "flex w-auto flex-col gap-2",
+        "flex w-full flex-col gap-2",
         from === "user"
           ? "items-end"
           : "items-start prose-strong:text-gray-900 prose-lead:text-gray-900",
@@ -118,10 +118,10 @@ function MessageContent({ className, ...props }: MessageContentProps) {
     <div
       data-slot="message-content"
       className={cn(
-        "min-h-10 w-fit rounded-[20px] text-sm leading-6 text-gray-900",
+        "min-h-10 rounded-[20px] text-sm leading-6 text-gray-900",
         from === "user"
-          ? "bg-gray-100 px-4 py-2 dark:bg-gray-700"
-          : "bg-transparent px-2",
+          ? "bg-gray-100 px-4 py-2 dark:bg-gray-700 w-fit"
+          : "bg-transparent px-2 w-full",
         className,
       )}
       {...props}
