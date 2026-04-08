@@ -3,7 +3,7 @@ import { type ReactNode, useMemo, useState } from "react";
 import { Tick02Icon, ArrowDown01Icon, Copy01Icon, ArrowUpRight01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { cn } from "@/lib/cn";
-import { useCopyButton } from "fumadocs-ui/utils/use-copy-button";
+import { useCopyButton } from "@/lib/use-copy-button";
 import { buttonVariants } from "fumadocs-ui/components/ui/button";
 import {
   Popover,

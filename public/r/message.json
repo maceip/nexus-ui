@@ -10,7 +10,9 @@
     "@streamdown/math",
     "@streamdown/mermaid",
     "radix-ui",
-    "@radix-ui/react-slot"
+    "@radix-ui/react-slot",
+    "@hugeicons/react",
+    "@hugeicons/core-free-icons"
   ],
   "registryDependencies": [
     "nexus-ui-theme",
@@ -22,6 +24,11 @@
       "path": "registry/new-york/message/message.tsx",
       "type": "registry:file",
       "target": "~/components/nexus-ui/message.tsx"
+    },
+    {
+      "path": "registry/new-york/message/codeblock.tsx",
+      "type": "registry:file",
+      "target": "~/components/nexus-ui/codeblock.tsx"
     }
   ],
   "css": {

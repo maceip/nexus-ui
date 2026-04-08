@@ -9,7 +9,10 @@ import { math } from "@streamdown/math";
 import { mermaid } from "@streamdown/mermaid";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { CodeBlock } from "@/components/nexus-ui/codeblock";
 import { cn } from "@/lib/utils";
+
+const streamdownPlugins = { cjk, code, math, mermaid } as const;
 
 /** Typography (prose) classes for MessageMarkdown. **/
 const messageMarkdownProseClasses = [
@@ -95,7 +98,9 @@ function MessageStack({ className, ...props }: MessageStackProps) {
       data-slot="message-stack"
       className={cn(
         "flex w-auto flex-col gap-2",
-        from === "user" ? "items-end" : "items-start prose-lead:text-gray-900 prose-strong:text-gray-900",
+        from === "user"
+          ? "items-end"
+          : "items-start prose-strong:text-gray-900 prose-lead:text-gray-900",
         className,
       )}
       {...props}
@@ -135,18 +140,20 @@ function MessageMarkdown({ className, ...props }: MessageMarkdownProps) {
         "[&>*:first-child]:mt-0 [&>*:last-child]:mb-0",
         className,
       )}
-      controls={{
-        table: {
-          copy: false,
-          download: false,
-          fullscreen: false,
-        },
-        code: {
-          copy: false,
-          download: false,
-        },
-      }}
       components={{
+        code: CodeBlock,
+        inlineCode: ({ children, className, ...props }) => (
+          <code
+            className={cn(
+              "rounded bg-gray-100 px-1.5 py-0.5 font-mono text-sm dark:bg-gray-800",
+              className,
+            )}
+            data-slot="message-markdown-inline-code"
+            {...props}
+          >
+            {children}
+          </code>
+        ),
         table: (props) => (
           <div
             data-slot="message-markdown-table-wrap"
@@ -168,20 +175,20 @@ function MessageMarkdown({ className, ...props }: MessageMarkdownProps) {
         th: (props) => (
           <th
             data-slot="message-markdown-th"
-            className="border-none px-6 py-2.5 text-start text-[14px] font-normal! text-gray-400! dark:bg-gray-950 dark:text-gray-500!"
+            className="border-none px-5 py-2 text-start text-[13px] font-normal! text-gray-400! dark:bg-gray-950 dark:text-gray-500!"
             {...props}
           />
         ),
         td: (props) => (
           <td
             data-slot="message-markdown-td"
-            className="border-0 border-gray-100 bg-white px-6 py-3.5 text-[14px] text-gray-900 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400 [tr:not(:first-child)_&]:border-t"
+            className="border-0 border-gray-100 bg-white px-5 py-3 text-[13px] text-gray-900 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400 [tr:not(:first-child)_&]:border-t"
             {...props}
           />
         ),
       }}
       shikiTheme={["github-light", "github-dark"]}
-      plugins={{ cjk, code, math, mermaid }}
+      plugins={streamdownPlugins}
       {...props}
     />
   );

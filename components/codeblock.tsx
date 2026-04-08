@@ -15,7 +15,7 @@ import {
   useState,
 } from "react";
 import { cn } from "../lib/cn";
-import { useCopyButton } from "fumadocs-ui/utils/use-copy-button";
+import { useCopyButton } from "@/lib/use-copy-button";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 import { mergeRefs } from "../lib/merge-refs";

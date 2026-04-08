@@ -140,17 +140,6 @@ function MessageMarkdown({ className, ...props }: MessageMarkdownProps) {
         "[&>*:first-child]:mt-0 [&>*:last-child]:mb-0",
         className,
       )}
-      controls={{
-        table: {
-          copy: false,
-          download: false,
-          fullscreen: false,
-        },
-        code: {
-          copy: false,
-          download: false,
-        },
-      }}
       components={{
         code: CodeBlock,
         inlineCode: ({ children, className, ...props }) => (

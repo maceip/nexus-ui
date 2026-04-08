@@ -48,6 +48,8 @@ bunx shadcn@latest add @nexus-ui/message
 <h3>Copy and paste the following code into your project.</h3>
 
 <ComponentSource src="registry/new-york/message/message.tsx" title="components/nexus-ui/message.tsx" />
+
+<ComponentSource src="registry/new-york/message/codeblock.tsx" title="components/nexus-ui/codeblock.tsx" />
 </Step>
 <Step>
 <h3>Update the import paths to match your project setup.</h3>
@@ -128,6 +130,19 @@ Nexus applies shared **prose-style** **`className`** tokens for headings, body t
 **Plugins** from **`@streamdown/code`**, **`@streamdown/math`**, **`@streamdown/mermaid`**, and **`@streamdown/cjk`** enable code blocks, math, diagrams, and CJK-friendly typography. A few **MDX components** are overridden—especially **tables**—so wide content fits the chat bubble layout.
 
 Streamdown parses markdown into HTML that relies on utility classes shipped inside **`streamdown`** and those plugin packages. That model works well for **streaming** assistant output so you do not hand-build the markup.
+
+#### Fenced code: Nexus **`CodeBlock`** replaces Streamdown’s default
+
+**`MessageMarkdown`** passes **`components.code={CodeBlock}`** (`@/components/nexus-ui/codeblock`). Highlighting still comes from **`@streamdown/code`** and your **`Streamdown`** plugins—only the **UI** is custom.
+
+**Compared to Streamdown’s built-in fenced block**, **`CodeBlock`** gives you:
+
+- Figure, scroll viewport, and **`CodeBlock`** **`showTitleRow`** (optional; default **true** via **`CodeBlockChromeProvider`** or built-in defaults). Pass **`showTitleRow={false}`** on **`CodeBlock`** where you wire Streamdown’s **`components.code`** (or wrap: **`(props) => <CodeBlock {...props} showTitleRow={false} />`**) to hide the language header and float copy top-right. **`CodeBlockChromeProvider`** still sets defaults for **`keepBackground`**, **`allowCopy`**, and **`showTitleRow`** when those props are omitted on **`CodeBlock`**.
+- **Line gutters** when **`lineNumbers`** is on, using global **`code .line`** / **`code .line::before`** (same idea as this site’s docs code block)
+
+**Inline code** (single backticks in markdown) is rendered with **`components.inlineCode`** as a plain **`<code>`**, per [Streamdown’s `inlineCode` docs](https://streamdown.ai/docs/components#inline-code), so fenced blocks and inline spans stay separate.
+
+**Install:** **`@nexus-ui/message`** adds **two** files in one go—**`message.tsx`** and **`codeblock.tsx`** (copy helpers live inside **`codeblock.tsx`**). Commit both. There is no **`@nexus-ui/codeblock`** package to add on its own.
 
 #### Tailwind **@source** after install
 
