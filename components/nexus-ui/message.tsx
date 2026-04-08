@@ -9,7 +9,10 @@ import { math } from "@streamdown/math";
 import { mermaid } from "@streamdown/mermaid";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { NexusCodeBlock } from "@/components/nexus-ui/codeblock";
 import { cn } from "@/lib/utils";
+
+const streamdownPlugins = { cjk, code, math, mermaid } as const;
 
 /** Typography (prose) classes for MessageMarkdown. **/
 const messageMarkdownProseClasses = [
@@ -95,7 +98,9 @@ function MessageStack({ className, ...props }: MessageStackProps) {
       data-slot="message-stack"
       className={cn(
         "flex w-auto flex-col gap-2",
-        from === "user" ? "items-end" : "items-start prose-lead:text-gray-900 prose-strong:text-gray-900",
+        from === "user"
+          ? "items-end"
+          : "items-start prose-strong:text-gray-900 prose-lead:text-gray-900",
         className,
       )}
       {...props}
@@ -147,6 +152,19 @@ function MessageMarkdown({ className, ...props }: MessageMarkdownProps) {
         },
       }}
       components={{
+        code: NexusCodeBlock,
+        inlineCode: ({ children, className, ...props }) => (
+          <code
+            className={cn(
+              "rounded bg-gray-100 px-1.5 py-0.5 font-mono text-sm dark:bg-gray-800",
+              className,
+            )}
+            data-slot="message-markdown-inline-code"
+            {...props}
+          >
+            {children}
+          </code>
+        ),
         table: (props) => (
           <div
             data-slot="message-markdown-table-wrap"
@@ -181,7 +199,7 @@ function MessageMarkdown({ className, ...props }: MessageMarkdownProps) {
         ),
       }}
       shikiTheme={["github-light", "github-dark"]}
-      plugins={{ cjk, code, math, mermaid }}
+      plugins={streamdownPlugins}
       {...props}
     />
   );
