@@ -9,7 +9,7 @@ import { math } from "@streamdown/math";
 import { mermaid } from "@streamdown/mermaid";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { NexusCodeBlock } from "@/components/nexus-ui/codeblock";
+import { CodeBlock } from "@/components/nexus-ui/codeblock";
 import { cn } from "@/lib/utils";
 
 const streamdownPlugins = { cjk, code, math, mermaid } as const;
@@ -152,7 +152,7 @@ function MessageMarkdown({ className, ...props }: MessageMarkdownProps) {
         },
       }}
       components={{
-        code: NexusCodeBlock,
+        code: CodeBlock,
         inlineCode: ({ children, className, ...props }) => (
           <code
             className={cn(
