@@ -168,14 +168,14 @@ function MessageMarkdown({ className, ...props }: MessageMarkdownProps) {
         th: (props) => (
           <th
             data-slot="message-markdown-th"
-            className="border-none px-6 py-2.5 text-start text-[14px] font-normal! text-gray-400! dark:bg-gray-950 dark:text-gray-500!"
+            className="border-none px-5 py-2 text-start text-[13px] font-normal! text-gray-400! dark:bg-gray-950 dark:text-gray-500!"
             {...props}
           />
         ),
         td: (props) => (
           <td
             data-slot="message-markdown-td"
-            className="border-0 border-gray-100 bg-white px-6 py-3.5 text-[14px] text-gray-900 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400 [tr:not(:first-child)_&]:border-t"
+            className="border-0 border-gray-100 bg-white px-5 py-3 text-[13px] text-gray-900 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400 [tr:not(:first-child)_&]:border-t"
             {...props}
           />
         ),
