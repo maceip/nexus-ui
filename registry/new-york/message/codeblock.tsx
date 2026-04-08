@@ -4,9 +4,7 @@
  * Streamdown `components.code` for fenced blocks (Shiki via {@link @streamdown/code}).
  * Installed together with **Message** (`@nexus-ui/message`): same registry item as `message.tsx`, not a separate add.
  *
- * Matches site docs `CodeBlock` chrome: title row, copy, `keepBackground`, scroll viewport.
- * Pass **`showTitleRow`** on **`CodeBlock`** (Streamdown `components.code`) to toggle the title row.
- * Optional: {@link CodeBlockChromeProvider} for defaults when **`allowCopy`**, **`keepBackground`**, or **`showTitleRow`** are omitted on **`CodeBlock`**.
+ * Nexus chrome: title row (optional via **`showTitleRow`**), copy, bordered card, scroll viewport.
  * Set `components.inlineCode` per
  * [Streamdown](https://streamdown.ai/docs/components#inline-code).
  */
@@ -17,7 +15,6 @@ import { code as codeHighlighter } from "@streamdown/code";
 import type { Element as HastElement } from "hast";
 import {
   type ComponentProps,
-  createContext,
   type CSSProperties,
   type DetailedHTMLProps,
   type HTMLAttributes,
@@ -44,13 +41,6 @@ import { cn } from "@/lib/utils";
 // Types
 // -----------------------------------------------------------------------------
 
-type CodeBlockChromeOptions = {
-  allowCopy: boolean;
-  keepBackground: boolean;
-  /** Language label + copy in a header row. When false, copy floats top-right (Streamdown has no equivalent prop). */
-  showTitleRow: boolean;
-};
-
 type MarkdownCodeElementProps = DetailedHTMLProps<
   HTMLAttributes<HTMLElement>,
   HTMLElement
@@ -59,7 +49,7 @@ type MarkdownCodeElementProps = DetailedHTMLProps<
 
 /** Streamdown `components.code` props: markdown element props plus Nexus chrome overrides. */
 export type CodeBlockProps = MarkdownCodeElementProps & {
-  /** Language label + copy in a header row. When false, copy floats top-right. Omitted → {@link CodeBlockChromeProvider} / defaults. */
+  /** Language label + copy in a header row. When false, copy floats top-right. Defaults to true when omitted. */
   showTitleRow?: boolean;
 };
 
@@ -93,41 +83,6 @@ type CodeBlockFencedViewProps = {
 const LANGUAGE_REGEX = /language-([^\s]+)/;
 const START_LINE_PATTERN = /startLine=(\d+)/;
 const NO_LINE_NUMBERS_PATTERN = /\bnoLineNumbers\b/;
-
-const defaultChrome: CodeBlockChromeOptions = {
-  allowCopy: true,
-  keepBackground: false,
-  showTitleRow: true,
-};
-
-// -----------------------------------------------------------------------------
-// Context
-// -----------------------------------------------------------------------------
-
-const CodeBlockChromeContext =
-  createContext<CodeBlockChromeOptions>(defaultChrome);
-
-export function CodeBlockChromeProvider({
-  children,
-  allowCopy = defaultChrome.allowCopy,
-  keepBackground = defaultChrome.keepBackground,
-  showTitleRow = defaultChrome.showTitleRow,
-}: {
-  children: React.ReactNode;
-  allowCopy?: boolean;
-  keepBackground?: boolean;
-  showTitleRow?: boolean;
-}) {
-  const value = useMemo(
-    () => ({ allowCopy, keepBackground, showTitleRow }),
-    [allowCopy, keepBackground, showTitleRow],
-  );
-  return (
-    <CodeBlockChromeContext.Provider value={value}>
-      {children}
-    </CodeBlockChromeContext.Provider>
-  );
-}
 
 // -----------------------------------------------------------------------------
 // Utilities (pure)
@@ -237,12 +192,10 @@ function useCopyButton(
 
 function CodeBlockCopyButton({
   text,
-  keepBackground,
   showGlow = false,
   className,
 }: {
   text: string;
-  keepBackground: boolean;
   showGlow?: boolean;
   className?: string;
 }) {
@@ -256,9 +209,7 @@ function CodeBlockCopyButton({
         <div
           className={cn(
             "pointer-events-none absolute top-1/2 left-1/2 z-0 size-13.5 -translate-x-1/2 -translate-y-1/2 rounded-l-full rounded-tr-full bg-linear-to-l",
-            keepBackground
-              ? "from-gray-100 from-70% to-gray-100/0 dark:from-gray-950 dark:to-gray-950/0"
-              : "from-white from-70% to-white/0 dark:from-gray-900 dark:to-gray-900/0",
+            "from-white from-70% to-white/0 dark:from-gray-900 dark:to-gray-900/0",
           )}
         />
       ) : null}
@@ -298,29 +249,19 @@ function CodeBlockCopyButton({
 
 function CodeBlockTitleRow({
   title,
-  allowCopy,
   copyText,
-  keepBackground,
 }: {
   title: string;
-  allowCopy: boolean;
   copyText: string;
-  keepBackground: boolean;
 }) {
   return (
     <div className="flex h-9.5 items-center gap-2 px-4 text-gray-500 dark:text-gray-400">
       <figcaption className="flex-1 truncate text-[13px] lowercase">
         {title}
       </figcaption>
-      {allowCopy ? (
-        <div className="-me-2 flex shrink-0 items-center">
-          <CodeBlockCopyButton
-            text={copyText}
-            keepBackground={keepBackground}
-            showGlow={false}
-          />
-        </div>
-      ) : null}
+      <div className="-me-2 flex shrink-0 items-center">
+        <CodeBlockCopyButton showGlow={false} text={copyText} />
+      </div>
     </div>
   );
 }
@@ -330,12 +271,10 @@ function CodeBlockTitleRow({
 // -----------------------------------------------------------------------------
 
 function CodeBlockViewport({
-  keepBackground,
   /** `top` when a title row sits above; `all` when the viewport is the only block body. */
   rounding = "top",
   children,
 }: {
-  keepBackground: boolean;
   rounding?: "top" | "all";
   children: React.ReactNode;
 }) {
@@ -344,9 +283,7 @@ function CodeBlockViewport({
       className={cn(
         "no-scrollbar overflow-auto overscroll-x-none px-4 py-3.5 text-sm leading-6",
         rounding === "top" ? "rounded-t-xl" : "rounded-xl",
-        keepBackground
-          ? "bg-gray-100! dark:bg-gray-950!"
-          : "bg-white dark:bg-gray-900",
+        "bg-white dark:bg-gray-900",
       )}
     >
       {children}
@@ -362,29 +299,24 @@ function CodeBlockFigureChrome({
   className,
   language,
   isIncomplete,
-  keepBackground,
   showTitleRow,
   title,
   copyText,
-  allowCopy,
   children,
 }: {
   className?: string;
   language: string;
   isIncomplete?: boolean;
-  keepBackground: boolean;
   showTitleRow: boolean;
   title: string;
   copyText: string;
-  allowCopy: boolean;
   children: React.ReactNode;
 }) {
   return (
     <figure
       className={cn(
-        "my-4 rounded-xl",
+        "my-4 rounded-xl border border-gray-200 dark:border-white/10",
         showTitleRow ? "bg-gray-100 dark:bg-gray-950" : "dark:bg-background",
-        !keepBackground && "border border-gray-200 dark:border-white/10",
         "not-prose relative w-full overflow-hidden text-[13px] font-[450]",
         className,
       )}
@@ -396,27 +328,14 @@ function CodeBlockFigureChrome({
       style={{ contentVisibility: "auto", containIntrinsicSize: "auto 200px" }}
     >
       {showTitleRow ? (
-        <CodeBlockTitleRow
-          allowCopy={allowCopy}
-          copyText={copyText}
-          keepBackground={keepBackground}
-          title={title}
-        />
-      ) : null}
-      {!showTitleRow && allowCopy ? (
+        <CodeBlockTitleRow copyText={copyText} title={title} />
+      ) : (
         <div className="absolute top-3 right-3 z-20">
-          <CodeBlockCopyButton
-            keepBackground={keepBackground}
-            showGlow
-            text={copyText}
-          />
+          <CodeBlockCopyButton showGlow text={copyText} />
         </div>
-      ) : null}
+      )}
 
-      <CodeBlockViewport
-        keepBackground={keepBackground}
-        rounding={showTitleRow ? "top" : "all"}
-      >
+      <CodeBlockViewport rounding={showTitleRow ? "top" : "all"}>
         {children}
       </CodeBlockViewport>
     </figure>
@@ -593,20 +512,16 @@ function CodeBlockFencedView({
   codePlugin = codeHighlighter,
   showTitleRow: showTitleRowProp,
 }: CodeBlockFencedViewProps) {
-  const { allowCopy, keepBackground, showTitleRow: contextShowTitleRow } =
-    useContext(CodeBlockChromeContext);
-  const showTitleRow = showTitleRowProp ?? contextShowTitleRow;
+  const showTitleRow = showTitleRowProp ?? true;
   const trimmed = useMemo(() => trimTrailingNewlines(code), [code]);
   const raw = useMemo(() => buildRawHighlightResult(trimmed), [trimmed]);
   const title = (language || "code").toLowerCase();
 
   return (
     <CodeBlockFigureChrome
-      allowCopy={allowCopy}
       className={className}
       copyText={trimmed}
       isIncomplete={isIncomplete}
-      keepBackground={keepBackground}
       language={language}
       showTitleRow={showTitleRow}
       title={title}

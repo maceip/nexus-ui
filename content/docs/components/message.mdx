@@ -94,7 +94,7 @@ Use **`MessageActions`** and **`MessageActionGroup`** for a row of controls. **`
   <MessageWithActions />
 </DemoWithCode>
 
-### With avatar
+### With Avatar
 
 **`MessageAvatar`** composes shadcn **Avatar** / **AvatarImage** / **AvatarFallback** — pass **`src`**, **`alt`**, and optional **`fallback`** (and **`delayMs`** if needed). Place the avatar **after** **`MessageStack`** for **`from="user"`**, and **before** **`MessageStack`** for **`from="assistant"`**.
 
@@ -102,7 +102,7 @@ Use **`MessageActions`** and **`MessageActionGroup`** for a row of controls. **`
   <MessageWithAvatar />
 </DemoWithCode>
 
-### With attachments
+### With Attachments
 
 Render **`AttachmentList`** / **`Attachment`** inside **`MessageStack`** above **`MessageContent`**. Use **`readOnly`** on **`Attachment`** when showing files that were already sent (no remove control or progress). See **[Attachments](/docs/components/attachments)** for **`AttachmentMeta`** and variants.
 
@@ -110,7 +110,7 @@ Render **`AttachmentList`** / **`Attachment`** inside **`MessageStack`** above *
   <MessageWithAttachments />
 </DemoWithCode>
 
-### Rich text (markdown)
+### Rich Text (Markdown)
 
 **`MessageMarkdown`** renders markdown with **Streamdown** and shared prose-style classes. Pass a string as **`children`** (or a template literal) for headings, lists, code blocks, and links.
 
@@ -121,30 +121,27 @@ Render **`AttachmentList`** / **`Attachment`** inside **`MessageStack`** above *
   <MessageRichText />
 </DemoWithCode>
 
-#### How **MessageMarkdown** uses Streamdown
+## Message and Streamdown
+
+### How **MessageMarkdown** uses Streamdown
 
 It is a thin wrapper around **[Streamdown](https://github.com/vercel/streamdown)** with the same component props, so you can pass **`children`**, **`className`**, and other **`Streamdown`** options as needed.
 
 Nexus applies shared **prose-style** **`className`** tokens for headings, body text, links, lists, and inline code. **Shiki** highlights fenced code with **`github-light`** and **`github-dark`**.
 
-**Plugins** from **`@streamdown/code`**, **`@streamdown/math`**, **`@streamdown/mermaid`**, and **`@streamdown/cjk`** enable code blocks, math, diagrams, and CJK-friendly typography. A few **MDX components** are overridden—especially **tables**—so wide content fits the chat bubble layout.
+**Plugins** from **`@streamdown/code`**, **`@streamdown/math`**, **`@streamdown/mermaid`**, and **`@streamdown/cjk`** enable code blocks, math, diagrams, and CJK-friendly typography. A few **MDX components** are overridden—especially **tables** and **codeblocks**.
 
 Streamdown parses markdown into HTML that relies on utility classes shipped inside **`streamdown`** and those plugin packages. That model works well for **streaming** assistant output so you do not hand-build the markup.
 
-#### Fenced code: Nexus **`CodeBlock`** replaces Streamdown’s default
+### Fenced Code 
 
-**`MessageMarkdown`** passes **`components.code={CodeBlock}`** (`@/components/nexus-ui/codeblock`). Highlighting still comes from **`@streamdown/code`** and your **`Streamdown`** plugins—only the **UI** is custom.
+**`MessageMarkdown`** uses **`CodeBlock`** for **`components.code`** (`@/components/nexus-ui/codeblock`). **`@streamdown/code`** still handles highlighting—you are only swapping the **UI**.
 
-**Compared to Streamdown’s built-in fenced block**, **`CodeBlock`** gives you:
+Use **`CodeBlock`** **`showTitleRow`** to show or hide the fenced-block title row (pass it on your **`components.code`** renderer). Turn line gutters on or off with Streamdown **`lineNumbers`**, which **`MessageMarkdown`** forwards like any other Streamdown prop.
 
-- Figure, scroll viewport, and **`CodeBlock`** **`showTitleRow`** (optional; default **true** via **`CodeBlockChromeProvider`** or built-in defaults). Pass **`showTitleRow={false}`** on **`CodeBlock`** where you wire Streamdown’s **`components.code`** (or wrap: **`(props) => <CodeBlock {...props} showTitleRow={false} />`**) to hide the language header and float copy top-right. **`CodeBlockChromeProvider`** still sets defaults for **`keepBackground`**, **`allowCopy`**, and **`showTitleRow`** when those props are omitted on **`CodeBlock`**.
-- **Line gutters** when **`lineNumbers`** is on, using global **`code .line`** / **`code .line::before`** (same idea as this site’s docs code block)
+**`@nexus-ui/message`** ships **`message.tsx`** and **`codeblock.tsx`** in one install—there is no separate codeblock package.
 
-**Inline code** (single backticks in markdown) is rendered with **`components.inlineCode`** as a plain **`<code>`**, per [Streamdown’s `inlineCode` docs](https://streamdown.ai/docs/components#inline-code), so fenced blocks and inline spans stay separate.
-
-**Install:** **`@nexus-ui/message`** adds **two** files in one go—**`message.tsx`** and **`codeblock.tsx`** (copy helpers live inside **`codeblock.tsx`**). Commit both. There is no **`@nexus-ui/codeblock`** package to add on its own.
-
-#### Tailwind **@source** after install
+### Tailwind **@source** after install
 
 Installing **Message** with the **shadcn CLI** should merge **Tailwind `@source`** lines into the CSS file from **`components.json`** so those classes are **not purged**. With a **manual** install, that merge does not run by default.
 
