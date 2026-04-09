@@ -3,7 +3,7 @@
  * Syncs local component files back to the registry.
  * Reads registry.json and copies from target (components) to path (registry).
  */
-import { readFileSync, writeFileSync } from "fs";
+import { readFileSync, writeFileSync, mkdirSync } from "fs";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 
@@ -20,6 +20,7 @@ for (const item of registry.items) {
       const dest = join(root, file.path);
       try {
         const content = readFileSync(src, "utf-8");
+        mkdirSync(dirname(dest), { recursive: true });
         writeFileSync(dest, content);
         console.log(`✓ ${file.target} → ${file.path}`);
       } catch (err) {

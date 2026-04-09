@@ -1,0 +1,23 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "thread",
+  "title": "Thread",
+  "description": "Chat thread viewport with stick-to-bottom scrolling and a scroll-to-bottom control.",
+  "dependencies": [
+    "@radix-ui/react-slot",
+    "@hugeicons/react",
+    "@hugeicons/core-free-icons",
+    "use-stick-to-bottom"
+  ],
+  "registryDependencies": [
+    "nexus-ui-theme"
+  ],
+  "files": [
+    {
+      "path": "registry/new-york/thread/thread.tsx",
+      "type": "registry:file",
+      "target": "~/components/nexus-ui/thread.tsx"
+    }
+  ],
+  "type": "registry:ui"
+}
