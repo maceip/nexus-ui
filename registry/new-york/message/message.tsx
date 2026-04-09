@@ -120,8 +120,8 @@ function MessageContent({ className, ...props }: MessageContentProps) {
       className={cn(
         "min-h-10 rounded-[20px] text-sm leading-6 text-gray-900",
         from === "user"
-          ? "bg-gray-100 px-4 py-2 dark:bg-gray-700 w-fit"
-          : "bg-transparent px-2 w-full",
+          ? "w-fit bg-gray-100 px-4 py-2 dark:bg-gray-700"
+          : "w-full bg-transparent px-2",
         className,
       )}
       {...props}
