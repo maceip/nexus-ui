@@ -10,6 +10,7 @@
     "components/message",
     "components/model-selector",
     "components/prompt-input",
-    "components/suggestions"
+    "components/suggestions",
+    "components/thread"
   ]
 }

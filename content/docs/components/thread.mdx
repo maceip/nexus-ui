@@ -1,0 +1,255 @@
+---
+title: Thread
+description: Scrollable chat thread with stick-to-bottom behavior and an optional jump-to-bottom control
+---
+
+import ThreadDefault from "@/components/nexus-ui/examples/thread/default";
+import ThreadScrollAsChild from "@/components/nexus-ui/examples/thread/scroll-as-child";
+
+A viewport for stacked **[Message](/docs/components/message)** turns (or any content) that **sticks to the bottom** as content grows—built on [**use-stick-to-bottom**](https://github.com/stackblitz/use-stick-to-bottom). **`Thread`** wraps the scroll root, **`ThreadContent`** wraps the scrolling column, and **`ThreadScrollToBottom`** shows a control when the user has scrolled away from the bottom.
+
+<DemoWithCode
+  src="components/nexus-ui/examples/thread/default.tsx"
+  previewClassName="p-0!"
+>
+  <ThreadDefault />
+</DemoWithCode>
+
+## Installation
+
+<Tabs items={["CLI", "Manual"]} framed={false}>
+<Tab value="CLI">
+<Tabs items={["npm", "pnpm", "yarn", "bun"]}>
+<Tab value="npm">
+```bash
+npx shadcn@latest add @nexus-ui/thread
+```
+</Tab>
+<Tab value="pnpm">
+```bash
+pnpm dlx shadcn@latest add @nexus-ui/thread
+```
+</Tab>
+<Tab value="yarn">
+```bash
+yarn dlx shadcn@latest add @nexus-ui/thread
+```
+</Tab>
+<Tab value="bun">
+```bash
+bunx shadcn@latest add @nexus-ui/thread
+```
+</Tab>
+</Tabs>
+</Tab>
+<Tab value="Manual">
+<Steps>
+<Step>
+<h3>Copy and paste the following code into your project.</h3>
+
+<ComponentSource src="registry/new-york/thread/thread.tsx" title="components/nexus-ui/thread.tsx" />
+</Step>
+<Step>
+<h3>Update the import paths to match your project setup.</h3>
+</Step>
+</Steps>
+</Tab>
+</Tabs>
+
+## Usage
+
+```tsx keepBackground
+import {
+  Thread,
+  ThreadContent,
+  ThreadScrollToBottom,
+} from "@/components/nexus-ui/thread";
+```
+
+```tsx keepBackground
+<Thread className="h-[50vh]">
+  <ThreadContent>{/* messages */}</ThreadContent>
+  <ThreadScrollToBottom />
+</Thread>
+```
+
+**`ThreadScrollToBottom`** must be rendered **inside** **`Thread`** so it can read **`useStickToBottomContext`**.
+
+## Vercel AI SDK Integration
+
+Render [`useChat`](https://ai-sdk.dev/docs/reference/ai-sdk-ui/use-chat) messages inside **Thread** by mapping the same **`messages`** array you would render with **[Message](/docs/components/message)** alone. Read each **[`UIMessage`](https://ai-sdk.dev/docs/reference/ai-sdk-core/ui-message)** **`parts`** array and join **`text`** parts for **MessageMarkdown** (streaming updates apply as the SDK appends or grows **`TextUIPart`** content).
+
+
+See [Prompt Input](/docs/components/prompt-input#vercel-ai-sdk-integration) for a minimal **`POST /api/chat`** route with **`streamText`** and **`toUIMessageStreamResponse`**.
+
+<Steps>
+<Step>
+<h3>Install the AI SDK</h3>
+
+```bash
+npm install ai @ai-sdk/react @ai-sdk/openai
+```
+
+</Step>
+<Step>
+<h3>Create your chat API route</h3>
+
+Use the same handler as in the Prompt Input docs: **`messages: await convertToModelMessages(messages)`** and **`return result.toUIMessageStreamResponse()`**.
+
+</Step>
+<Step>
+<h3>Map `messages` to Message inside Thread</h3>
+
+Use **`isTextUIPart`** from **`ai`** so you only aggregate **`type: "text"`** segments. Skip **`system`** turns unless you surface them deliberately. Assistant messages can also include **reasoning**, **tool**, **source**, and other part types—extend this loop when you need those in the UI.
+
+```tsx
+"use client";
+
+import { useChat } from "@ai-sdk/react";
+import { DefaultChatTransport, isTextUIPart, type UIMessage } from "ai";
+import {
+  Message,
+  MessageStack,
+  MessageContent,
+  MessageMarkdown,
+} from "@/components/nexus-ui/message";
+import {
+  Thread,
+  ThreadContent,
+  ThreadScrollToBottom,
+} from "@/components/nexus-ui/thread";
+
+function textFromMessage(message: UIMessage) {
+  return message.parts.filter(isTextUIPart).map((p) => p.text).join("");
+}
+
+export default function ChatThread() {
+  const { messages } = useChat({
+    transport: new DefaultChatTransport({ api: "/api/chat" }),
+  });
+
+  return (
+    <Thread className="h-[min(70vh,32rem)]">
+      <ThreadContent className="items-stretch">
+        {messages
+          .filter((m) => m.role !== "system")
+          .map((m) => (
+            <Message key={m.id} from={m.role === "user" ? "user" : "assistant"}>
+              <MessageStack>
+                <MessageContent>
+                  <MessageMarkdown>{textFromMessage(m)}</MessageMarkdown>
+                </MessageContent>
+              </MessageStack>
+            </Message>
+          ))}
+      </ThreadContent>
+      <ThreadScrollToBottom />
+    </Thread>
+  );
+}
+```
+
+</Step>
+</Steps>
+
+## API Reference
+
+### Thread
+
+Root scroll container wrapping [**`StickToBottom`**](https://github.com/stackblitz/use-stick-to-bottom). **`ThreadContent`** and **`ThreadScrollToBottom`** must live under **`Thread`** so the scrollable list and jump control share the same stick-to-bottom context.
+
+<TypeTable
+  type={{
+    resize: {
+      type: "ScrollBehavior | SpringAnimation",
+      default: '"smooth"',
+      description:
+        "How the container reacts when content size changes. Pass a spring object ({ mass, damping, stiffness }) for animated resize.",
+    },
+    initial: {
+      type: "boolean | ScrollBehavior | SpringAnimation",
+      default: '"smooth"',
+      description:
+        "Scroll behavior on first mount. false skips scrolling to bottom initially.",
+    },
+    mass: {
+      type: "number",
+      default: "1.25",
+      description:
+        "Spring mass for smooth animations (from use-stick-to-bottom).",
+    },
+    damping: {
+      type: "number",
+      default: "0.7",
+      description: "Spring damping for smooth animations.",
+    },
+    stiffness: {
+      type: "number",
+      default: "0.05",
+      description: "Spring stiffness for smooth animations.",
+    },
+    targetScrollTop: {
+      type: "(targetScrollTop, context) => number",
+      description: "Optional override to compute scroll top from layout.",
+    },
+    contextRef: {
+      type: "Ref<StickToBottomContext>",
+      description: "Optional ref to the library context object.",
+    },
+    instance: {
+      type: "StickToBottomInstance",
+      description: "Optional external instance from useStickToBottom.",
+    },
+    className: {
+      type: "string",
+      description: "Additional CSS classes to apply to the thread root.",
+    },
+    children: {
+      type: "ReactNode | ((context) => ReactNode)",
+      description:
+        "Typically ThreadContent plus ThreadScrollToBottom; render props receive the library context if needed.",
+    },
+  }}
+/>
+
+### ThreadContent
+
+Wraps the transcript—usually **`Message`** rows—so **`Thread`** can keep the viewport following the bottom as new content arrives (**`StickToBottom.Content`**).
+
+<TypeTable
+  type={{
+    className: {
+      type: "string",
+      description: "Additional CSS classes to apply to the content wrapper.",
+    },
+    children: {
+      type: "ReactNode | ((context) => ReactNode)",
+      description: "Message list or other thread body.",
+    },
+  }}
+/>
+
+### ThreadScrollToBottom
+
+Optional control that appears when the user has scrolled away from the bottom, so they can jump back to the latest messages. Supports polymorphism via **`asChild`**.
+
+<TypeTable
+  type={{
+    asChild: {
+      type: "boolean",
+      default: "false",
+      description:
+        "Merge props into the child element (Radix Slot) instead of rendering a button.",
+    },
+    className: {
+      type: "string",
+      description:
+        "Additional CSS classes to apply to the scroll-to-bottom control.",
+    },
+    children: {
+      type: "React.ReactNode",
+      description: "Optional. Defaults to ArrowDown02Icon via HugeiconsIcon.",
+    },
+  }}
+/>
+

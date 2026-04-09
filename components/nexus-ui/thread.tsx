@@ -37,7 +37,7 @@ function ThreadContent({ className, ...props }: ThreadContentProps) {
     <StickToBottom.Content
       data-slot="thread-content"
       className={cn(
-        "flex w-full flex-col items-center justify-center gap-6",
+        "flex w-full flex-col items-center justify-center gap-6 p-6",
         className,
       )}
       {...props}
@@ -70,7 +70,7 @@ function ThreadScrollToBottom({
       type={asChild ? undefined : "button"}
       className={cn(
         !asChild &&
-          "absolute bottom-0 left-[50%] flex size-8 translate-x-[-50%] cursor-pointer items-center justify-center rounded-full border border-gray-200 bg-gray-100 text-gray-500 transition-all hover:bg-gray-200/70 active:scale-95",
+          "absolute bottom-6 shadow-sm left-[50%] flex size-8 translate-x-[-50%] cursor-pointer items-center justify-center rounded-full border border-gray-200 bg-gray-100 text-gray-500 transition-all hover:bg-gray-200 active:scale-95 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700",
         className,
       )}
       onClick={(event) => {

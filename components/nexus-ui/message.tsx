@@ -28,7 +28,7 @@ const messageMarkdownProseClasses = [
   // links
   "prose-a:text-gray-900 dark:prose-a:text-gray-50 prose-a:font-normal prose-a:underline prose-a:underline-offset-3",
   // strong
-  "prose-strong:text-gray-900 dark:prose-strong:text-gray-50 prose-strong:font-normal",
+  "prose-strong:text-gray-900 dark:prose-strong:text-gray-50 prose-strong:font-normal [&_[data-streamdown=strong]]:font-[550]",
   // code
   "prose-code:text-[13px] prose-code:text-gray-900 dark:prose-code:text-gray-50 prose-code:bg-gray-100 dark:prose-code:bg-gray-800 prose-code:px-1.5 prose-code:border-none prose-code:rounded-md prose-code:font-[450]",
   // lists
