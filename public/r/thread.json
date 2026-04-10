@@ -10,7 +10,7 @@
     "use-stick-to-bottom"
   ],
   "registryDependencies": [
-    "nexus-ui-theme"
+    "@nexus-ui/nexus-ui-theme"
   ],
   "files": [
     {

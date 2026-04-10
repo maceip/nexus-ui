@@ -10,7 +10,7 @@
     "@hugeicons/core-free-icons"
   ],
   "registryDependencies": [
-    "nexus-ui-theme"
+    "@nexus-ui/nexus-ui-theme"
   ],
   "files": [
     {

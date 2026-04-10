@@ -36,7 +36,7 @@
       "title": "Prompt Input",
       "description": "A composable AI chat input component with auto-resizing textarea and action slots.",
       "dependencies": ["@radix-ui/react-slot"],
-      "registryDependencies": ["nexus-ui-theme", "textarea", "scroll-area"],
+      "registryDependencies": ["@nexus-ui/nexus-ui-theme", "textarea", "scroll-area"],
       "files": [
         {
           "path": "registry/new-york/prompt-input/prompt-input.tsx",
@@ -51,7 +51,7 @@
       "title": "Suggestions",
       "description": "Composable prompt suggestion chips for guiding user input.",
       "dependencies": ["@radix-ui/react-slot"],
-      "registryDependencies": ["nexus-ui-theme", "button"],
+      "registryDependencies": ["@nexus-ui/nexus-ui-theme", "button"],
       "files": [
         {
           "path": "registry/new-york/suggestions/suggestions.tsx",
@@ -71,7 +71,7 @@
         "@hugeicons/react",
         "@hugeicons/core-free-icons"
       ],
-      "registryDependencies": ["nexus-ui-theme"],
+      "registryDependencies": ["@nexus-ui/nexus-ui-theme"],
       "files": [
         {
           "path": "registry/new-york/attachments/attachments.tsx",
@@ -90,7 +90,7 @@
         "@hugeicons/react",
         "@hugeicons/core-free-icons"
       ],
-      "registryDependencies": ["nexus-ui-theme"],
+      "registryDependencies": ["@nexus-ui/nexus-ui-theme"],
       "files": [
         {
           "path": "registry/new-york/model-selector/model-selector.tsx",
@@ -115,7 +115,7 @@
         "@hugeicons/react",
         "@hugeicons/core-free-icons"
       ],
-      "registryDependencies": ["nexus-ui-theme", "button", "avatar"],
+      "registryDependencies": ["@nexus-ui/nexus-ui-theme", "button", "avatar"],
       "css": {
         "@source \"../node_modules/streamdown/dist/index.js\"": {},
         "@source \"../node_modules/@streamdown/code/dist/*.js\"": {},
@@ -173,7 +173,7 @@
         "@hugeicons/core-free-icons",
         "use-stick-to-bottom"
       ],
-      "registryDependencies": ["nexus-ui-theme"],
+      "registryDependencies": ["@nexus-ui/nexus-ui-theme"],
       "files": [
         {
           "path": "registry/new-york/thread/thread.tsx",

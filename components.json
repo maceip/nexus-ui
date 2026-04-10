@@ -19,5 +19,7 @@
     "lib": "@/lib",
     "hooks": "@/hooks"
   },
-  "registries": {}
+  "registries": {
+    "@nexus-ui": "https://nexus-ui.dev/r/{name}.json"
+  }
 }
