@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { readFile, access } from "fs/promises";
 import { join } from "path";
-import { recordInstallEvent } from "@/lib/install-tracking";
 
 const REGISTRY_BASE = process.cwd();
 const R_DIR = join(REGISTRY_BASE, "public", "r");
@@ -18,20 +17,14 @@ async function fileExists(path: string): Promise<boolean> {
 }
 
 export async function GET(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ path?: string[] }> }
 ) {
   const pathSegments = (await params).path ?? [];
-  const ua = request.headers.get("user-agent");
 
   try {
     // /api/registry/registry.json -> registry index
     if (pathSegments.length === 1 && pathSegments[0] === "registry.json") {
-      recordInstallEvent({
-        kind: "api-registry-item-json",
-        path: "/api/registry/registry.json",
-        userAgent: ua,
-      });
       const content = await readFile(join(R_DIR, "registry.json"), "utf-8");
       return NextResponse.json(JSON.parse(content), {
         headers: { "Cache-Control": "public, max-age=3600, s-maxage=3600" },
@@ -44,11 +37,6 @@ export async function GET(
       pathSegments[0].endsWith(".json") &&
       pathSegments[0] !== "registry.json"
     ) {
-      recordInstallEvent({
-        kind: "api-registry-item-json",
-        path: `/api/registry/${pathSegments[0]}`,
-        userAgent: ua,
-      });
       const content = await readFile(join(R_DIR, pathSegments[0]), "utf-8");
       return NextResponse.json(JSON.parse(content), {
         headers: { "Cache-Control": "public, max-age=3600, s-maxage=3600" },
@@ -61,11 +49,6 @@ export async function GET(
       if (filePath.includes("..")) {
         return NextResponse.json({ error: "Invalid path" }, { status: 400 });
       }
-      recordInstallEvent({
-        kind: "api-registry-source",
-        path: `/api/registry/registry/${filePath}`,
-        userAgent: ua,
-      });
       // Prefer public/registry (build output), fallback to source registry/
       const publicPath = join(REGISTRY_PUBLIC, filePath);
       const srcPath = join(REGISTRY_SRC, filePath);

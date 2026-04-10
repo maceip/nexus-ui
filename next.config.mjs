@@ -20,15 +20,6 @@ const config = {
         source: '/docs/:path*.md',
         destination: '/raw/docs/:path*',
       },
-      // Route shadcn registry traffic through the app so installs are observable (Vercel CDN static bypasses middleware).
-      {
-        source: '/r/:path*',
-        destination: '/api/registry-asset/r/:path*',
-      },
-      {
-        source: '/registry/:path*',
-        destination: '/api/registry-asset/registry/:path*',
-      },
     ];
   },
 };
