@@ -64,7 +64,7 @@ function PromptInput({
         role="group"
         aria-label="Chat input"
         className={cn(
-          "flex h-auto w-full cursor-text flex-col gap-0 overflow-hidden rounded-[24px] border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800 relative",
+          "relative flex h-auto w-full cursor-text flex-col gap-0 overflow-hidden rounded-[24px] border border-border bg-card dark:bg-muted",
           className,
         )}
         onClick={handleClick}
@@ -109,7 +109,7 @@ const PromptInputTextarea = React.forwardRef<
           aria-label="Message input"
           placeholder="How can I help you today?"
           className={cn(
-            "min-h-14 w-full resize-none border-0 bg-transparent px-4 py-4 text-sm leading-6 font-normal text-gray-900 shadow-none outline-none placeholder:text-gray-500 focus-visible:ring-0 focus-visible:ring-offset-0 dark:bg-transparent dark:text-white",
+            "min-h-14 w-full resize-none border-0 bg-transparent px-4 py-4 text-sm leading-6 font-normal text-foreground shadow-none outline-none placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0 dark:bg-transparent",
             className,
           )}
           onKeyDown={handleKeyDown}

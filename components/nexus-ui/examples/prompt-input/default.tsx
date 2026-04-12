@@ -49,9 +49,15 @@ export default function PromptInputDefault() {
           <PromptInputAction asChild>
             <Button
               type="button"
-              className="size-8 cursor-pointer gap-1 rounded-full border-none bg-transparent text-[13px] leading-6 font-normal text-gray-900 transition-transform hover:bg-gray-200 active:scale-97 dark:text-white dark:hover:bg-gray-700"
+              variant="ghost"
+              size="icon-sm"
+              className="cursor-pointer rounded-full text-secondary-foreground active:scale-97 disabled:opacity-70 hover:dark:bg-border"
             >
-              <HugeiconsIcon icon={PlusSignIcon} strokeWidth={2.0} className="size-4" />
+              <HugeiconsIcon
+                icon={PlusSignIcon}
+                strokeWidth={2.0}
+                className="size-4"
+              />
             </Button>
           </PromptInputAction>
         </PromptInputActionGroup>
@@ -59,14 +65,23 @@ export default function PromptInputDefault() {
           <PromptInputAction asChild>
             <Button
               type="button"
-              className="size-8 cursor-pointer rounded-full bg-gray-700 text-white transition-transform hover:bg-gray-800 active:scale-97 disabled:opacity-70 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200"
+              size="icon-sm"
+              className="cursor-pointer rounded-full active:scale-97 disabled:opacity-70"
               disabled={isLoading || !input.trim()}
               onClick={() => input.trim() && doSubmit(input)}
             >
               {isLoading ? (
-                <HugeiconsIcon icon={SquareIcon} strokeWidth={2.0} className="size-3.5 fill-current" />
+                <HugeiconsIcon
+                  icon={SquareIcon}
+                  strokeWidth={2.0}
+                  className="size-3.5 fill-current"
+                />
               ) : (
-                <HugeiconsIcon icon={ArrowUp02Icon} strokeWidth={2.0} className="size-4" />
+                <HugeiconsIcon
+                  icon={ArrowUp02Icon}
+                  strokeWidth={2.0}
+                  className="size-4"
+                />
               )}
             </Button>
           </PromptInputAction>

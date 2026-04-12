@@ -150,7 +150,12 @@ export default function SuggestionWithPanel() {
         <PromptInputActions>
           <PromptInputActionGroup>
             <PromptInputAction asChild>
-              <Button className="size-8 cursor-pointer rounded-full border-none bg-transparent text-gray-900 hover:bg-gray-200 dark:text-white dark:hover:bg-gray-700">
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-sm"
+                className="cursor-pointer rounded-full text-secondary-foreground active:scale-97 disabled:opacity-70 hover:dark:bg-border"
+              >
                 <HugeiconsIcon icon={PlusSignIcon} strokeWidth={2.0} className="size-4" />
               </Button>
             </PromptInputAction>
@@ -159,7 +164,8 @@ export default function SuggestionWithPanel() {
             <PromptInputAction asChild>
               <Button
                 type="button"
-                className="size-8 cursor-pointer rounded-full bg-gray-700 text-white transition-transform hover:bg-gray-800 active:scale-97 disabled:opacity-70 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200"
+                size="icon-sm"
+                className="cursor-pointer rounded-full active:scale-97 disabled:opacity-70"
                 disabled={isLoading || !input.trim()}
                 onClick={() => input.trim() && doSubmit(input)}
               >
@@ -223,13 +229,13 @@ export default function SuggestionWithPanel() {
                         variant="ghost"
                         highlight={active.highlight}
                         value={text}
-                        className="group h-auto w-full justify-between rounded-[6px] px-3 text-left whitespace-normal text-gray-900 hover:bg-gray-200/72"
+                        className="group h-auto w-full justify-between rounded-[6px] px-3 text-left whitespace-normal text-primary hover:bg-border"
                       >
                         {text}
                         <HugeiconsIcon
                           icon={ArrowRight01Icon}
                           strokeWidth={2.0}
-                          className="size-4 text-gray-400 opacity-0 transition-opacity group-hover:opacity-100 dark:text-gray-500"
+                          className="size-4 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100"
                         />
                       </Suggestion>
                     ))}

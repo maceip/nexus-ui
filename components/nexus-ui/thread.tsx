@@ -67,7 +67,7 @@ function ThreadScrollToBottom({
       type={asChild ? undefined : "button"}
       className={cn(
         !asChild &&
-          "absolute bottom-6 left-[50%] flex size-8 translate-x-[-50%] cursor-pointer items-center justify-center rounded-full border border-gray-200 bg-gray-100 text-gray-500 shadow-sm transition-all hover:bg-gray-200 active:scale-95 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700",
+          "absolute bottom-6 left-[50%] flex size-8 translate-x-[-50%] cursor-pointer items-center justify-center rounded-full border border-border bg-secondary text-muted-foreground shadow-sm transition-all hover:bg-border active:scale-95",
         className,
       )}
       onClick={(event) => {

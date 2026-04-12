@@ -209,7 +209,7 @@ function CodeBlockCopyButton({
         <div
           className={cn(
             "pointer-events-none absolute top-1/2 left-1/2 z-0 size-13.5 -translate-x-1/2 -translate-y-1/2 rounded-l-full rounded-tr-full bg-linear-to-l",
-            "from-white from-70% to-white/0 dark:from-gray-900 dark:to-gray-900/0",
+            "from-background from-70% to-background/0 dark:from-background dark:to-background/0",
           )}
         />
       ) : null}
@@ -217,7 +217,7 @@ function CodeBlockCopyButton({
         type="button"
         data-checked={checked || undefined}
         className={cn(
-          "relative flex size-7 cursor-pointer items-center justify-center rounded-lg text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300",
+          "relative flex size-7 cursor-pointer items-center justify-center rounded-lg text-muted-foreground hover:text-foreground dark:hover:text-primary",
           className,
         )}
         aria-label={checked ? "Copied" : "Copy code"}
@@ -255,7 +255,7 @@ function CodeBlockTitleRow({
   copyText: string;
 }) {
   return (
-    <div className="flex h-9.5 items-center gap-2 px-4 text-gray-500 dark:text-gray-400">
+    <div className="flex h-9.5 items-center gap-2 px-4 text-muted-foreground">
       <figcaption className="flex-1 truncate text-[13px] lowercase">
         {title}
       </figcaption>
@@ -283,7 +283,7 @@ function CodeBlockViewport({
       className={cn(
         "no-scrollbar overflow-auto overscroll-x-none px-4 py-3.5 text-sm leading-6",
         rounding === "top" ? "rounded-t-xl" : "rounded-xl",
-        "bg-white dark:bg-gray-900",
+        "bg-card",
       )}
     >
       {children}
@@ -315,8 +315,8 @@ function CodeBlockFigureChrome({
   return (
     <figure
       className={cn(
-        "my-4 rounded-xl border border-gray-200 dark:border-white/10",
-        showTitleRow ? "bg-gray-100 dark:bg-gray-950" : "dark:bg-background",
+        "my-4 rounded-xl border border-border dark:border-sidebar-border",
+        showTitleRow ? "bg-muted dark:bg-background" : "dark:bg-background",
         "not-prose relative w-full overflow-hidden text-[13px] font-[450]",
         className,
       )}
