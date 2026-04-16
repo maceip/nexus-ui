@@ -41,6 +41,9 @@ import PromptInput, {
 } from "@/components/nexus-ui/prompt-input";
 import { TypingLoader } from "@/components/nexus-ui/loader";
 import PerplexityIcon from "@/components/svgs/perplexity";
+import ChatgptIcon from "@/components/svgs/chatgpt";
+import { ClaudeIcon2 } from "@/components/svgs/claude";
+import GeminiIcon from "@/components/svgs/gemini";
 import {
   ArrowUp02Icon,
   Copy01Icon,
@@ -48,7 +51,6 @@ import {
   Link01Icon,
   PlusSignIcon,
   RepeatIcon,
-  Search01Icon,
   SquareIcon,
   ThumbsDownIcon,
   ThumbsUpIcon,
@@ -58,31 +60,63 @@ import { HugeiconsIcon } from "@hugeicons/react";
 const imgUser = "/assets/user-avatar.avif";
 const imgAssistant = "/assets/nexus-avatar.png";
 
-/** Perplexity Sonar model ids — server uses `@ai-sdk/perplexity` (see `/api/chat`). */
+/**
+ * `value` is either a Vercel AI Gateway id or a Perplexity Sonar id — see `/api/chat`.
+ */
 const models = [
+  {
+    value: "openai/gpt-4o",
+    icon: ChatgptIcon,
+    title: "GPT-4o",
+    description: "Most capable",
+  },
+  {
+    value: "openai/gpt-4o-mini",
+    icon: ChatgptIcon,
+    title: "GPT-4o Mini",
+    description: "Fast",
+  },
+  {
+    value: "anthropic/claude-sonnet-4.5",
+    icon: ClaudeIcon2,
+    title: "Claude Sonnet 4.5",
+    description: "Strong reasoning",
+  },
+  {
+    value: "google/gemini-2.0-flash",
+    icon: GeminiIcon,
+    title: "Gemini 2.0 Flash",
+    description: "Fast and versatile",
+  },
   {
     value: "sonar",
     icon: PerplexityIcon,
-    title: "Sonar",
-    description: "Fast search + answer",
+    title: "Perplexity Sonar",
+    description: "Search + citations",
   },
   {
     value: "sonar-pro",
     icon: PerplexityIcon,
-    title: "Sonar Pro",
+    title: "Perplexity Sonar Pro",
     description: "Deeper search",
   },
   {
     value: "sonar-reasoning",
     icon: PerplexityIcon,
-    title: "Sonar Reasoning",
+    title: "Perplexity Sonar Reasoning",
     description: "Chain-of-thought",
   },
   {
     value: "sonar-reasoning-pro",
     icon: PerplexityIcon,
-    title: "Sonar Reasoning Pro",
+    title: "Perplexity Sonar Reasoning Pro",
     description: "Advanced reasoning",
+  },
+  {
+    value: "sonar-deep-research",
+    icon: PerplexityIcon,
+    title: "Perplexity Sonar Deep Research",
+    description: "Multi-step research",
   },
 ] as const;
 
@@ -372,7 +406,7 @@ export default function MessageDemo() {
         <ThreadScrollToBottom className="bottom-0 z-50" />
       </Thread>
 
-      <div className="fixed right-0 bottom-0 left-0 z-10 border-t border-border bg-background/70 pt-6 pb-12 flex justify-center items-center backdrop-blur-sm dark:bg-background/95 w-full px-6">
+      <div className="fixed right-0 bottom-0 left-0 z-10 border-t border-accent bg-background/70 pt-6 pb-12 flex justify-center items-center backdrop-blur-sm dark:bg-background/95 w-full px-6">
         <div className="mx-auto w-full max-w-xl space-y-2">
           {error ? (
             <div

@@ -1,5 +1,5 @@
 import { streamText, UIMessage, convertToModelMessages } from "ai";
-import { perplexity } from "@ai-sdk/perplexity";
+import { perplexity as perplexityModel } from "@ai-sdk/perplexity";
 
 const PERPLEXITY_MODEL_IDS = [
   "sonar",
@@ -11,14 +11,15 @@ const PERPLEXITY_MODEL_IDS = [
 
 type PerplexityModelId = (typeof PERPLEXITY_MODEL_IDS)[number];
 
-function resolvePerplexityModel(model: string | undefined): PerplexityModelId {
-  if (
+const DEFAULT_GATEWAY_MODEL = "anthropic/claude-sonnet-4.5";
+
+function isPerplexityModelId(
+  model: string | undefined,
+): model is PerplexityModelId {
+  return (
     model != null &&
     (PERPLEXITY_MODEL_IDS as readonly string[]).includes(model)
-  ) {
-    return model as PerplexityModelId;
-  }
-  return "sonar-pro";
+  );
 }
 
 export async function POST(req: Request) {
@@ -27,10 +28,17 @@ export async function POST(req: Request) {
     model,
   }: { messages: UIMessage[]; model?: string } = await req.json();
 
+  const usePerplexity = isPerplexityModelId(model);
+  const languageModel = usePerplexity
+    ? perplexityModel(model)
+    : (model ?? DEFAULT_GATEWAY_MODEL);
+
   const result = streamText({
-    model: perplexity(resolvePerplexityModel(model)),
+    model: languageModel,
     messages: await convertToModelMessages(messages),
   });
 
-  return result.toUIMessageStreamResponse({ sendSources: true });
+  return result.toUIMessageStreamResponse({
+    sendSources: usePerplexity,
+  });
 }
