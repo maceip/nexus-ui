@@ -225,7 +225,7 @@
     background: var(--scrollbar-track);
   }
 
-  html:not(:has([data-page="home"])) {
+  html:not(:has([data-page="home"], [data-page="demo"])) {
     scrollbar-gutter: stable;
   }
 

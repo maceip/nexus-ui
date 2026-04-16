@@ -7,5 +7,5 @@ export const metadata: Metadata = {
 };
 
 export default function DemoLayout({ children }: { children: ReactNode }) {
-  return children;
+  return <main data-page="demo">{children}</main>;
 }
