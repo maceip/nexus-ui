@@ -181,6 +181,29 @@
           "target": "~/components/nexus-ui/thread.tsx"
         }
       ]
+    },
+    {
+      "name": "citation",
+      "type": "registry:ui",
+      "title": "Citation",
+      "description": "Composable inline citations with hover preview, multi-source carousel, and favicons.",
+      "dependencies": [
+        "radix-ui",
+        "@hugeicons/react",
+        "@hugeicons/core-free-icons"
+      ],
+      "registryDependencies": [
+        "@nexus-ui/nexus-ui-theme",
+        "carousel",
+        "hover-card"
+      ],
+      "files": [
+        {
+          "path": "registry/new-york/citation/citation.tsx",
+          "type": "registry:file",
+          "target": "~/components/nexus-ui/citation.tsx"
+        }
+      ]
     }
   ]
 }

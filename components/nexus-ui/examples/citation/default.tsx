@@ -44,7 +44,7 @@ const SOURCES = [
 function CitationDefault() {
   return (
     <div className="flex items-center gap-5">
-      <Citation citations={SOURCES} open>
+      <Citation citations={SOURCES}>
         <CitationTrigger />
 
         <CitationContent>
