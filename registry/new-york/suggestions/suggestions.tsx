@@ -10,16 +10,16 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
 const suggestionVariants = cva(
-  "h-8 gap-1.5 rounded-full px-4 text-sm font-normal shadow-none outline-none transition-all duration-150 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background active:scale-99",
+  "h-8 gap-1.5 rounded-full px-4 text-sm font-normal shadow-none outline-0 transition-all duration-150 focus-visible:ring-2 focus-visible:ring-ring active:scale-99",
   {
     variants: {
       variant: {
         filled:
-          "border-none bg-muted text-foreground hover:bg-border dark:bg-foreground/10 dark:hover:bg-foreground/15",
+          "border-none bg-muted text-primary hover:bg-border",
         outline:
-          "border border-input bg-transparent text-foreground hover:bg-muted dark:hover:bg-foreground/10",
+          "border border-input bg-transparent text-primary hover:bg-muted",
         ghost:
-          "border-none bg-transparent text-muted-foreground hover:bg-muted hover:text-foreground dark:hover:bg-foreground/10",
+          "border-none bg-transparent text-muted-foreground hover:bg-muted hover:text-primary",
       },
     },
     defaultVariants: {
@@ -104,7 +104,7 @@ function highlightText(
             {part}
           </span>
         ) : (
-          <span key={i} className="text-foreground">
+          <span key={i} className="text-secondary-foreground">
             {part}
           </span>
         ),
@@ -269,7 +269,7 @@ function SuggestionPanel({
         data-state={open ? "open" : "closed"}
         onAnimationEnd={handleAnimationEnd}
         className={cn(
-          "rounded-t-0 absolute inset-x-0 -top-7.5 z-0 mx-auto flex w-[calc(100%-16px)] flex-col items-center justify-center gap-3 rounded-b-[20px] border border-transparent bg-muted px-2 py-3 duration-200 data-[state=closed]:animate-out data-[state=closed]:duration-0 data-[state=closed]:fade-out-0 data-[state=closed]:slide-out-to-top-2 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:slide-in-from-top-2 dark:border-sidebar-border dark:bg-card",
+          "rounded-t-0 absolute inset-x-0 -top-7.5 z-0 mx-auto flex w-[calc(100%-16px)] flex-col items-center justify-center gap-3 rounded-b-[20px] bg-muted px-2 py-3 duration-200 data-[state=closed]:animate-out data-[state=closed]:duration-0 data-[state=closed]:fade-out-0 data-[state=closed]:slide-out-to-top-2 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:slide-in-from-top-2",
           className,
         )}
         {...props}
@@ -334,7 +334,7 @@ function SuggestionPanelClose({
       data-slot="suggestion-panel-close"
       aria-label="Close suggestions panel"
       className={cn(
-        "flex cursor-pointer items-center justify-center text-muted-foreground hover:text-foreground dark:hover:text-primary",
+        "flex cursor-pointer items-center justify-center text-muted-foreground hover:text-primary dark:hover:text-primary",
         className,
       )}
       onClick={handleClick}

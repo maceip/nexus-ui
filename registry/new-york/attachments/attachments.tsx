@@ -176,7 +176,7 @@ function inferDetailedSubtitleMode(
 }
 
 const attachmentVariants = cva(
-  "group relative cursor-default overflow-hidden rounded-[6px] border border-gray-100 bg-gray-100 text-gray-400 dark:border-gray-700 dark:bg-gray-700 dark:text-gray-300",
+  "group relative cursor-default overflow-hidden rounded-[6px] border border-muted bg-secondary text-muted-foreground",
   {
     variants: {
       variant: {
@@ -572,7 +572,7 @@ export function AttachmentsDropOverlay({
       role="presentation"
       aria-hidden
       className={cn(
-        "pointer-events-none bg-white/20 backdrop-blur-sm dark:bg-gray-900/50",
+        "pointer-events-none bg-background/50 backdrop-blur-sm",
         variant === "fullscreen"
           ? "fixed inset-0 z-50 flex items-center justify-center"
           : "absolute inset-0 z-10 flex items-center justify-center rounded-[inherit]",
@@ -584,15 +584,15 @@ export function AttachmentsDropOverlay({
         <div className="flex flex-col items-center gap-3">
           <HugeiconsIcon
             icon={Upload01Icon}
-            className="size-5 text-gray-900 dark:text-gray-100"
+            className="size-5 text-primary"
           />
 
           <div className="flex flex-col items-center gap-1">
-            <p className="text-sm font-[350] text-gray-900 dark:text-gray-100">
+            <p className="text-sm font-[350] text-primary">
               Drop files here to add as attachment
             </p>
             {maxSizeLabel ? (
-              <p className="text-xs font-[350] text-gray-500 dark:text-gray-400">
+              <p className="text-xs font-[350] text-muted-foreground">
                 Maximum {maxSizeLabel} per file
               </p>
             ) : null}
@@ -696,7 +696,7 @@ function AttachmentOverflowFadeLayer({
       aria-hidden
       data-slot="attachment-overflow-fade"
       className={cn(
-        "pointer-events-none absolute top-1/2 right-0 w-10 -translate-y-1/2 bg-linear-to-l from-gray-100 from-65% to-transparent transition-opacity group-hover:opacity-100 sm:opacity-0 dark:from-gray-700",
+        "pointer-events-none absolute top-1/2 right-0 w-10 -translate-y-1/2 bg-linear-to-l from-secondary from-65% to-transparent transition-opacity group-hover:opacity-100 sm:opacity-0",
         variant === "detailed" ? "h-15" : "h-8",
         className,
       )}
@@ -769,13 +769,13 @@ function Attachment({
         <AttachmentPreview pastedExcerptMaxChars={pastedExcerptMaxChars} />
 
         {!readOnly ? (
-          <div className="flex h-6 w-full items-center justify-between gap-2 rounded-[6px] bg-white pr-1 pl-2 dark:bg-gray-950/50">
-            <span className="text-xs leading-4 font-[350] text-gray-500 uppercase dark:text-gray-400">
+          <div className="flex h-6 w-full items-center justify-between gap-2 rounded-[6px] bg-card pr-1 pl-2">
+            <span className="text-xs leading-4 font-[350] text-muted-foreground uppercase">
               Pasted
             </span>
             <AttachmentRemove
               position="inline"
-              className="bg-transparent text-gray-500 hover:bg-gray-100 dark:bg-transparent dark:hover:bg-gray-700"
+              className="bg-transparent text-muted-foreground hover:bg-muted dark:bg-transparent dark:hover:bg-muted"
             />
           </div>
         ) : null}
@@ -830,18 +830,18 @@ function Attachment({
 }
 
 const attachmentPreviewVariants = cva(
-  "flex shrink-0 items-center justify-center overflow-hidden bg-white text-gray-400 dark:bg-gray-800 dark:text-gray-300",
+  "flex shrink-0 items-center justify-center overflow-hidden bg-card text-muted-foreground",
   {
     variants: {
       variant: {
         compact:
-          "absolute inset-0 size-full rounded-[inherit] border-0 bg-transparent dark:bg-transparent",
+          "absolute inset-0 size-full rounded-[inherit] border-0 bg-transparent",
         inline:
-          "size-6 rounded-[4px] border border-gray-200 dark:border-gray-600",
+          "size-6 rounded-[4px] border border-input",
         detailed:
-          "size-11 rounded-[6px] border border-gray-200 dark:border-gray-600",
+          "size-11 rounded-[6px] border border-input",
         pasted:
-          "min-h-0 w-full flex-1 shrink self-stretch items-start justify-start border-0 bg-transparent p-0 dark:bg-transparent",
+          "min-h-0 w-full flex-1 shrink self-stretch items-start justify-start border-0 bg-transparent p-0",
       },
     },
     defaultVariants: {
@@ -939,7 +939,7 @@ function AttachmentPreview({
       return (
         <p
           data-slot="attachment-preview-excerpt"
-          className="my-0! line-clamp-6 text-xs leading-4 font-[350] text-gray-400 dark:text-gray-400"
+          className="my-0! line-clamp-6 text-xs leading-4 font-[350] text-ring"
         >
           {pastedExcerpt.length > 0 ? pastedExcerpt : "\u00a0"}
         </p>
@@ -948,7 +948,7 @@ function AttachmentPreview({
     if (rasterSrc) {
       return (
         <>
-          <div className="absolute inset-0 z-0 size-full animate-pulse bg-gray-200 dark:bg-gray-900" />
+          <div className="absolute inset-0 z-0 size-full animate-pulse bg-input" />
           <img
             src={rasterSrc}
             alt=""
@@ -960,7 +960,7 @@ function AttachmentPreview({
     if (videoSrc) {
       return (
         <>
-          <div className="absolute inset-0 z-0 size-full animate-pulse bg-gray-200 dark:bg-gray-900" />
+          <div className="absolute inset-0 z-0 size-full animate-pulse bg-input" />
           <video
             src={videoSrc}
             muted
@@ -999,7 +999,7 @@ function AttachmentPreview({
 }
 
 const removeButtonVariants = cva(
-  "z-10 flex size-4.5 cursor-pointer items-center justify-center rounded-full bg-gray-100 text-gray-400 sm:opacity-0 transition-all group-hover:opacity-100 hover:bg-gray-200 hover:text-gray-500 active:scale-97 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600 dark:hover:text-gray-100",
+  "z-10 flex size-4.5 cursor-pointer items-center justify-center rounded-full bg-secondary text-muted-foreground sm:opacity-0 transition-all group-hover:opacity-100 hover:bg-border hover:text-primary active:scale-97",
   {
     variants: {
       position: {
@@ -1127,8 +1127,8 @@ function AttachmentProperty({
       data-as={mode}
       className={cn(
         isTitle
-          ? "my-0! truncate text-sm leading-6 font-[450] text-gray-900 dark:text-gray-100"
-          : "my-0! text-xs font-[350] text-gray-500 dark:text-gray-400",
+          ? "my-0! truncate text-sm leading-6 font-[450] text-primary"
+          : "my-0! text-xs font-[350] text-muted-foreground",
         className,
       )}
       {...props}
@@ -1153,13 +1153,13 @@ function AttachmentProgress({
     <div
       data-slot="attachment-progress"
       className={cn(
-        "pointer-events-none absolute inset-x-0 bottom-0 h-0.5 bg-gray-200/90 dark:bg-gray-600/90",
+        "pointer-events-none absolute inset-x-0 bottom-0 h-0.5 bg-border/90",
         className,
       )}
       {...props}
     >
       <div
-        className="h-full bg-gray-900 transition-[width] duration-200 dark:bg-gray-100"
+        className="h-full bg-foreground transition-[width] duration-200 dark:bg-primary"
         style={{ width: `${clamped}%` }}
       />
     </div>

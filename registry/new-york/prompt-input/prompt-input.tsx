@@ -13,8 +13,9 @@ type PromptInputContextValue = {
   onSubmit?: (value: string) => void;
 };
 
-const PromptInputContext =
-  React.createContext<PromptInputContextValue | null>(null);
+const PromptInputContext = React.createContext<PromptInputContextValue | null>(
+  null,
+);
 
 type PromptInputProps = Omit<
   React.HTMLAttributes<HTMLDivElement>,
@@ -64,7 +65,7 @@ function PromptInput({
         role="group"
         aria-label="Chat input"
         className={cn(
-          "relative flex h-auto w-full cursor-text flex-col gap-0 overflow-hidden rounded-[24px] border border-border bg-card dark:bg-muted",
+          "relative flex h-auto w-full cursor-text flex-col gap-0 overflow-hidden rounded-[24px] border border-border dark:border-border/50 bg-card dark:bg-input/30",
           className,
         )}
         onClick={handleClick}
@@ -109,7 +110,7 @@ const PromptInputTextarea = React.forwardRef<
           aria-label="Message input"
           placeholder="How can I help you today?"
           className={cn(
-            "min-h-14 w-full resize-none border-0 bg-transparent px-4 py-4 text-sm leading-6 font-normal text-foreground shadow-none outline-none placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0 dark:bg-transparent",
+            "min-h-14 w-full resize-none border-0 bg-transparent px-4 py-4 text-sm leading-6 font-normal text-primary shadow-none outline-none placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0 dark:bg-transparent",
             className,
           )}
           onKeyDown={handleKeyDown}

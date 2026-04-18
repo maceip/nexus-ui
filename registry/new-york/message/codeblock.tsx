@@ -209,7 +209,7 @@ function CodeBlockCopyButton({
         <div
           className={cn(
             "pointer-events-none absolute top-1/2 left-1/2 z-0 size-13.5 -translate-x-1/2 -translate-y-1/2 rounded-l-full rounded-tr-full bg-linear-to-l",
-            "from-background from-70% to-background/0 dark:from-background dark:to-background/0",
+            "from-card from-70% to-card/0",
           )}
         />
       ) : null}
@@ -217,7 +217,7 @@ function CodeBlockCopyButton({
         type="button"
         data-checked={checked || undefined}
         className={cn(
-          "relative flex size-7 cursor-pointer items-center justify-center rounded-lg text-muted-foreground hover:text-foreground dark:hover:text-primary",
+          "relative flex size-7 cursor-pointer items-center justify-center rounded-lg text-ring hover:text-primary",
           className,
         )}
         aria-label={checked ? "Copied" : "Copy code"}
@@ -315,8 +315,8 @@ function CodeBlockFigureChrome({
   return (
     <figure
       className={cn(
-        "my-4 rounded-xl border border-border dark:border-sidebar-border",
-        showTitleRow ? "bg-muted dark:bg-background" : "dark:bg-background",
+        "my-4 rounded-xl border border-border dark:border-accent",
+        showTitleRow ? "bg-muted dark:bg-background" : "dark:bg-card",
         "not-prose relative w-full overflow-hidden text-[13px] font-[450]",
         className,
       )}
