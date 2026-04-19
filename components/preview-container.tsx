@@ -2,7 +2,7 @@ import { cn } from "@/lib/utils";
 
 const ReviewContainer = ({ children, className }: { children: React.ReactNode, className?: string }) => {
   return (
-    <div className={cn("flex w-full flex-col items-center justify-center rounded-xl bg-white dark:bg-gray-900 h-[412px] px-6 py-10 md:p-10 relative overscroll-none", className)}>
+    <div className={cn("flex w-full flex-col items-center justify-center rounded-xl bg-white dark:bg-gray-900 h-[412px] px-6 py-10 md:p-10 relative overscroll-none not-prose", className)}>
       {children}
     </div>
   );
