@@ -1,0 +1,134 @@
+---
+title: Commit Graph
+description: Topological git graph with rail lines showing branch forks, merges, and commit ancestry
+---
+
+import CommitGraphDefault from "@/components/nexus-ui/examples/commit-graph/default";
+
+Topological git graph with rail lines showing branch forks, merges, and commit ancestry.
+
+<DemoWithCode src="components/nexus-ui/examples/commit-graph/default.tsx">
+  <CommitGraphDefault />
+</DemoWithCode>
+
+## Installation
+
+<Tabs items={["CLI", "Manual"]} framed={false}>
+<Tab value="CLI">
+<Tabs items={["npm", "pnpm", "yarn", "bun"]}>
+<Tab value="npm">
+```bash
+npx shadcn@latest add @nexus-ui/commit-graph
+```
+</Tab>
+<Tab value="pnpm">
+```bash
+pnpm dlx shadcn@latest add @nexus-ui/commit-graph
+```
+</Tab>
+<Tab value="yarn">
+```bash
+yarn dlx shadcn@latest add @nexus-ui/commit-graph
+```
+</Tab>
+<Tab value="bun">
+```bash
+bunx shadcn@latest add @nexus-ui/commit-graph
+```
+</Tab>
+</Tabs>
+</Tab>
+<Tab value="Manual">
+<Steps>
+<Step>
+<h3>Copy and paste the following code into your project.</h3>
+
+<ComponentSource src="registry/new-york/commit-graph/commit-graph.tsx" title="components/nexus-ui/commit-graph.tsx" />
+</Step>
+<Step>
+<h3>Update the import paths to match your project setup.</h3>
+</Step>
+</Steps>
+</Tab>
+</Tabs>
+
+## Usage
+
+```tsx keepBackground
+import { CommitGraph, type Commit } from "@/components/nexus-ui/commit-graph";
+```
+
+```tsx keepBackground
+<CommitGraph commits={commits} />
+```
+
+Client component. Pass commits in topological order (newest first) with `parents` hashes. Each row opens a popover with commit details.
+
+## API Reference
+
+### CommitGraph
+
+<TypeTable
+  type={{
+    commits: {
+      type: "Commit[]",
+      description:
+        "Commit data in topological order, newest first. Parent hashes are used to compute rail placement and merge paths.",
+      required: true,
+    },
+    truncateHash: {
+      type: "number",
+      default: "7",
+      description: "How many characters of the commit hash to show in the row view.",
+    },
+    railWidth: {
+      type: "number",
+      default: "18",
+      description: "Horizontal spacing between commit lanes.",
+    },
+    className: {
+      type: "string",
+      description: "Additional CSS classes to apply to the graph container.",
+    },
+  }}
+/>
+
+### Commit
+
+<TypeTable
+  type={{
+    hash: {
+      type: "string",
+      description: "Full git commit hash.",
+      required: true,
+    },
+    message: {
+      type: "string",
+      description: "Commit subject or summary line.",
+      required: true,
+    },
+    author: {
+      type: "{ name: string; avatarUrl?: string }",
+      description: "Author display metadata used in the row and popover.",
+      required: true,
+    },
+    date: {
+      type: "string | Date",
+      description: "Commit timestamp.",
+      required: true,
+    },
+    parents: {
+      type: "string[]",
+      description: "Parent commit hashes. Multiple parents render merge rails.",
+      required: true,
+    },
+    refs: {
+      type: "string[]",
+      description: "Optional branch or ref labels shown inline.",
+    },
+    tag: {
+      type: "string",
+      description: "Optional tag label shown as a highlighted badge.",
+    },
+  }}
+/>

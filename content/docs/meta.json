@@ -6,11 +6,15 @@
     "skills",
     "roadmap",
     "---Components---",
+    "components/activity-graph",
     "components/attachments",
     "components/citation",
+    "components/commit-graph",
+    "components/file-tree",
     "components/message",
     "components/model-selector",
     "components/prompt-input",
+    "components/repo-card",
     "components/suggestions",
     "components/thread"
   ]

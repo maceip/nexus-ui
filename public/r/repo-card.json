@@ -1,0 +1,21 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "repo-card",
+  "title": "Repo Card",
+  "description": "GitHub repository preview card with stars, forks, language metadata, and optional topics.",
+  "dependencies": [
+    "class-variance-authority",
+    "lucide-react"
+  ],
+  "registryDependencies": [
+    "@nexus-ui/nexus-ui-theme"
+  ],
+  "files": [
+    {
+      "path": "registry/new-york/repo-card/repo-card.tsx",
+      "type": "registry:file",
+      "target": "~/components/nexus-ui/repo-card.tsx"
+    }
+  ],
+  "type": "registry:ui"
+}

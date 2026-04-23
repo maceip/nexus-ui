@@ -1,0 +1,124 @@
+---
+title: File Tree
+description: Collapsible file and folder tree with file-type icons, highlights, and configurable expand state
+---
+
+import FileTreeDefault from "@/components/nexus-ui/examples/file-tree/default";
+
+Interactive file and folder tree for repository and project overviews. Supports configurable default expand state, highlight paths, and minimal or colored file icons.
+
+<DemoWithCode src="components/nexus-ui/examples/file-tree/default.tsx">
+  <FileTreeDefault />
+</DemoWithCode>
+
+## Installation
+
+<Tabs items={["CLI", "Manual"]} framed={false}>
+<Tab value="CLI">
+<Tabs items={["npm", "pnpm", "yarn", "bun"]}>
+<Tab value="npm">
+```bash
+npx shadcn@latest add @nexus-ui/file-tree
+```
+</Tab>
+<Tab value="pnpm">
+```bash
+pnpm dlx shadcn@latest add @nexus-ui/file-tree
+```
+</Tab>
+<Tab value="yarn">
+```bash
+yarn dlx shadcn@latest add @nexus-ui/file-tree
+```
+</Tab>
+<Tab value="bun">
+```bash
+bunx shadcn@latest add @nexus-ui/file-tree
+```
+</Tab>
+</Tabs>
+</Tab>
+<Tab value="Manual">
+<Steps>
+<Step>
+<h3>Copy and paste the following code into your project.</h3>
+
+<ComponentSource src="registry/new-york/file-tree/file-tree.tsx" title="components/nexus-ui/file-tree.tsx" />
+</Step>
+<Step>
+<h3>Update the import paths to match your project setup.</h3>
+</Step>
+</Steps>
+</Tab>
+</Tabs>
+
+## Usage
+
+```tsx keepBackground
+import { FileTree } from "@/components/nexus-ui/file-tree";
+```
+
+```tsx keepBackground
+<FileTree
+  tree={[
+    {
+      name: "src",
+      children: [
+        { name: "app", children: [{ name: "page.tsx" }, { name: "layout.tsx" }] },
+        { name: "components", children: [{ name: "header.tsx" }] },
+      ],
+    },
+    { name: "package.json" },
+  ]}
+/>
+```
+
+## API Reference
+
+### FileTree
+
+<TypeTable
+  type={{
+    tree: {
+      type: "FileTreeNode[]",
+      description:
+        "Nested file and folder data. When omitted, the component renders a small built-in example tree.",
+    },
+    defaultExpanded: {
+      type: "boolean | string[]",
+      description:
+        "Controls the initial open state. Pass `true` to expand all folders, `false` to collapse all folders, or an array of folder paths like `src/app`.",
+    },
+    iconStyle: {
+      type: '"minimal" | "colored"',
+      default: '"minimal"',
+      description:
+        "Switches between a neutral icon set and file-type color accents for common extensions.",
+    },
+    highlight: {
+      type: "string[]",
+      description:
+        "Marks paths as selected or emphasized. Paths are relative to the root node and should not include a leading slash.",
+    },
+    className: {
+      type: "string",
+      description: "Additional CSS classes applied to the root tree container.",
+    },
+  }}
+/>
+
+### FileTreeNode
+
+<TypeTable
+  type={{
+    name: {
+      type: "string",
+      description: "Display name for a file or folder.",
+    },
+    children: {
+      type: "FileTreeNode[]",
+      description:
+        "Nested children for folders. Omit `children` for leaf file nodes.",
+    },
+  }}
+/>

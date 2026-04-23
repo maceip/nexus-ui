@@ -1,0 +1,155 @@
+---
+title: Activity Graph
+description: GitHub-style activity heatmap with an optional side-scrolling loading animation
+---
+
+import ActivityGraphDefault from "@/components/nexus-ui/examples/activity-graph/default";
+
+A GitHub-style contribution heatmap for activity data. It also supports a loading mode that animates the grid like a side-scrolling game loop, so it can double as a spinner or skeleton for repository views.
+
+<DemoWithCode src="components/nexus-ui/examples/activity-graph/default.tsx">
+  <ActivityGraphDefault />
+</DemoWithCode>
+
+## Installation
+
+<Tabs items={["CLI", "Manual"]} framed={false}>
+<Tab value="CLI">
+<Tabs items={["npm", "pnpm", "yarn", "bun"]}>
+<Tab value="npm">
+```bash
+npx shadcn@latest add @nexus-ui/activity-graph
+```
+</Tab>
+<Tab value="pnpm">
+```bash
+pnpm dlx shadcn@latest add @nexus-ui/activity-graph
+```
+</Tab>
+<Tab value="yarn">
+```bash
+yarn dlx shadcn@latest add @nexus-ui/activity-graph
+```
+</Tab>
+<Tab value="bun">
+```bash
+bunx shadcn@latest add @nexus-ui/activity-graph
+```
+</Tab>
+</Tabs>
+</Tab>
+<Tab value="Manual">
+<Steps>
+<Step>
+<h3>Copy and paste the following code into your project.</h3>
+
+<ComponentSource src="registry/new-york/activity-graph/activity-graph.tsx" title="components/nexus-ui/activity-graph.tsx" />
+</Step>
+<Step>
+<h3>Update the import paths to match your project setup.</h3>
+</Step>
+</Steps>
+</Tab>
+</Tabs>
+
+## Usage
+
+```tsx keepBackground
+import { ActivityGraph } from "@/components/nexus-ui/activity-graph";
+```
+
+```tsx keepBackground
+<ActivityGraph
+  data={[
+    { date: "2026-03-11", count: 5 },
+    { date: "2026-03-12", count: 1 },
+  ]}
+/>
+```
+
+## Loading mode
+
+Set **`loading`** to animate the graph as a moving loading surface. This keeps the same prop surface as the activity graph while making it useful as a spinner-like placeholder.
+
+```tsx keepBackground
+<ActivityGraph data={[]} loading loadingSpeed={0.9} weeks={20} />
+```
+
+## API Reference
+
+<TypeTable
+  type={{
+    data: {
+      type: "ActivityEntry[]",
+      description:
+        "Daily activity entries. Dates should use the `YYYY-MM-DD` format.",
+    },
+    colorScale: {
+      type: "[string, string, string, string, string]",
+      description:
+        "Five-step color scale used from zero activity through the strongest activity level.",
+    },
+    blockSize: {
+      type: "number",
+      description:
+        "Fixed pixel size for each cell. When omitted, the graph auto-fits to the container width.",
+    },
+    blockRadius: {
+      type: "number",
+      default: "4",
+      description: "Corner radius, in pixels, for each activity cell.",
+    },
+    weeks: {
+      type: "number",
+      default: "26",
+      description: "How many weeks to render in the grid.",
+    },
+    className: {
+      type: "string",
+      description: "Additional CSS classes for the graph container.",
+    },
+    loading: {
+      type: "boolean",
+      default: "false",
+      description:
+        "When true, animates the graph as a side-scrolling loading surface for use as a spinner or skeleton.",
+    },
+    loadingSpeed: {
+      type: "number",
+      default: "1.2",
+      description:
+        "Controls how quickly the loading animation sweeps across the graph.",
+    },
+  }}
+/>
+
+### ActivityEntry
+
+<TypeTable
+  type={{
+    date: {
+      type: "string",
+      description: "ISO date string in `YYYY-MM-DD` format.",
+    },
+    count: {
+      type: "number",
+      description: "Activity count for that day.",
+    },
+  }}
+/>
+
+### fetchGitHubContributions
+
+<TypeTable
+  type={{
+    username: {
+      type: "string",
+      description: "GitHub username to fetch contribution data for.",
+    },
+    returns: {
+      type: "Promise<GitHubContributions | null>",
+      description:
+        "Returns normalized contribution data from the external contributions API, or `null` if the fetch fails.",
+    },
+  }}
+/>

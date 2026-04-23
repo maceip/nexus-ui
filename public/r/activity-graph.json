@@ -1,0 +1,20 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "activity-graph",
+  "title": "Activity Graph",
+  "description": "GitHub-style activity heatmap with tooltip details and an animated loading mode.",
+  "dependencies": [
+    "radix-ui"
+  ],
+  "registryDependencies": [
+    "@nexus-ui/nexus-ui-theme"
+  ],
+  "files": [
+    {
+      "path": "registry/new-york/activity-graph/activity-graph.tsx",
+      "type": "registry:file",
+      "target": "~/components/nexus-ui/activity-graph.tsx"
+    }
+  ],
+  "type": "registry:ui"
+}

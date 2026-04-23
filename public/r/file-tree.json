@@ -1,0 +1,20 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "file-tree",
+  "title": "File Tree",
+  "description": "Collapsible file and folder tree with highlight paths and configurable icon styles.",
+  "dependencies": [
+    "lucide-react"
+  ],
+  "registryDependencies": [
+    "@nexus-ui/nexus-ui-theme"
+  ],
+  "files": [
+    {
+      "path": "registry/new-york/file-tree/file-tree.tsx",
+      "type": "registry:file",
+      "target": "~/components/nexus-ui/file-tree.tsx"
+    }
+  ],
+  "type": "registry:ui"
+}
