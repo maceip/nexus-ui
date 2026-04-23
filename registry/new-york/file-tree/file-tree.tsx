@@ -70,11 +70,11 @@ export function FileTree({
       role="tree"
       aria-label="File tree"
       className={cn(
-        "w-full rounded-2xl border border-border bg-card p-3 shadow-sm",
+        "w-full rounded-[20px] border border-white/8 bg-[#0b0b0d] p-3 text-zinc-200 shadow-[0_18px_50px_rgba(0,0,0,0.28)]",
         className,
       )}
     >
-      <div className="space-y-1">
+      <div className="space-y-0.5">
         {flattened.map(({ node, path, depth }) => {
           const isFolder = Boolean(node.children?.length);
           const isExpanded = expanded.has(path);
@@ -104,19 +104,19 @@ export function FileTree({
                   });
                 }}
                 className={cn(
-                  "flex w-full items-center gap-2 rounded-xl px-2 py-1.5 text-left text-sm transition-colors",
-                  "hover:bg-muted/70 focus-visible:bg-muted/80 focus-visible:outline-none",
+                  "flex w-full items-center gap-2 rounded-lg px-2 py-1 text-left text-[13px] leading-5 transition-colors",
+                  "hover:bg-white/6 focus-visible:bg-white/8 focus-visible:outline-none",
                   isHighlighted &&
-                    "bg-primary/8 text-foreground ring-1 ring-primary/15 dark:bg-primary/12",
+                    "bg-white/8 text-white ring-1 ring-white/10",
                   !isFolder && "cursor-default",
                 )}
-                style={{ paddingLeft: `${depth * 14 + 8}px` }}
+                style={{ paddingLeft: `${depth * 13 + 8}px` }}
               >
-                <span className="flex w-4 shrink-0 items-center justify-center text-muted-foreground">
+                <span className="flex w-3.5 shrink-0 items-center justify-center text-zinc-500">
                   {isFolder ? (
                     <ChevronRightIcon
                       className={cn(
-                        "size-3.5 transition-transform",
+                        "size-3 transition-transform",
                         isExpanded && "rotate-90",
                       )}
                     />
@@ -128,7 +128,9 @@ export function FileTree({
                   expanded={isExpanded}
                   iconStyle={iconStyle}
                 />
-                <span className="truncate">{node.name}</span>
+                <span className={cn("truncate", isHighlighted ? "text-white" : "text-zinc-300")}>
+                  {node.name}
+                </span>
               </button>
             </div>
           );
@@ -154,8 +156,8 @@ function TreeIcon({
     return (
       <FolderComponent
         className={cn(
-          "size-4 shrink-0",
-          iconStyle === "colored" ? "text-amber-500" : "text-muted-foreground",
+          "size-3.5 shrink-0",
+          iconStyle === "colored" ? "text-amber-400" : "text-zinc-500",
         )}
       />
     );
@@ -164,7 +166,7 @@ function TreeIcon({
   return (
     <FileIcon
       className={cn(
-        "size-4 shrink-0",
+        "size-3.5 shrink-0",
         iconStyle === "colored" ? fileColorClass(name) : "text-muted-foreground",
       )}
     />
@@ -223,28 +225,28 @@ function fileColorClass(name: string) {
   switch (extension) {
     case "ts":
     case "tsx":
-      return "text-sky-500";
+      return "text-sky-400";
     case "js":
     case "jsx":
-      return "text-amber-500";
+      return "text-amber-300";
     case "json":
-      return "text-lime-500";
+      return "text-lime-300";
     case "md":
     case "mdx":
-      return "text-violet-500";
+      return "text-violet-300";
     case "css":
     case "scss":
-      return "text-pink-500";
+      return "text-pink-300";
     case "py":
-      return "text-emerald-500";
+      return "text-emerald-300";
     case "rs":
-      return "text-orange-500";
+      return "text-orange-300";
     case "go":
-      return "text-cyan-500";
+      return "text-cyan-300";
     case "yml":
     case "yaml":
-      return "text-fuchsia-500";
+      return "text-fuchsia-300";
     default:
-      return "text-muted-foreground";
+      return "text-zinc-500";
   }
 }

@@ -4,64 +4,78 @@ import { CommitGraph, type Commit } from "@/components/nexus-ui/commit-graph";
 
 const commits: Commit[] = [
   {
-    hash: "8e9a9cd76c16f50aa15a719d2dca4fc781df2dc4",
-    message: "Merge branch 'feature/activity-graph'",
+    hash: "a1b2c3d",
+    message: "feat(auth): add OAuth2 support",
     author: {
-      name: "Maya Chen",
-      avatarUrl: "https://avatars.githubusercontent.com/u/10137?v=4",
+      name: "Sarah Chen",
     },
-    date: "2026-04-20T18:12:00.000Z",
-    parents: [
-      "d1a4c68cb8bbd7fa936858f22b8f17eea90d6d0d",
-      "ac30b2f5849485c7a5d5ff8891c3f4143347d8fa",
-    ],
-    refs: ["main", "origin/main"],
+    date: new Date(Date.now() - 2 * 3600_000).toISOString(),
+    parents: ["m1e2r3g"],
+    refs: ["main", "HEAD"],
+    tag: "v2.1.0",
   },
   {
-    hash: "d1a4c68cb8bbd7fa936858f22b8f17eea90d6d0d",
-    message: "Polish repo card stats row",
+    hash: "m1e2r3g",
+    message: "Merge branch 'feat/dashboard' into main",
     author: {
-      name: "Jon Bell",
-      avatarUrl: "https://avatars.githubusercontent.com/u/810438?v=4",
+      name: "Sarah Chen",
     },
-    date: "2026-04-20T14:33:00.000Z",
-    parents: ["57429a70cbcb548e61168fccf5d4d13ffb17f0d3"],
-    refs: ["release"],
+    date: new Date(Date.now() - 6 * 3600_000).toISOString(),
+    parents: ["f6e5d4c", "d4a5s6h"],
   },
   {
-    hash: "ac30b2f5849485c7a5d5ff8891c3f4143347d8fa",
-    message: "Add side-scrolling activity graph loading mode",
+    hash: "d4a5s6h",
+    message: "feat: add analytics chart component",
     author: {
-      name: "Priya Patel",
-      avatarUrl: "https://avatars.githubusercontent.com/u/17232?v=4",
+      name: "Jordan Lee",
     },
-    date: "2026-04-20T13:01:00.000Z",
-    parents: ["57429a70cbcb548e61168fccf5d4d13ffb17f0d3"],
-    refs: ["feature/activity-graph"],
-    tag: "beta",
+    date: new Date(Date.now() - 8 * 3600_000).toISOString(),
+    parents: ["w1i2p3"],
+    refs: ["feat/dashboard"],
   },
   {
-    hash: "57429a70cbcb548e61168fccf5d4d13ffb17f0d3",
-    message: "Introduce file tree and commit graph docs",
+    hash: "f6e5d4c",
+    message: "fix(api): handle rate limit headers",
     author: {
       name: "Alex Rivera",
-      avatarUrl: "https://avatars.githubusercontent.com/u/2621?v=4",
     },
-    date: "2026-04-19T11:40:00.000Z",
-    parents: ["b11af5d8136a9933bb80cdc458fc44ad8d0f6f2c"],
+    date: new Date(Date.now() - 18 * 3600_000).toISOString(),
+    parents: ["4d5e6f1"],
   },
   {
-    hash: "b11af5d8136a9933bb80cdc458fc44ad8d0f6f2c",
-    message: "Bootstrap repository insights section",
+    hash: "w1i2p3",
+    message: "wip: dashboard layout skeleton",
     author: {
-      name: "Nina Gomez",
-      avatarUrl: "https://avatars.githubusercontent.com/u/279?v=4",
+      name: "Jordan Lee",
     },
-    date: "2026-04-18T08:10:00.000Z",
+    date: new Date(Date.now() - 2 * 86400_000).toISOString(),
+    parents: ["4d5e6f1"],
+  },
+  {
+    hash: "4d5e6f1",
+    message: "chore(deps): upgrade next to 15.5",
+    author: {
+      name: "Sarah Chen",
+    },
+    date: new Date(Date.now() - 5 * 86400_000).toISOString(),
+    parents: ["0a1b2c3"],
+    tag: "v2.0.0",
+  },
+  {
+    hash: "0a1b2c3",
+    message: "Initial commit",
+    author: {
+      name: "Sarah Chen",
+    },
+    date: new Date(Date.now() - 14 * 86400_000).toISOString(),
     parents: [],
   },
 ];
 
 export default function CommitGraphDefault() {
-  return <CommitGraph commits={commits} />;
+  return (
+    <div className="w-full max-w-5xl">
+      <CommitGraph commits={commits} />
+    </div>
+  );
 }

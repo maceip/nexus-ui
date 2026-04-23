@@ -22,9 +22,9 @@ const COMMIT_GRAPH_COLORS = [
   "#4F46E5",
 ] as const;
 
-const ROW_HEIGHT = 56;
-const GRAPH_PADDING_X = 16;
-const DOT_RADIUS = 5;
+const ROW_HEIGHT = 64;
+const GRAPH_PADDING_X = 18;
+const DOT_RADIUS = 5.5;
 
 export type Commit = {
   hash: string;
@@ -62,7 +62,7 @@ type CommitEdge = {
 export function CommitGraph({
   commits,
   truncateHash = 7,
-  railWidth = 18,
+  railWidth = 22,
   className,
 }: CommitGraphProps) {
   const { layouts, edges, maxLane } = React.useMemo(
@@ -77,11 +77,11 @@ export function CommitGraph({
     <div
       data-slot="commit-graph"
       className={cn(
-        "relative overflow-hidden rounded-2xl border border-border bg-card text-card-foreground shadow-sm",
+        "relative overflow-hidden rounded-[22px] border border-white/8 bg-[#0a0a0a] text-white shadow-[0_0_0_1px_rgba(255,255,255,0.02)]",
         className,
       )}
     >
-      <div className="relative min-w-0 overflow-x-auto">
+      <div className="relative min-w-0 overflow-x-auto bg-[linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0))]">
         <svg
           aria-hidden="true"
           className="pointer-events-none absolute top-0 left-0"
@@ -104,10 +104,10 @@ export function CommitGraph({
                 d={path}
                 fill="none"
                 stroke={COMMIT_GRAPH_COLORS[edge.fromLane % COMMIT_GRAPH_COLORS.length]}
-                strokeWidth="2.25"
+                strokeWidth="3"
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                opacity="0.9"
+                opacity="0.95"
               />
             );
           })}
@@ -149,7 +149,7 @@ function CommitRow({
         <button
           type="button"
           data-slot="commit-graph-row"
-          className="group relative flex w-full min-w-[520px] items-center border-border/70 border-b bg-card text-left last:border-b-0 hover:bg-muted/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="group relative flex w-full items-center border-white/6 border-b bg-transparent text-left last:border-b-0 hover:bg-white/[0.02] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2563eb]/60"
           style={{ minHeight: ROW_HEIGHT }}
         >
           <div
@@ -157,7 +157,7 @@ function CommitRow({
             style={{ width: graphWidth, minHeight: ROW_HEIGHT }}
           >
             <div
-              className="absolute top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-card shadow-sm"
+              className="absolute top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border-[3px] border-[#0a0a0a] shadow-[0_0_0_1px_rgba(255,255,255,0.08)]"
               style={{
                 left: laneToX(layout.lane, railWidth),
                 width: DOT_RADIUS * 2.6,
@@ -167,10 +167,10 @@ function CommitRow({
             />
           </div>
 
-          <div className="flex min-w-0 flex-1 items-center justify-between gap-4 px-4 py-3">
-            <div className="min-w-0 space-y-1">
+          <div className="grid min-w-0 flex-1 grid-cols-[minmax(0,1fr)_120px_44px_140px_116px] items-center gap-4 px-5 py-3">
+            <div className="flex min-w-0 items-center gap-3">
               <div className="flex min-w-0 flex-wrap items-center gap-2">
-                <p className="truncate font-medium text-foreground text-sm">
+                <p className="truncate font-medium text-[16px] text-white tracking-[-0.03em]">
                   {layout.commit.message}
                 </p>
                 {layout.commit.refs?.map((ref) => (
@@ -183,26 +183,44 @@ function CommitRow({
                   </RefBadge>
                 ) : null}
               </div>
-              <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 text-muted-foreground text-xs">
-                <span>{layout.commit.author.name}</span>
-                <span>{formatDate(date)}</span>
-                <code className="rounded-md bg-muted px-1.5 py-0.5 font-mono text-[11px] text-foreground/80">
-                  {truncateCommitHash(layout.commit.hash, truncateHash)}
-                </code>
-              </div>
             </div>
-            <GitCommitVerticalIcon className="size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+            <code className="truncate text-right font-mono text-[13px] text-white/45">
+              {truncateCommitHash(layout.commit.hash, truncateHash)}
+            </code>
+            <Avatar size="sm" className="bg-white/6">
+              <AvatarImage
+                src={layout.commit.author.avatarUrl}
+                alt={layout.commit.author.name}
+              />
+              <AvatarFallback className="bg-white/8 text-[10px] text-white/80">
+                {layout.commit.author.name
+                  .split(" ")
+                  .map((part) => part[0])
+                  .join("")
+                  .slice(0, 2)
+                  .toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+            <div className="truncate text-[15px] text-white/72">
+              {layout.commit.author.name}
+            </div>
+            <div className="text-right text-[15px] text-white/52">
+              {formatRelativeTime(date)}
+            </div>
           </div>
         </button>
       </PopoverTrigger>
-      <PopoverContent align="start" className="w-[360px] rounded-2xl p-4">
+      <PopoverContent
+        align="start"
+        className="w-[360px] rounded-2xl border-white/8 bg-[#121212]/95 p-4 text-white shadow-[0_18px_48px_rgba(0,0,0,0.45)] backdrop-blur-xl"
+      >
         <div className="space-y-4">
           <div className="space-y-2">
-            <p className="font-medium text-base text-foreground">
+            <p className="font-medium text-base text-white">
               {layout.commit.message}
             </p>
-            <div className="flex flex-wrap items-center gap-2 text-muted-foreground text-xs">
-              <code className="rounded-md bg-muted px-2 py-1 font-mono text-[11px] text-foreground">
+            <div className="flex flex-wrap items-center gap-2 text-white/55 text-xs">
+              <code className="rounded-md bg-white/6 px-2 py-1 font-mono text-[11px] text-white/78">
                 {layout.commit.hash}
               </code>
               {layout.commit.refs?.map((ref) => (
@@ -217,18 +235,21 @@ function CommitRow({
             </div>
           </div>
 
-          <div className="flex items-center gap-3 rounded-xl border border-border/70 bg-muted/30 p-3">
-            <Avatar size="lg">
-              <AvatarImage src={layout.commit.author.avatarUrl} alt={layout.commit.author.name} />
-              <AvatarFallback>
+          <div className="flex items-center gap-3 rounded-xl border border-white/8 bg-white/[0.03] p-3">
+            <Avatar size="lg" className="bg-white/6">
+              <AvatarImage
+                src={layout.commit.author.avatarUrl}
+                alt={layout.commit.author.name}
+              />
+              <AvatarFallback className="bg-white/8 text-white/85">
                 {layout.commit.author.name.slice(0, 2).toUpperCase()}
               </AvatarFallback>
             </Avatar>
             <div className="min-w-0">
-              <p className="font-medium text-sm text-foreground">
+              <p className="font-medium text-sm text-white">
                 {layout.commit.author.name}
               </p>
-              <p className="text-muted-foreground text-xs">
+              <p className="text-white/52 text-xs">
                 {formatDate(toDate(layout.commit.date), true)}
               </p>
             </div>
@@ -236,25 +257,25 @@ function CommitRow({
 
           <div className="space-y-2 text-sm">
             <div className="flex items-start justify-between gap-4">
-              <span className="text-muted-foreground">Parents</span>
+              <span className="text-white/52">Parents</span>
               <div className="flex flex-wrap justify-end gap-2">
                 {layout.commit.parents.length > 0 ? (
                   layout.commit.parents.map((parent) => (
                     <code
                       key={parent}
-                      className="rounded-md bg-muted px-2 py-1 font-mono text-[11px] text-foreground"
+                      className="rounded-md bg-white/6 px-2 py-1 font-mono text-[11px] text-white/78"
                     >
                       {parent}
                     </code>
                   ))
                 ) : (
-                  <span className="text-muted-foreground text-xs">Root commit</span>
+                  <span className="text-white/45 text-xs">Root commit</span>
                 )}
               </div>
             </div>
             <div className="flex items-start justify-between gap-4">
-              <span className="text-muted-foreground">Topology lane</span>
-              <span className="font-medium text-foreground text-xs">
+              <span className="text-white/52">Topology lane</span>
+              <span className="font-medium text-white/86 text-xs">
                 Rail {layout.lane + 1}
               </span>
             </div>
@@ -277,8 +298,8 @@ function RefBadge({
       className={cn(
         "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium",
         tone === "accent"
-          ? "border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-500/30 dark:bg-blue-500/10 dark:text-blue-200"
-          : "border-border/80 bg-muted/60 text-muted-foreground",
+          ? "border-[#1f4fb7] bg-[#0d2e6e]/40 text-[#5f97ff]"
+          : "border-[#1b4fb8] bg-[#0e2448]/40 text-[#4e8bff]",
       )}
     >
       {children}
@@ -395,4 +416,21 @@ function formatDate(date: Date, withTime = false) {
         }
       : {}),
   }).format(date);
+}
+
+function formatRelativeTime(date: Date) {
+  const diff = date.getTime() - Date.now();
+  const absHours = Math.abs(diff) / (1000 * 60 * 60);
+
+  if (absHours < 24) {
+    return new Intl.RelativeTimeFormat("en", { numeric: "auto" }).format(
+      Math.round(diff / (1000 * 60 * 60)),
+      "hour",
+    );
+  }
+
+  return new Intl.RelativeTimeFormat("en", { numeric: "auto" }).format(
+    Math.round(diff / (1000 * 60 * 60 * 24)),
+    "day",
+  );
 }

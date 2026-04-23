@@ -4,32 +4,32 @@ import {
   ArchiveIcon,
   CircleIcon,
   GitForkIcon,
+  GithubIcon,
   ScaleIcon,
   StarIcon,
   Clock3Icon,
-  ExternalLinkIcon,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
 const repoCardVariants = cva(
-  "group relative flex h-full w-full flex-col overflow-hidden rounded-2xl border text-left transition-colors",
+  "group relative flex h-full w-full flex-col overflow-hidden rounded-[20px] border text-left transition-colors",
   {
     variants: {
       variant: {
         default:
-          "border-border bg-card text-card-foreground shadow-sm hover:border-foreground/15",
+          "border-white/10 bg-[#09090b] text-zinc-50 shadow-[0_0_0_1px_rgba(255,255,255,0.015)] hover:border-white/16",
         outline:
-          "border-border bg-background text-foreground hover:border-foreground/20",
+          "border-white/12 bg-[#09090b] text-zinc-50 hover:border-white/18",
         ghost:
-          "border-transparent bg-transparent text-foreground hover:border-border hover:bg-muted/30",
+          "border-transparent bg-[#09090b] text-zinc-50 hover:border-white/10",
         muted:
-          "border-border/80 bg-muted/50 text-foreground hover:border-foreground/15",
+          "border-white/10 bg-[#111214] text-zinc-50 hover:border-white/16",
       },
       size: {
-        sm: "gap-3 p-4",
-        default: "gap-4 p-5",
-        lg: "gap-5 p-6",
+        sm: "gap-4 p-4",
+        default: "gap-5 p-5",
+        lg: "gap-6 p-6",
       },
     },
     defaultVariants: {
@@ -39,12 +39,14 @@ const repoCardVariants = cva(
   },
 );
 
-const statTextVariants = cva("inline-flex items-center gap-1.5 text-muted-foreground", {
+const statTextVariants = cva(
+  "inline-flex items-center gap-2 text-zinc-300/88",
+  {
   variants: {
     size: {
-      sm: "text-xs",
-      default: "text-xs",
-      lg: "text-sm",
+      sm: "text-[12px]",
+      default: "text-[13px]",
+      lg: "text-[14px]",
     },
   },
   defaultVariants: {
@@ -206,6 +208,7 @@ export async function RepoCard({
     ? LANGUAGE_COLORS[repoData.language] ?? "#9CA3AF"
     : "#9CA3AF";
   const topics = repoData?.topics.slice(0, maxTopics) ?? [];
+  const remainingTopics = Math.max((repoData?.topics.length ?? 0) - topics.length, 0);
   const description =
     repoData?.description ?? "GitHub repository preview unavailable.";
 
@@ -216,10 +219,13 @@ export async function RepoCard({
       rel="noreferrer"
       className={cn(repoCardVariants({ variant, size }), className)}
     >
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0 space-y-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <p className="truncate font-medium text-foreground text-sm sm:text-base">
+      <div className="flex items-center gap-3">
+        <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-white/[0.06] ring-1 ring-white/10">
+          <GithubIcon className="size-4.5 text-white/80" />
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className="flex min-w-0 flex-wrap items-center gap-2">
+            <p className="truncate font-semibold text-[15px] text-white tracking-[-0.02em] sm:text-[17px]">
               {repoData?.full_name ?? `${owner}/${repo}`}
             </p>
             {repoData?.archived ? (
@@ -227,22 +233,39 @@ export async function RepoCard({
             ) : null}
             {repoData?.fork ? <StatusBadge tone="default">Fork</StatusBadge> : null}
           </div>
-          <p className="text-muted-foreground text-xs sm:text-sm">
-            by {repoData?.owner.login ?? owner}
+          <p className="truncate text-[12px] text-zinc-500">
+            github.com/{repoData?.full_name ?? `${owner}/${repo}`}
           </p>
         </div>
-        <ExternalLinkIcon className="mt-0.5 size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
       </div>
 
-      <p className="line-clamp-3 text-muted-foreground text-sm leading-6">
+      <p className="line-clamp-2 text-[15px] leading-8 text-zinc-300/88 sm:text-[16px] sm:leading-7">
         {description}
       </p>
 
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+      {showTopics && (topics.length > 0 || remainingTopics > 0) ? (
+        <div className="flex flex-wrap gap-2">
+          {topics.map((topic) => (
+            <span
+              key={topic}
+              className="inline-flex items-center rounded-full bg-white/[0.07] px-3 py-1 text-[11px] font-semibold text-zinc-100 ring-1 ring-white/[0.06]"
+            >
+              {topic}
+            </span>
+          ))}
+          {remainingTopics > 0 ? (
+            <span className="inline-flex items-center rounded-full bg-white/[0.07] px-3 py-1 text-[11px] font-semibold text-zinc-300 ring-1 ring-white/[0.06]">
+              +{remainingTopics}
+            </span>
+          ) : null}
+        </div>
+      ) : null}
+
+      <div className="mt-auto flex flex-wrap items-center gap-x-5 gap-y-2">
         {showLanguage && repoData?.language ? (
           <span className={statTextVariants({ size })}>
             <CircleIcon
-              className="size-3 fill-current stroke-none"
+              className="size-3.5 fill-current stroke-none"
               style={{ color: languageColor }}
             />
             <span>{repoData.language}</span>
@@ -263,28 +286,15 @@ export async function RepoCard({
           </span>
         ) : null}
         {showUpdated && repoData?.updated_at ? (
-          <span className={statTextVariants({ size })}>
+          <span className={cn(statTextVariants({ size }), "ml-auto")}>
             <Clock3Icon className="size-3.5" />
             <span>{formatUpdated(repoData.updated_at)}</span>
           </span>
         ) : null}
       </div>
 
-      {showTopics && topics.length > 0 ? (
-        <div className="flex flex-wrap gap-2">
-          {topics.map((topic) => (
-            <span
-              key={topic}
-              className="inline-flex items-center rounded-full border border-border/80 bg-muted/60 px-2.5 py-1 text-[11px] font-medium text-muted-foreground"
-            >
-              {topic}
-            </span>
-          ))}
-        </div>
-      ) : null}
-
       {!repoData ? (
-        <div className="mt-auto inline-flex items-center gap-2 rounded-xl border border-dashed border-border/80 bg-muted/40 px-3 py-2 text-muted-foreground text-xs">
+        <div className="inline-flex items-center gap-2 rounded-xl border border-dashed border-white/10 bg-white/[0.04] px-3 py-2 text-[12px] text-zinc-400">
           <ArchiveIcon className="size-3.5" />
           GitHub API data could not be fetched. Pass `data` to render pre-fetched
           repository details.
@@ -304,10 +314,10 @@ function StatusBadge({
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium",
+        "inline-flex items-center rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.08em]",
         tone === "warning"
-          ? "bg-amber-100 text-amber-900 dark:bg-amber-500/15 dark:text-amber-200"
-          : "bg-muted text-muted-foreground",
+          ? "bg-amber-400/12 text-amber-200 ring-1 ring-amber-300/15"
+          : "bg-white/[0.06] text-zinc-300 ring-1 ring-white/[0.08]",
       )}
     >
       {children}
@@ -326,11 +336,13 @@ function formatUpdated(date: string) {
   const updated = new Date(date);
   const diff = Date.now() - updated.getTime();
   const day = 1000 * 60 * 60 * 24;
+  const hour = 1000 * 60 * 60;
 
-  if (diff < day) return "Updated today";
-  if (diff < day * 2) return "Updated yesterday";
+  if (diff < hour) return "just now";
+  if (diff < day) return "today";
+  if (diff < day * 2) return "yesterday";
 
-  return `Updated ${new Intl.RelativeTimeFormat("en", {
+  return new Intl.RelativeTimeFormat("en", {
     numeric: "auto",
-  }).format(-Math.round(diff / day), "day")}`;
+  }).format(-Math.round(diff / day), "day");
 }
