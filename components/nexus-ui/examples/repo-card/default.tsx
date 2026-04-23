@@ -1,6 +1,6 @@
 "use server";
 
-import { RepoCard } from "@/components/nexus-ui/repo-card";
+import { RepoCard, fetchGitHubRepo } from "@/components/nexus-ui/repo-card";
 
 const exampleRepo = {
   id: 1,
@@ -29,9 +29,11 @@ const exampleRepo = {
 };
 
 export default async function RepoCardDefault() {
+  const repoData = await fetchGitHubRepo("maceip", "nexus-ui");
+
   return (
     <div className="w-full max-w-xl">
-      <RepoCard owner="maceip" repo="nexus-ui" data={exampleRepo} />
+      <RepoCard owner="maceip" repo="nexus-ui" data={repoData ?? exampleRepo} />
     </div>
   );
 }

@@ -3,42 +3,54 @@
 import * as React from "react";
 import {
   ArrowRight01Icon,
-  ArrowUp02Icon,
   CheckmarkCircle03Icon,
   Github01Icon,
   Key01Icon,
   LinkSquare02Icon,
   SearchList01Icon,
-  SquareIcon,
-  StarsIcon,
+  SparklesIcon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { motion } from "motion/react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { PromptInput, PromptInputAction, PromptInputActionGroup, PromptInputActions, PromptInputTextarea } from "@/components/nexus-ui/prompt-input";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { Suggestions, Suggestion, SuggestionList } from "@/components/nexus-ui/suggestions";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import {
+  ContextualTextInput,
+  validateContextualInput,
+} from "@/components/nexus-ui/contextual-text-input";
+import { RepoCard } from "@/components/nexus-ui/repo-card";
+import type { GitHubRepoData } from "@/components/nexus-ui/repo-card";
+import { FileTree, type FileTreeNode } from "@/components/nexus-ui/file-tree";
+import { ActivityGraph } from "@/components/nexus-ui/activity-graph";
+import { CommitGraph } from "@/components/nexus-ui/commit-graph";
 import { cn } from "@/lib/utils";
 import { getModuleIcon } from "@/lib/home/repo-ingest/catalog";
-import { repoScanStore } from "@/lib/home/repo-ingest/browser-db";
+import {
+  repoScanStore,
+  type StoredRepoScanRecord,
+} from "@/lib/home/repo-ingest/browser-db";
 import type {
   AuthMode,
   BucketGroup,
+  BucketModuleMatch,
   IngestMode,
+  RepoActivityEntry,
+  RepoCommitSummary,
   RepoScanResult,
   RepoSuggestion,
 } from "@/lib/home/repo-ingest/shared";
-import { ARCHITECTURE_BUCKETS, LANGUAGE_PROFILES } from "@/lib/home/repo-ingest/shared";
+import {
+  ARCHITECTURE_BUCKETS,
+  LANGUAGE_PROFILES,
+} from "@/lib/home/repo-ingest/shared";
 
 type ScanState = "idle" | "loading" | "done" | "error";
-
-type PersistedRecord = {
-  repoFullName: string;
-  storedAt: string;
-  result: RepoScanResult;
-};
 
 type RepoScanResponse =
   | { ok: true; repos: RepoSuggestion[] }
@@ -46,52 +58,41 @@ type RepoScanResponse =
   | { ok: false; error: string };
 
 const AUTH_SUGGESTIONS = [
-  "vercel/next.js",
-  "facebook/react",
-  "tailwindlabs/tailwindcss",
-  "victorcodess/nexus-ui",
-];
-
-function safeJsonParse<T>(value: string): T | null {
-  try {
-    return JSON.parse(value) as T;
-  } catch {
-    return null;
-  }
-}
+  "github.com/vercel/next.js",
+  "github.com/facebook/react",
+  "github.com/tailwindlabs/tailwindcss",
+  "github.com/maceip/nexus-ui",
+] as const;
 
 function normalizeRepoCandidate(value: string) {
-  const trimmed = value.trim().replace(/^https?:\/\/github\.com\//, "");
-  return trimmed.replace(/\.git$/, "").replace(/^github\.com\//, "");
+  const normalized = value
+    .trim()
+    .replace(/^https?:\/\//i, "")
+    .replace(/^github\.com\//i, "")
+    .replace(/\/+$/, "");
+  return normalized;
 }
 
-function GitHubMark() {
-  return (
-    <div className="flex size-9 items-center justify-center rounded-2xl border border-white/15 bg-white/10 text-white shadow-sm">
-      <HugeiconsIcon icon={Github01Icon} strokeWidth={1.8} className="size-4.5" />
-    </div>
-  );
+function toGithubInputValue(repoFullName: string) {
+  return `github.com/${repoFullName}`;
+}
+
+function normalizeGithubInputValue(value: string) {
+  const normalized = normalizeRepoCandidate(value);
+  if (!normalized) return "";
+  return `github.com/${normalized}`;
 }
 
 function MetricPill({
   label,
   value,
-  accent = false,
 }: {
   label: string;
   value: string;
-  accent?: boolean;
 }) {
   return (
-    <div
-      className={cn(
-        "rounded-2xl border px-3 py-2",
-        accent
-          ? "border-cyan-400/30 bg-cyan-400/10 text-cyan-100"
-          : "border-white/10 bg-white/[0.04] text-gray-200",
-      )}
-    >
-      <div className="text-[11px] uppercase tracking-[0.24em] text-gray-400">
+    <div className="rounded-full border border-white/10 bg-white/5 px-3 py-2 text-white">
+      <div className="text-[11px] uppercase tracking-[0.18em] text-white/50">
         {label}
       </div>
       <div className="mt-1 text-sm font-medium">{value}</div>
@@ -113,25 +114,27 @@ function AuthHud({
   recentCount: number;
 }) {
   return (
-    <div className="rounded-[26px] border border-white/10 bg-black/30 p-3 text-white shadow-2xl backdrop-blur-xl">
-      <div className="flex items-center justify-between gap-3">
-        <div>
-          <div className="text-sm font-medium">GitHub auth HUD</div>
-          <div className="text-xs text-gray-400">
-            Keeps auth scoped to this component only.
+    <div className="rounded-2xl border border-border/70 bg-card/90 p-4 shadow-sm">
+      <div className="flex items-start justify-between gap-3">
+        <div className="space-y-1">
+          <div className="text-sm font-medium text-foreground">
+            GitHub auth HUD
+          </div>
+          <div className="text-xs text-muted-foreground">
+            Inline auth only. No page-blocking overlay.
           </div>
         </div>
-        <div className="rounded-full border border-emerald-400/25 bg-emerald-400/10 px-2.5 py-1 text-[11px] font-medium tracking-wide text-emerald-200">
+        <span className="rounded-full bg-emerald-500/10 px-2.5 py-1 text-[11px] font-medium text-emerald-700 dark:text-emerald-300">
           low profile
-        </div>
+        </span>
       </div>
 
       <div className="mt-3 flex flex-wrap gap-2">
         <Button
           type="button"
-          variant={authMode === "pat" ? "secondary" : "ghost"}
           size="sm"
-          className="rounded-full bg-white/10 text-white hover:bg-white/15"
+          variant={authMode === "pat" ? "secondary" : "outline"}
+          className="rounded-full"
           onClick={() => onAuthModeChange("pat")}
         >
           <HugeiconsIcon icon={Key01Icon} className="size-4" strokeWidth={1.8} />
@@ -139,27 +142,31 @@ function AuthHud({
         </Button>
         <Button
           type="button"
-          variant={authMode === "backup" ? "secondary" : "ghost"}
           size="sm"
-          className="rounded-full bg-white/10 text-white hover:bg-white/15"
+          variant={authMode === "backup" ? "secondary" : "outline"}
+          className="rounded-full"
           onClick={() => onAuthModeChange("backup")}
         >
-          <HugeiconsIcon icon={Github01Icon} className="size-4" strokeWidth={1.8} />
+          <HugeiconsIcon
+            icon={Github01Icon}
+            className="size-4"
+            strokeWidth={1.8}
+          />
           Backup token
         </Button>
         <Button
           type="button"
-          variant="ghost"
           size="sm"
-          className="rounded-full border border-white/10 bg-transparent text-white/90 hover:bg-white/10"
+          variant="ghost"
+          className="rounded-full"
           disabled
         >
           OAuth ready
         </Button>
       </div>
 
-      <label className="mt-3 block">
-        <span className="mb-1.5 block text-[11px] uppercase tracking-[0.18em] text-gray-400">
+      <label className="mt-4 block space-y-1.5">
+        <span className="text-[11px] font-semibold tracking-[0.16em] text-muted-foreground uppercase">
           Personal access token
         </span>
         <input
@@ -167,130 +174,237 @@ function AuthHud({
           value={pat}
           onChange={(event) => onPatChange(event.target.value)}
           placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"
-          className="h-10 w-full rounded-2xl border border-white/10 bg-white/5 px-3 text-sm text-white outline-none ring-0 placeholder:text-gray-500 focus:border-cyan-400/50"
+          className="h-10 w-full rounded-xl border border-border bg-background px-3 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-ring"
         />
       </label>
 
-      <div className="mt-3 flex items-center justify-between rounded-2xl border border-white/10 bg-white/[0.04] px-3 py-2 text-xs text-gray-300">
+      <div className="mt-4 flex items-center justify-between rounded-xl border border-border/80 bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
         <div className="flex items-center gap-2">
-          <HugeiconsIcon icon={SearchList01Icon} className="size-4" strokeWidth={1.8} />
-          Autocomplete seeded from your recent repos
+          <HugeiconsIcon
+            icon={SearchList01Icon}
+            className="size-4"
+            strokeWidth={1.8}
+          />
+          Autocomplete seeded from your latest 10 repos
         </div>
-        <div className="rounded-full bg-white/10 px-2 py-1 text-[11px] text-white">
-          {recentCount}/10 loaded
-        </div>
+        <span className="rounded-full bg-background px-2 py-1 text-[11px] text-foreground">
+          {recentCount}/10
+        </span>
       </div>
     </div>
   );
 }
 
 function VendorChip({
-  name,
-  svg,
-  tone = "default",
+  module,
 }: {
-  name: string;
-  svg?: { path: string; hex: string; title: string };
-  tone?: "default" | "accent";
+  module: Pick<BucketModuleMatch, "displayName" | "icon" | "matchKind">;
 }) {
   return (
-    <div
+    <span
       className={cn(
-        "inline-flex items-center gap-2 rounded-full border px-2.5 py-1.5 text-xs font-medium",
-        tone === "accent"
-          ? "border-cyan-400/30 bg-cyan-400/10 text-cyan-100"
-          : "border-white/10 bg-white/[0.04] text-gray-200",
+        "inline-flex items-center gap-2 rounded-full border px-2.5 py-1 text-xs font-medium",
+        module.matchKind === "catalog"
+          ? "border-primary/15 bg-primary/8 text-foreground"
+          : "border-border bg-muted/50 text-muted-foreground",
       )}
     >
-      <span className="flex size-5 items-center justify-center rounded-full bg-white/10">
-        {svg ? (
+      <span className="flex size-4.5 items-center justify-center rounded-full bg-background">
+        {module.icon ? (
           <svg
             viewBox="0 0 24 24"
-            className="size-3.5"
+            className="size-3"
+            fill={`#${module.icon.hex}`}
             aria-hidden
-            fill={`#${svg.hex}`}
           >
-            <path d={svg.path} />
+            <path d={module.icon.path} />
           </svg>
         ) : (
-          <span className="text-[10px] uppercase text-white/70">
-            {name.slice(0, 2)}
+          <span className="text-[9px] uppercase">
+            {module.displayName.slice(0, 2)}
           </span>
         )}
       </span>
-      <span>{name}</span>
+      {module.displayName}
+    </span>
+  );
+}
+
+function BucketCloud({
+  title,
+  groups,
+}: {
+  title: string;
+  groups: BucketGroup[];
+}) {
+  return (
+    <div className="space-y-3">
+      <div className="text-xs font-semibold tracking-[0.16em] text-muted-foreground uppercase">
+        {title}
+      </div>
+      {groups.map((group) => (
+        <div
+          key={group.bucket.id}
+          className="rounded-2xl border border-border bg-card p-4 shadow-sm"
+        >
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <div className="text-sm font-medium text-foreground">
+                {group.bucket.title}
+              </div>
+              <div className="mt-1 text-xs text-muted-foreground">
+                {group.bucket.description}
+              </div>
+            </div>
+            <span className="rounded-full bg-muted px-2 py-1 text-[11px] text-muted-foreground">
+              {group.modules.length}
+            </span>
+          </div>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {group.modules.length > 0 ? (
+              group.modules.map((module) => (
+                <VendorChip
+                  key={`${group.bucket.id}-${module.moduleName}-${module.manifestPath}`}
+                  module={module}
+                />
+              ))
+            ) : (
+              <span className="text-xs text-muted-foreground">
+                No mapped modules yet.
+              </span>
+            )}
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
 
-function BucketCard({ group }: { group: BucketGroup }) {
-  const [open, setOpen] = React.useState(group.modules.length > 0);
+function toFileTree(manifests: RepoScanResult["manifests"]): FileTreeNode[] {
+  const root: FileTreeNode[] = [];
 
-  return (
-    <Collapsible open={open} onOpenChange={setOpen}>
-      <div className="rounded-[24px] border border-white/10 bg-white/[0.035]">
-        <CollapsibleTrigger asChild>
-          <button
-            type="button"
-            className="flex w-full items-center justify-between gap-4 px-4 py-3 text-left"
-          >
-            <div>
-              <div className="text-sm font-medium text-white">{group.bucket.title}</div>
-              <div className="mt-1 text-xs text-gray-400">
-                {group.bucket.description}
-              </div>
-            </div>
-            <div className="rounded-full border border-white/10 bg-white/10 px-2.5 py-1 text-[11px] text-white">
-              {group.modules.length}
-            </div>
-          </button>
-        </CollapsibleTrigger>
-        <CollapsibleContent>
-          <div className="border-t border-white/10 px-4 py-3">
-            {group.modules.length > 0 ? (
-              <div className="flex flex-wrap gap-2">
-                {group.modules.map((module) => (
-                  <VendorChip
-                    key={`${group.bucket.id}-${module.moduleName}-${module.manifestPath}`}
-                    name={module.displayName}
-                    svg={module.icon}
-                    tone={module.matchKind === "catalog" ? "accent" : "default"}
-                  />
-                ))}
-              </div>
-            ) : (
-              <div className="text-xs text-gray-500">
-                No mapped modules from the detected manifests yet.
-              </div>
-            )}
-          </div>
-        </CollapsibleContent>
-      </div>
-    </Collapsible>
-  );
+  function insert(parts: string[], nodes: FileTreeNode[]) {
+    const [head, ...rest] = parts;
+    if (!head) return;
+
+    let current = nodes.find((node) => node.name === head);
+    if (!current) {
+      current = rest.length > 0 ? { name: head, children: [] } : { name: head };
+      nodes.push(current);
+    }
+
+    if (rest.length > 0) {
+      current.children ??= [];
+      insert(rest, current.children);
+    }
+  }
+
+  for (const manifest of manifests) {
+    insert(manifest.manifestPath.split("/"), root);
+  }
+
+  return root;
+}
+
+function buildFileTreeHighlights(manifests: RepoScanResult["manifests"]) {
+  return manifests.slice(0, 6).map((manifest) => manifest.manifestPath);
+}
+
+function toCommitGraph(commits: RepoCommitSummary[]) {
+  return commits.map((commit) => ({
+    hash: commit.hash,
+    message: commit.message,
+    author: {
+      name: commit.author.name,
+      avatarUrl: commit.author.avatarUrl,
+    },
+    date: commit.date,
+    parents: commit.parents,
+    refs: commit.refs,
+    tag: commit.tag,
+  }));
+}
+
+function toRepoCardData(scan: RepoScanResult | null): GitHubRepoData | null {
+  if (!scan?.repo) return null;
+
+  return {
+    id: scan.repo.id,
+    name: scan.repo.name,
+    full_name: scan.repo.fullName,
+    html_url: scan.repo.htmlUrl,
+    description: scan.repo.description,
+    stargazers_count: scan.repo.stargazersCount,
+    forks_count: scan.repo.forksCount,
+    language: scan.repo.language,
+    topics: scan.repo.topics,
+    archived: scan.repo.archived,
+    fork: scan.repo.fork,
+    updated_at: scan.repo.updatedAt,
+    license: scan.repo.license
+      ? {
+          key: scan.repo.license.key,
+          name: scan.repo.license.name,
+          spdx_id: scan.repo.license.spdxId,
+        }
+      : null,
+    owner: {
+      login: scan.repo.owner.login,
+      avatar_url: scan.repo.owner.avatarUrl,
+      html_url: scan.repo.owner.htmlUrl,
+    },
+  };
+}
+
+function buildFallbackActivity() {
+  return Array.from({ length: 91 }, (_, index) => {
+    const date = new Date();
+    date.setDate(date.getDate() - (90 - index));
+    return {
+      date: date.toISOString().slice(0, 10),
+      count: Math.max(0, Math.round((Math.sin(index / 6) + 1) * 2 + (index % 4))),
+    } satisfies RepoActivityEntry;
+  });
+}
+
+function normalizeScanResult(scan: RepoScanResult): RepoScanResult {
+  return {
+    ...scan,
+    activity: Array.isArray(scan.activity) ? scan.activity : [],
+    commits: Array.isArray(scan.commits)
+      ? scan.commits
+      : Array.isArray((scan as Partial<{ recentCommits: RepoCommitSummary[] }>).recentCommits)
+        ? ((scan as Partial<{ recentCommits: RepoCommitSummary[] }>).recentCommits ?? [])
+        : [],
+    manifestTree: Array.isArray(scan.manifestTree) ? scan.manifestTree : [],
+    highlightedPaths: Array.isArray(scan.highlightedPaths)
+      ? scan.highlightedPaths
+      : [],
+    expandedPaths: Array.isArray(scan.expandedPaths) ? scan.expandedPaths : [],
+  };
 }
 
 function StoredScanRail({
   records,
   onRestore,
 }: {
-  records: PersistedRecord[];
-  onRestore: (record: PersistedRecord) => void;
+  records: StoredRepoScanRecord[];
+  onRestore: (record: StoredRepoScanRecord) => void;
 }) {
   return (
-    <div className="rounded-[28px] border border-black/10 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-gray-950/80">
+    <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <div className="text-sm font-medium text-gray-950 dark:text-white">
+          <div className="text-sm font-medium text-foreground">
             Local OPFS scan shelf
           </div>
-          <div className="text-xs text-gray-500 dark:text-gray-400">
-            SQLite WASM persists previous repo scans inside the browser.
+          <div className="text-xs text-muted-foreground">
+            SQLite WASM keeps prior scans available in-browser.
           </div>
         </div>
-        <div className="rounded-full border border-black/10 bg-black/[0.03] px-2.5 py-1 text-[11px] dark:border-white/10 dark:bg-white/5 dark:text-white">
+        <span className="rounded-full bg-muted px-2 py-1 text-[11px] text-muted-foreground">
           {records.length} saved
-        </div>
+        </span>
       </div>
 
       <div className="mt-4 space-y-2">
@@ -299,22 +413,26 @@ function StoredScanRail({
             <button
               key={`${record.repoFullName}-${record.storedAt}`}
               type="button"
-              className="flex w-full items-center justify-between rounded-2xl border border-black/8 bg-black/[0.02] px-3 py-2 text-left transition hover:bg-black/[0.04] dark:border-white/10 dark:bg-white/[0.03] dark:hover:bg-white/[0.06]"
+              className="flex w-full items-center justify-between rounded-xl border border-border bg-background px-3 py-2 text-left transition-colors hover:bg-muted/40"
               onClick={() => onRestore(record)}
             >
               <div>
-                <div className="text-sm font-medium text-gray-900 dark:text-white">
+                <div className="text-sm font-medium text-foreground">
                   {record.repoFullName}
                 </div>
-                <div className="text-xs text-gray-500 dark:text-gray-400">
+                <div className="text-xs text-muted-foreground">
                   {new Date(record.storedAt).toLocaleString()}
                 </div>
               </div>
-              <HugeiconsIcon icon={ArrowRight01Icon} className="size-4 text-gray-500" strokeWidth={1.8} />
+              <HugeiconsIcon
+                icon={ArrowRight01Icon}
+                className="size-4 text-muted-foreground"
+                strokeWidth={1.8}
+              />
             </button>
           ))
         ) : (
-          <div className="rounded-2xl border border-dashed border-black/10 px-3 py-4 text-sm text-gray-500 dark:border-white/10 dark:text-gray-400">
+          <div className="rounded-xl border border-dashed border-border px-3 py-4 text-sm text-muted-foreground">
             Run a single repo ingest to seed local storage.
           </div>
         )}
@@ -325,50 +443,130 @@ function StoredScanRail({
 
 function TwinRepoPreview() {
   return (
-    <div className="flex h-full min-h-[640px] flex-col justify-between rounded-[36px] border border-white/10 bg-[radial-gradient(circle_at_top,rgba(12,74,110,0.4),transparent_50%),linear-gradient(180deg,#030712_0%,#0f172a_100%)] p-6 text-white shadow-[0_40px_120px_-48px_rgba(8,145,178,0.8)]">
-      <div>
-        <div className="inline-flex items-center gap-2 rounded-full border border-cyan-400/20 bg-cyan-400/10 px-3 py-1 text-xs text-cyan-100">
-          <HugeiconsIcon icon={LinkSquare02Icon} className="size-4" strokeWidth={1.8} />
-          twin repo ingest
+    <div className="grid gap-4 lg:grid-cols-[1.05fr_0.95fr]">
+      <div className="rounded-3xl border border-border bg-card p-5 shadow-sm">
+        <div className="inline-flex items-center gap-2 rounded-full bg-primary/8 px-3 py-1 text-xs font-medium text-primary">
+          <HugeiconsIcon
+            icon={LinkSquare02Icon}
+            className="size-4"
+            strokeWidth={1.8}
+          />
+          Twin repo ingest
         </div>
-        <h3 className="mt-4 text-2xl font-medium tracking-[-0.03em]">
-          Compare upstream, downstream, and shared vendors.
+        <h3 className="mt-4 text-2xl font-medium tracking-[-0.03em] text-foreground">
+          Compare upstream, downstream, and shared architecture.
         </h3>
-        <p className="mt-2 max-w-xl text-sm leading-6 text-gray-300">
-          The second tab previews the next motion pattern: two repos, merged
-          manifests, and cross-repo vendor drift analysis. This pass keeps it
-          visible while shipping only the full GitHub single repo flow.
+        <p className="mt-2 max-w-xl text-sm leading-6 text-muted-foreground">
+          This preview now leans on the same repo-native card language from main:
+          paired repository summaries, shared commit context, and a future merge
+          view for vendor drift across two repos.
         </p>
+
+        <div className="mt-5 grid gap-4 md:grid-cols-2">
+          <RepoCard
+            owner="maceip"
+            repo="nexus-ui"
+            data={{
+              id: 1,
+              name: "nexus-ui",
+              full_name: "maceip/nexus-ui",
+              html_url: "https://github.com/maceip/nexus-ui",
+              description:
+                "Composable Nexus UI primitives for AI-first app surfaces.",
+              stargazers_count: 1284,
+              forks_count: 164,
+              language: "TypeScript",
+              topics: ["components", "ai", "design-system", "nextjs"],
+              archived: false,
+              fork: false,
+              updated_at: "2026-04-23T12:00:00.000Z",
+              license: { key: "mit", name: "MIT License", spdx_id: "MIT" },
+              owner: {
+                login: "maceip",
+                avatar_url: "https://github.com/maceip.png",
+                html_url: "https://github.com/maceip",
+              },
+            }}
+          />
+          <RepoCard
+            owner="vercel"
+            repo="next.js"
+            data={{
+              id: 2,
+              name: "next.js",
+              full_name: "vercel/next.js",
+              html_url: "https://github.com/vercel/next.js",
+              description:
+                "The React framework for production with SSR, app router, and tooling.",
+              stargazers_count: 132000,
+              forks_count: 28500,
+              language: "JavaScript",
+              topics: ["react", "framework", "ssr", "web"],
+              archived: false,
+              fork: false,
+              updated_at: "2026-04-23T12:00:00.000Z",
+              license: { key: "mit", name: "MIT License", spdx_id: "MIT" },
+              owner: {
+                login: "vercel",
+                avatar_url: "https://github.com/vercel.png",
+                html_url: "https://github.com/vercel",
+              },
+            }}
+          />
+        </div>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        {[
-          {
-            title: "Repo A",
-            subtitle: "design-system/web",
-            items: ["Next.js", "Tailwind CSS", "Sentry", "LaunchDarkly"],
-          },
-          {
-            title: "Repo B",
-            subtitle: "platform/api",
-            items: ["PostgreSQL", "Redis", "OpenTelemetry", "Kafka"],
-          },
-        ].map((panel) => (
-          <div
-            key={panel.title}
-            className="rounded-[28px] border border-white/10 bg-white/[0.04] p-4"
-          >
-            <div className="text-xs uppercase tracking-[0.22em] text-gray-400">
-              {panel.title}
-            </div>
-            <div className="mt-1 text-lg font-medium">{panel.subtitle}</div>
-            <div className="mt-4 flex flex-wrap gap-2">
-              {panel.items.map((item) => (
-                <VendorChip key={item} name={item} svg={getModuleIcon(item)} />
-              ))}
-            </div>
+      <div className="space-y-4">
+        <div className="rounded-3xl border border-border bg-card p-4 shadow-sm">
+          <div className="text-sm font-medium text-foreground">
+            Shared manifest focus
           </div>
-        ))}
+          <div className="mt-1 text-xs text-muted-foreground">
+            Preview of merged package and infra paths for paired ingest.
+          </div>
+          <div className="mt-4">
+            <FileTree
+              iconStyle="colored"
+              defaultExpanded={["apps", "apps/web", "packages", "infra"]}
+              highlight={[
+                "apps/web/package.json",
+                "packages/ui/package.json",
+                "infra/terraform/main.tf",
+              ]}
+              tree={[
+                {
+                  name: "apps",
+                  children: [
+                    {
+                      name: "web",
+                      children: [{ name: "package.json" }, { name: "next.config.ts" }],
+                    },
+                  ],
+                },
+                {
+                  name: "packages",
+                  children: [{ name: "ui", children: [{ name: "package.json" }] }],
+                },
+                {
+                  name: "infra",
+                  children: [{ name: "terraform", children: [{ name: "main.tf" }] }],
+                },
+              ]}
+            />
+          </div>
+        </div>
+
+        <div className="rounded-3xl border border-border bg-card p-4 shadow-sm">
+          <div className="text-sm font-medium text-foreground">
+            Twin ingest activity preview
+          </div>
+          <div className="mt-1 text-xs text-muted-foreground">
+            Shared contribution tempo across both repos.
+          </div>
+          <div className="mt-4">
+            <ActivityGraph data={buildFallbackActivity()} weeks={13} />
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -383,7 +581,8 @@ export function HomeRepoIngestShowcase() {
   const [error, setError] = React.useState<string | null>(null);
   const [recentRepos, setRecentRepos] = React.useState<RepoSuggestion[]>([]);
   const [scan, setScan] = React.useState<RepoScanResult | null>(null);
-  const [storedScans, setStoredScans] = React.useState<PersistedRecord[]>([]);
+  const [storedScans, setStoredScans] = React.useState<StoredRepoScanRecord[]>([]);
+  const [storageLabel, setStorageLabel] = React.useState("SQLite WASM");
 
   React.useEffect(() => {
     const storedToken = window.localStorage.getItem("repo-ingest-pat");
@@ -396,7 +595,15 @@ export function HomeRepoIngestShowcase() {
       setInput(savedInput);
     }
 
-    void repoScanStore.list().then(setStoredScans);
+    setStorageLabel(repoScanStore.label());
+    void repoScanStore.list().then((records) =>
+      setStoredScans(
+        records.map((record) => ({
+          ...record,
+          result: normalizeScanResult(record.result),
+        })),
+      ),
+    );
   }, []);
 
   React.useEffect(() => {
@@ -442,31 +649,39 @@ export function HomeRepoIngestShowcase() {
     };
   }, [authMode, pat]);
 
-  const suggestions = React.useMemo(() => {
-    const normalized = normalizeRepoCandidate(input).toLowerCase();
-    const fromRecent = recentRepos.filter((repo) =>
-      repo.fullName.toLowerCase().includes(normalized),
-    );
-    if (!normalized) {
-      return fromRecent.slice(0, 6);
-    }
-    return fromRecent.slice(0, 6);
-  }, [input, recentRepos]);
+  const normalizedInput = normalizeGithubInputValue(input);
+  const validation = validateContextualInput("github", normalizedInput);
 
-  const highlightedRepo = suggestions[0]?.fullName ?? AUTH_SUGGESTIONS[0];
+  const suggestions = React.useMemo(() => {
+    const normalizedValue =
+      validation.normalizedValue?.replace(/^github\.com\//, "").toLowerCase() ?? "";
+    const fromRecent = recentRepos.filter((repo) =>
+      repo.fullName.toLowerCase().includes(normalizedValue),
+    );
+    return fromRecent.slice(0, 6);
+  }, [recentRepos, validation.normalizedValue]);
+
+  const highlightedRepo = suggestions[0]?.fullName ?? "vercel/next.js";
 
   const runScan = React.useCallback(
     async (candidate?: string) => {
-      const repo = normalizeRepoCandidate(candidate ?? input);
-      if (!repo) {
-        setError("Enter a repo in owner/name format.");
+      const validated = validateContextualInput(
+        "github",
+        normalizeGithubInputValue(candidate ?? input),
+      );
+      const repo =
+        validated.normalizedValue?.replace(/^github\.com\//, "") ??
+        normalizeRepoCandidate(candidate ?? input);
+
+      if (!repo || !validated.isValid) {
+        setError(validated.error ?? "Enter a full GitHub repo URL.");
         setStatus("error");
         return;
       }
 
       setStatus("loading");
       setError(null);
-      window.localStorage.setItem("repo-ingest-last-input", repo);
+      window.localStorage.setItem("repo-ingest-last-input", `github.com/${repo}`);
 
       try {
         const response = await fetch("/api/repo-ingest", {
@@ -482,16 +697,20 @@ export function HomeRepoIngestShowcase() {
           }),
         });
         const payload = (await response.json()) as RepoScanResponse;
-
         if (!response.ok || !payload.ok || !("result" in payload)) {
           throw new Error(payload.ok ? "Repo scan failed." : payload.error);
         }
 
-        setScan(payload.result);
+        setScan(normalizeScanResult(payload.result));
         setStatus("done");
         await repoScanStore.save(payload.result);
         const records = await repoScanStore.list();
-        setStoredScans(records);
+        setStoredScans(
+          records.map((record) => ({
+            ...record,
+            result: normalizeScanResult(record.result),
+          })),
+        );
       } catch (scanError) {
         setStatus("error");
         setError((scanError as Error).message);
@@ -499,21 +718,6 @@ export function HomeRepoIngestShowcase() {
     },
     [authMode, input, pat],
   );
-
-  const statusCopy = React.useMemo(() => {
-    switch (status) {
-      case "loading":
-        return "Cloning signal, scanning manifests, and mapping vendors...";
-      case "done":
-        return scan
-          ? `Mapped ${scan.summary.mappedModules} modules across ${scan.summary.manifestsScanned} manifests.`
-          : "Repo scanned.";
-      case "error":
-        return error ?? "Repo scan failed.";
-      default:
-        return "Paste a repo or authenticate to seed autocomplete from your latest commits.";
-    }
-  }, [error, scan, status]);
 
   const groupedBuckets = React.useMemo(() => {
     if (!scan) {
@@ -523,7 +727,13 @@ export function HomeRepoIngestShowcase() {
       }));
     }
 
-    return scan.bucketGroups;
+    return ARCHITECTURE_BUCKETS.map(
+      (bucket) =>
+        scan.bucketGroups.find((group) => group.bucket.id === bucket.id) ?? {
+          bucket,
+          modules: [],
+        },
+    );
   }, [scan]);
 
   const frontendBuckets = groupedBuckets.filter(
@@ -534,47 +744,72 @@ export function HomeRepoIngestShowcase() {
   );
 
   const languageChips = scan?.detectedLanguages ?? LANGUAGE_PROFILES.slice(0, 6);
+  const manifestTree = React.useMemo(
+    () => toFileTree(scan?.manifests ?? []),
+    [scan?.manifests],
+  );
+  const highlightPaths = React.useMemo(
+    () => buildFileTreeHighlights(scan?.manifests ?? []),
+    [scan?.manifests],
+  );
+  const activityData = scan?.activity.length ? scan.activity : buildFallbackActivity();
+  const commitData = toCommitGraph(scan?.commits ?? []);
+
+  const statusCopy = React.useMemo(() => {
+    switch (status) {
+      case "loading":
+        return "Fetching repo context, manifest tree, commit cadence, and vendor buckets...";
+      case "done":
+        return scan
+          ? `Mapped ${scan.summary.mappedModules} modules across ${scan.summary.manifestsScanned} manifests.`
+          : "Repo scanned.";
+      case "error":
+        return error ?? "Repo scan failed.";
+      default:
+        return "Authenticate in-card, then ingest a GitHub repo through the contextual input.";
+    }
+  }, [error, scan, status]);
 
   return (
     <section className="w-full px-4 pb-8 md:px-6 md:pb-10">
-      <div className="rounded-[40px] border border-black/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(244,244,245,0.96))] p-3 shadow-[0_24px_120px_-56px_rgba(0,0,0,0.35)] dark:border-white/10 dark:bg-[linear-gradient(180deg,rgba(2,6,23,0.97),rgba(10,15,28,0.97))]">
+      <div className="rounded-[36px] border border-border bg-card/80 p-3 shadow-[0_24px_120px_-56px_rgba(0,0,0,0.25)] backdrop-blur-sm">
         <Tabs
           value={mode}
           onValueChange={(value) => setMode(value as IngestMode)}
           className="w-full"
         >
-          <div className="flex flex-col gap-4 rounded-[32px] bg-gray-950 p-5 text-white md:p-7">
+          <div className="rounded-[28px] border border-border bg-[radial-gradient(circle_at_top,rgba(15,23,42,0.12),transparent_52%),linear-gradient(180deg,rgba(2,6,23,0.96),rgba(15,23,42,0.96))] p-5 text-white md:p-7">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-              <div className="max-w-2xl">
-                <div className="inline-flex items-center gap-2 rounded-full border border-cyan-400/20 bg-cyan-400/10 px-3 py-1 text-xs tracking-[0.16em] text-cyan-100 uppercase">
-                  <HugeiconsIcon icon={StarsIcon} className="size-4" strokeWidth={1.8} />
+              <div className="max-w-3xl">
+                <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-medium tracking-[0.16em] uppercase">
+                  <HugeiconsIcon
+                    icon={SparklesIcon}
+                    className="size-4"
+                    strokeWidth={1.8}
+                  />
                   repo ingest showcase
                 </div>
                 <h2 className="mt-4 text-3xl font-medium tracking-[-0.04em] md:text-4xl">
-                  Ingest GitHub repos directly from a context-aware input.
+                  Single and twin repo ingest, now aligned with the repo-native UI
+                  added in main.
                 </h2>
-                <p className="mt-3 max-w-2xl text-sm leading-6 text-gray-300 md:text-base">
-                  This extension adds two product surfaces to the app page: a
-                  shipped single repo ingest card for GitHub and a visible twin
-                  repo ingest preview. The single flow authenticates in-place,
-                  autocompletes recent repos, scans manifests for the requested
-                  top 15 languages, maps modules into 24 frontend/backend
-                  buckets, and stores each result in browser OPFS via SQLite
-                  WASM.
+                <p className="mt-3 max-w-3xl text-sm leading-6 text-white/70 md:text-base">
+                  The single-repo flow now uses the contextual GitHub input, repo
+                  card, file tree, activity graph, and commit graph primitives from
+                  the merged repository insights work. It still scans manifests for
+                  the requested language set, groups vendors into 24 architecture
+                  buckets, and persists results in OPFS-backed SQLite WASM.
                 </p>
               </div>
 
-              <div className="flex flex-wrap items-center gap-3">
-                <MetricPill label="Modes" value="Single + Twin" accent />
-                <MetricPill
-                  label="Persistence"
-                  value="OPFS + SQLite WASM"
-                />
+              <div className="flex flex-wrap gap-3">
+                <MetricPill label="Modes" value="Single + Twin" />
+                <MetricPill label="Persistence" value={storageLabel} />
                 <MetricPill label="Autocomplete" value="Latest 10 repos" />
               </div>
             </div>
 
-            <TabsList className="inline-flex w-fit rounded-full border border-white/10 bg-white/5 p-1">
+            <TabsList className="mt-5 inline-flex w-fit rounded-full border border-white/10 bg-white/5 p-1">
               <TabsTrigger
                 value="single"
                 className="rounded-full px-4 py-2 text-sm text-white data-[state=active]:bg-white data-[state=active]:text-black"
@@ -590,171 +825,172 @@ export function HomeRepoIngestShowcase() {
             </TabsList>
           </div>
 
-          <TabsContent value="single" className="mt-0">
-            <div className="grid gap-4 p-3 lg:grid-cols-[1.25fr_0.75fr]">
-              <div className="overflow-hidden rounded-[36px] border border-black/10 bg-[radial-gradient(circle_at_top,rgba(34,211,238,0.08),transparent_32%),linear-gradient(180deg,#030712_0%,#111827_100%)] p-5 text-white shadow-[0_50px_120px_-60px_rgba(34,211,238,0.7)] md:p-6">
-                <div className="flex flex-col gap-5">
+          <TabsContent value="single" className="mt-0 p-3">
+            <div className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
+              <div className="space-y-4">
+                <div className="rounded-3xl border border-border bg-card p-5 shadow-sm">
                   <div className="flex items-start justify-between gap-4">
-                    <div className="flex items-center gap-3">
-                      <GitHubMark />
-                      <div>
-                        <div className="text-lg font-medium">
-                          Single repo ingest
-                        </div>
-                        <div className="text-sm text-gray-400">
-                          GitHub-first, non-blocking, component-scoped ingest.
-                        </div>
+                    <div className="space-y-1">
+                      <div className="inline-flex items-center gap-2 text-sm font-medium text-foreground">
+                        <HugeiconsIcon
+                          icon={Github01Icon}
+                          className="size-4"
+                          strokeWidth={1.8}
+                        />
+                        Single repo ingest
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        GitHub-first, component-scoped auth, contextual repo entry,
+                        and repo-native insights.
                       </div>
                     </div>
-                    <div className="rounded-full border border-cyan-400/20 bg-cyan-400/10 px-3 py-1 text-xs text-cyan-100">
+                    <span className="rounded-full bg-primary/8 px-3 py-1 text-xs font-medium text-primary">
                       shipped now
-                    </div>
+                    </span>
                   </div>
 
-                  <AuthHud
-                    authMode={authMode}
-                    onAuthModeChange={setAuthMode}
-                    pat={pat}
-                    onPatChange={setPat}
-                    recentCount={recentRepos.length}
-                  />
+                  <div className="mt-5 grid gap-4 lg:grid-cols-[0.92fr_1.08fr]">
+                    <AuthHud
+                      authMode={authMode}
+                      onAuthModeChange={setAuthMode}
+                      pat={pat}
+                      onPatChange={setPat}
+                      recentCount={recentRepos.length}
+                    />
 
-                  <div className="rounded-[30px] border border-white/10 bg-white/[0.04] p-3">
-                    <PromptInput
-                      onSubmit={(value) => {
-                        void runScan(value);
-                      }}
-                      className="border-white/10 bg-black/20"
-                    >
-                      <PromptInputTextarea
+                    <div className="space-y-3 rounded-2xl border border-border bg-muted/20 p-4">
+                      <ContextualTextInput
+                        kind="github"
                         value={input}
-                        onChange={(event) => setInput(event.target.value)}
-                        placeholder="Type a GitHub repo, e.g. owner/name or github.com/owner/name"
-                        className="min-h-18 text-white placeholder:text-gray-500"
+                        onChange={setInput}
                         disabled={status === "loading"}
                       />
-                      <PromptInputActions className="border-t border-white/10">
-                        <PromptInputActionGroup>
-                          <Popover>
-                            <PromptInputAction asChild>
-                              <PopoverTrigger asChild>
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="sm"
-                                  className="rounded-full bg-white/10 text-white hover:bg-white/15"
-                                >
-                                  <HugeiconsIcon
-                                    icon={SearchList01Icon}
-                                    className="size-4"
-                                    strokeWidth={1.8}
-                                  />
-                                  Recent repos
-                                </Button>
-                              </PopoverTrigger>
-                            </PromptInputAction>
-                            <PopoverContent
-                              align="start"
-                              className="w-[320px] rounded-[24px] border-white/10 bg-gray-950/95 p-2 text-white"
-                            >
-                              <div className="px-2 pb-2 text-xs uppercase tracking-[0.18em] text-gray-400">
-                                Most recently committed repos
-                              </div>
-                              <div className="space-y-1">
-                                {(recentRepos.length > 0
-                                  ? recentRepos
-                                  : AUTH_SUGGESTIONS.map((fullName, index) => ({
-                                      id: index,
-                                      fullName,
-                                      owner: fullName.split("/")[0] ?? "",
-                                      name: fullName.split("/")[1] ?? "",
-                                      description: "Seed suggestion",
-                                      pushedAt: new Date().toISOString(),
-                                      private: false,
-                                      defaultBranch: "main",
-                                    }))).map((repo) => (
-                                  <button
-                                    key={`${repo.id}-${repo.fullName}`}
-                                    type="button"
-                                    className="block w-full rounded-2xl px-3 py-2 text-left transition hover:bg-white/10"
-                                    onClick={() => setInput(repo.fullName)}
-                                  >
-                                    <div className="text-sm font-medium">
-                                      {repo.fullName}
-                                    </div>
-                                    <div className="text-xs text-gray-400">
-                                      {repo.description ?? "GitHub repository"}
-                                    </div>
-                                  </button>
-                                ))}
-                              </div>
-                            </PopoverContent>
-                          </Popover>
-                        </PromptInputActionGroup>
 
-                        <PromptInputActionGroup>
-                          <PromptInputAction asChild>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Popover>
+                          <PopoverTrigger asChild>
                             <Button
                               type="button"
-                              size="icon-sm"
+                              variant="outline"
+                              size="sm"
                               className="rounded-full"
-                              disabled={status === "loading" || !normalizeRepoCandidate(input)}
-                              onClick={() => void runScan()}
                             >
-                              {status === "loading" ? (
-                                <HugeiconsIcon
-                                  icon={SquareIcon}
-                                  className="size-3.5 fill-current"
-                                  strokeWidth={2}
-                                />
-                              ) : (
-                                <HugeiconsIcon
-                                  icon={ArrowUp02Icon}
-                                  className="size-4"
-                                  strokeWidth={2}
-                                />
-                              )}
+                              <HugeiconsIcon
+                                icon={SearchList01Icon}
+                                className="size-4"
+                                strokeWidth={1.8}
+                              />
+                              Recent repos
                             </Button>
-                          </PromptInputAction>
-                        </PromptInputActionGroup>
-                      </PromptInputActions>
-                    </PromptInput>
+                          </PopoverTrigger>
+                          <PopoverContent
+                            align="start"
+                            className="w-[340px] rounded-2xl p-2"
+                          >
+                            <div className="px-2 pb-2 text-xs font-semibold tracking-[0.16em] text-muted-foreground uppercase">
+                              Most recently committed repos
+                            </div>
+                            <div className="space-y-1">
+                              {(recentRepos.length > 0
+                                ? recentRepos
+                                : AUTH_SUGGESTIONS.map((fullName, index) => ({
+                                    id: index,
+                                    fullName: fullName.replace(/^github\.com\//, ""),
+                                    owner:
+                                      fullName.replace(/^github\.com\//, "").split("/")[0] ?? "",
+                                    name:
+                                      fullName.replace(/^github\.com\//, "").split("/")[1] ?? "",
+                                    description: "Seed suggestion",
+                                    pushedAt: new Date().toISOString(),
+                                    private: false,
+                                    defaultBranch: "main",
+                                  }))).map((repo) => (
+                                <button
+                                  key={`${repo.id}-${repo.fullName}`}
+                                  type="button"
+                                  className="block w-full rounded-xl px-3 py-2 text-left transition hover:bg-muted"
+                                  onClick={() => {
+                                    const nextValue = toGithubInputValue(repo.fullName);
+                                    setInput(nextValue);
+                                    void runScan(nextValue);
+                                  }}
+                                >
+                                  <div className="text-sm font-medium text-foreground">
+                                    {repo.fullName}
+                                  </div>
+                                  <div className="text-xs text-muted-foreground">
+                                    {repo.description ?? "GitHub repository"}
+                                  </div>
+                                </button>
+                              ))}
+                            </div>
+                          </PopoverContent>
+                        </Popover>
 
-                    <div className="mt-3 rounded-2xl border border-white/10 bg-black/20 px-3 py-2 text-sm text-gray-300">
-                      {statusCopy}
-                    </div>
-                  </div>
+                        <Button
+                          type="button"
+                          size="sm"
+                          className="rounded-full"
+                          disabled={status === "loading" || !normalizeRepoCandidate(input)}
+                          onClick={() => void runScan()}
+                        >
+                          Ingest repo
+                        </Button>
+                      </div>
 
-                  <Suggestions onSelect={(value) => setInput(value)}>
-                    <SuggestionList className="justify-start">
-                      {suggestions.length > 0
-                        ? suggestions.map((repo) => (
-                            <Suggestion key={repo.fullName} value={repo.fullName}>
-                              {repo.fullName}
-                            </Suggestion>
-                          ))
-                        : AUTH_SUGGESTIONS.map((suggestion) => (
+                      <Suggestions
+                        onSelect={(value) => setInput(toGithubInputValue(value))}
+                      >
+                        <SuggestionList className="justify-start">
+                          {(suggestions.length > 0
+                            ? suggestions.map((repo) => repo.fullName)
+                            : AUTH_SUGGESTIONS.map((repo) =>
+                                repo.replace(/^github\.com\//, ""),
+                              )
+                          ).map((suggestion) => (
                             <Suggestion key={suggestion} value={suggestion}>
                               {suggestion}
                             </Suggestion>
                           ))}
-                    </SuggestionList>
-                  </Suggestions>
+                        </SuggestionList>
+                      </Suggestions>
 
-                  <div className="grid gap-4 lg:grid-cols-[0.75fr_1.25fr]">
-                    <div className="rounded-[30px] border border-white/10 bg-white/[0.035] p-4">
-                      <div className="flex items-center justify-between">
+                      <div
+                        className={cn(
+                          "rounded-xl border px-3 py-2 text-sm",
+                          status === "error"
+                            ? "border-destructive/30 bg-destructive/10 text-destructive"
+                            : "border-border bg-background text-muted-foreground",
+                        )}
+                      >
+                        {statusCopy}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid gap-4 lg:grid-cols-[0.92fr_1.08fr]">
+                  <div className="space-y-4">
+                    <RepoCard
+                      owner={scan?.repo?.owner.login ?? "vercel"}
+                      repo={scan?.repo?.name ?? "next.js"}
+                      data={toRepoCardData(scan)}
+                      showTopics
+                      showUpdated
+                    />
+
+                    <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
+                      <div className="flex items-center justify-between gap-3">
                         <div>
-                          <div className="text-sm font-medium text-white">
+                          <div className="text-sm font-medium text-foreground">
                             Scan telemetry
                           </div>
-                          <div className="text-xs text-gray-400">
-                            Recent autocomplete, manifest discovery, and local
-                            storage status.
+                          <div className="text-xs text-muted-foreground">
+                            Input, manifests, and persisted repo context.
                           </div>
                         </div>
                         {scan ? (
-                          <div className="inline-flex items-center gap-1 rounded-full bg-emerald-400/10 px-2 py-1 text-[11px] text-emerald-200">
+                          <div className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-1 text-[11px] text-emerald-700 dark:text-emerald-300">
                             <HugeiconsIcon
                               icon={CheckmarkCircle03Icon}
                               className="size-3.5"
@@ -769,7 +1005,6 @@ export function HomeRepoIngestShowcase() {
                         <MetricPill
                           label="Autocomplete lead"
                           value={highlightedRepo}
-                          accent
                         />
                         <MetricPill
                           label="Detected languages"
@@ -778,7 +1013,7 @@ export function HomeRepoIngestShowcase() {
                               ? scan.detectedLanguages
                                   .map((language) => language.title)
                                   .join(", ")
-                              : "Waiting for repo scan"
+                              : "Waiting for scan"
                           }
                         />
                         <MetricPill
@@ -791,86 +1026,105 @@ export function HomeRepoIngestShowcase() {
                         />
                       </div>
 
-                      <div className="mt-4 rounded-[24px] border border-white/10 bg-black/20 p-3">
-                        <div className="text-xs uppercase tracking-[0.18em] text-gray-400">
+                      <div className="mt-4 rounded-xl border border-border bg-muted/30 p-3">
+                        <div className="text-xs font-semibold tracking-[0.16em] text-muted-foreground uppercase">
                           Language watchlist
                         </div>
                         <div className="mt-3 flex flex-wrap gap-2">
                           {languageChips.map((language) => (
-                            <VendorChip
+                            <span
                               key={language.key}
-                              name={`${language.rank}. ${language.title}`}
-                              tone="accent"
-                            />
+                              className="rounded-full border border-primary/15 bg-primary/8 px-2.5 py-1 text-xs font-medium text-foreground"
+                            >
+                              {language.rank}. {language.title}
+                            </span>
                           ))}
                         </div>
                       </div>
                     </div>
-
-                    <motion.div
-                      initial={{ opacity: 0, y: 8 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.25, ease: "easeOut" }}
-                      className="rounded-[30px] border border-white/10 bg-white/[0.035] p-4"
-                    >
-                      <div className="flex items-center justify-between gap-3">
-                        <div>
-                          <div className="text-sm font-medium text-white">
-                            Vendor cloud
-                          </div>
-                          <div className="text-xs text-gray-400">
-                            Modules grouped into 12 frontend and 12 backend
-                            architecture buckets.
-                          </div>
-                        </div>
-                        <div className="rounded-full border border-white/10 bg-white/10 px-2.5 py-1 text-[11px] text-white">
-                          {scan?.repoFullName ?? "no repo yet"}
-                        </div>
-                      </div>
-
-                      {error ? (
-                        <div className="mt-4 rounded-2xl border border-rose-400/20 bg-rose-400/10 px-3 py-3 text-sm text-rose-100">
-                          {error}
-                        </div>
-                      ) : null}
-
-                      <div className="mt-4 grid gap-4 xl:grid-cols-2">
-                        <div className="space-y-3">
-                          <div className="text-xs uppercase tracking-[0.18em] text-gray-500">
-                            Frontend
-                          </div>
-                          {frontendBuckets.map((group) => (
-                            <BucketCard key={group.bucket.id} group={group} />
-                          ))}
-                        </div>
-                        <div className="space-y-3">
-                          <div className="text-xs uppercase tracking-[0.18em] text-gray-500">
-                            Backend
-                          </div>
-                          {backendBuckets.map((group) => (
-                            <BucketCard key={group.bucket.id} group={group} />
-                          ))}
-                        </div>
-                      </div>
-
-                      {scan?.unmatchedModules.length ? (
-                        <div className="mt-4 rounded-[24px] border border-white/10 bg-black/20 p-3">
-                          <div className="text-xs uppercase tracking-[0.18em] text-gray-400">
-                            Unmatched modules
-                          </div>
-                          <div className="mt-3 flex flex-wrap gap-2">
-                            {scan.unmatchedModules.slice(0, 18).map((moduleName) => (
-                              <VendorChip
-                                key={moduleName}
-                                name={moduleName}
-                                svg={getModuleIcon(moduleName)}
-                              />
-                            ))}
-                          </div>
-                        </div>
-                      ) : null}
-                    </motion.div>
                   </div>
+
+                  <div className="space-y-4">
+                    <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
+                      <div className="text-sm font-medium text-foreground">
+                        Manifest tree
+                      </div>
+                      <div className="mt-1 text-xs text-muted-foreground">
+                        Repository manifests discovered during the ingest scan.
+                      </div>
+                      <div className="mt-4">
+                        <FileTree
+                          tree={
+                            manifestTree.length > 0
+                              ? manifestTree
+                              : [
+                                  {
+                                    name: "repo",
+                                    children: [{ name: "package.json" }],
+                                  },
+                                ]
+                          }
+                          iconStyle="colored"
+                          defaultExpanded
+                          highlight={highlightPaths}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
+                      <div className="text-sm font-medium text-foreground">
+                        Repo activity
+                      </div>
+                      <div className="mt-1 text-xs text-muted-foreground">
+                        Lightweight contribution tempo for the selected repo.
+                      </div>
+                      <div className="mt-4">
+                        <ActivityGraph data={activityData} weeks={13} />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="rounded-3xl border border-border bg-card p-5 shadow-sm">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <div className="text-sm font-medium text-foreground">
+                        Vendor cloud
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        Modules grouped into the 12 frontend and 12 backend
+                        architecture buckets.
+                      </div>
+                    </div>
+                    <span className="rounded-full bg-muted px-2.5 py-1 text-[11px] text-muted-foreground">
+                      {scan?.repoFullName ?? "no repo yet"}
+                    </span>
+                  </div>
+
+                  <div className="mt-4 grid gap-4 xl:grid-cols-2">
+                    <BucketCloud title="Frontend" groups={frontendBuckets} />
+                    <BucketCloud title="Backend" groups={backendBuckets} />
+                  </div>
+
+                  {scan?.unmatchedModules.length ? (
+                    <div className="mt-4 rounded-2xl border border-border bg-muted/30 p-4">
+                      <div className="text-xs font-semibold tracking-[0.16em] text-muted-foreground uppercase">
+                        Unmatched modules
+                      </div>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {scan.unmatchedModules.slice(0, 18).map((moduleName) => ({
+                          displayName: moduleName,
+                          icon: getModuleIcon(moduleName),
+                          matchKind: "heuristic" as const,
+                        })).map((module) => (
+                          <VendorChip
+                            key={module.displayName}
+                            module={module}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
                 </div>
               </div>
 
@@ -878,51 +1132,42 @@ export function HomeRepoIngestShowcase() {
                 <StoredScanRail
                   records={storedScans}
                   onRestore={(record) => {
-                    setScan(record.result);
-                    setInput(record.repoFullName);
+                    setScan(normalizeScanResult(record.result));
+                    setInput(toGithubInputValue(record.repoFullName));
                     setStatus("done");
                     setError(null);
                   }}
                 />
 
-                <div className="rounded-[28px] border border-black/10 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-gray-950/80">
-                  <div className="text-sm font-medium text-gray-950 dark:text-white">
-                    Module icon cloud
+                <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
+                  <div className="text-sm font-medium text-foreground">
+                    Recent commit graph
                   </div>
-                  <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                    Pulls local SVG logo metadata keyed by package name, with
-                    graceful fallbacks for unmatched modules.
+                  <div className="mt-1 text-xs text-muted-foreground">
+                    Reuses the merged commit graph component for repo ingest
+                    context.
                   </div>
-                  <div className="mt-4 flex flex-wrap gap-2">
-                    {[
-                      "github",
-                      "nextdotjs",
-                      "react",
-                      "tailwindcss",
-                      "postgresql",
-                      "redis",
-                      "docker",
-                      "opentelemetry",
-                    ].map((slug) => (
-                      <VendorChip
-                        key={slug}
-                        name={slug}
-                        svg={getModuleIcon(slug)}
-                        tone="accent"
-                      />
-                    ))}
+                  <div className="mt-4">
+                    {commitData.length > 0 ? (
+                      <CommitGraph commits={commitData} />
+                    ) : (
+                      <div className="rounded-xl border border-dashed border-border px-3 py-4 text-sm text-muted-foreground">
+                        Scan a repo to populate recent commits.
+                      </div>
+                    )}
                   </div>
                 </div>
 
-                <div className="rounded-[28px] border border-black/10 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-gray-950/80">
-                  <div className="text-sm font-medium text-gray-950 dark:text-white">
+                <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
+                  <div className="text-sm font-medium text-foreground">
                     What this pass ships
                   </div>
-                  <ul className="mt-3 space-y-2 text-sm leading-6 text-gray-600 dark:text-gray-300">
-                    <li>Single repo GitHub ingest with inline auth HUD.</li>
-                    <li>Recent-repo autocomplete seeded from user activity.</li>
-                    <li>Manifest scan + dependency bucketing across 24 domains.</li>
-                    <li>Browser OPFS persistence via SQLite WASM export/import.</li>
+                  <ul className="mt-3 space-y-2 text-sm leading-6 text-muted-foreground">
+                    <li>Contextual GitHub repo entry reusing the new mainline input.</li>
+                    <li>Repo-native summary via the merged `repo-card` component.</li>
+                    <li>Manifest coverage visualized with the merged `file-tree`.</li>
+                    <li>Activity and commit context using the new graph primitives.</li>
+                    <li>Local OPFS persistence preserved with SQLite WASM.</li>
                   </ul>
                 </div>
               </div>

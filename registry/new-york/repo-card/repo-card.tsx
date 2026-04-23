@@ -187,7 +187,7 @@ export async function fetchGitHubRepo(
   };
 }
 
-export async function RepoCard({
+export function RepoCard({
   owner,
   repo,
   variant = "default",
@@ -200,7 +200,7 @@ export async function RepoCard({
   data,
   className,
 }: RepoCardProps) {
-  const repoData = data ?? (await fetchGitHubRepo(owner, repo));
+  const repoData = data ?? null;
   const href = repoData?.html_url ?? `https://github.com/${owner}/${repo}`;
   const languageColor = repoData?.language
     ? LANGUAGE_COLORS[repoData.language] ?? "#9CA3AF"

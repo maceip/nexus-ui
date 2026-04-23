@@ -69,6 +69,60 @@ export interface RepoSuggestion {
   defaultBranch: string;
 }
 
+export interface RepoOwnerSummary {
+  login: string;
+  avatarUrl?: string;
+  htmlUrl?: string;
+}
+
+export interface RepoLicenseSummary {
+  key: string | null;
+  name: string | null;
+  spdxId?: string | null;
+}
+
+export interface RepoSummary {
+  id: number;
+  name: string;
+  fullName: string;
+  htmlUrl: string;
+  description: string | null;
+  stargazersCount: number;
+  forksCount: number;
+  language: string | null;
+  topics: string[];
+  archived: boolean;
+  fork: boolean;
+  updatedAt: string;
+  license: RepoLicenseSummary | null;
+  owner: RepoOwnerSummary;
+}
+
+export interface RepoCommitAuthor {
+  name: string;
+  avatarUrl?: string;
+}
+
+export interface RepoCommitSummary {
+  hash: string;
+  message: string;
+  author: RepoCommitAuthor;
+  date: string;
+  parents: string[];
+  refs?: string[];
+  tag?: string;
+}
+
+export interface RepoActivityEntry {
+  date: string;
+  count: number;
+}
+
+export interface RepoFileTreeNode {
+  name: string;
+  children?: RepoFileTreeNode[];
+}
+
 export interface ManifestScan {
   languageKey: LanguageProfile["key"];
   manifestPath: string;
@@ -109,6 +163,12 @@ export interface RepoScanResult {
   defaultBranch: string;
   authMode: AuthMode;
   scannedAt: string;
+  repo: RepoSummary | null;
+  commits: RepoCommitSummary[];
+  activity: RepoActivityEntry[];
+  manifestTree: RepoFileTreeNode[];
+  highlightedPaths: string[];
+  expandedPaths: string[];
   detectedLanguages: LanguageProfile[];
   manifests: ManifestScan[];
   bucketGroups: BucketGroup[];

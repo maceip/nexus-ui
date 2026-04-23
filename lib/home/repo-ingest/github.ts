@@ -8,6 +8,10 @@ import {
   type BucketModuleMatch,
   type LanguageProfile,
   type ManifestScan,
+  type RepoActivityEntry,
+  type RepoCommitSummary,
+  type RepoFileTreeNode,
+  type RepoSummary,
   type RepoScanResult,
   type RepoSuggestion,
 } from "@/lib/home/repo-ingest/shared";
@@ -57,6 +61,47 @@ type GitHubTreeResponse = {
 type GitHubContentResponse = {
   content?: string;
 };
+
+type GitHubRepoResponse = {
+  id: number;
+  name: string;
+  full_name: string;
+  html_url: string;
+  description: string | null;
+  stargazers_count: number;
+  forks_count: number;
+  language: string | null;
+  topics?: string[];
+  archived: boolean;
+  fork: boolean;
+  updated_at: string;
+  license: {
+    key: string | null;
+    name: string | null;
+    spdx_id?: string | null;
+  } | null;
+  owner: {
+    login: string;
+    avatar_url?: string;
+    html_url?: string;
+  };
+  default_branch: string;
+};
+
+type GitHubCommitResponse = Array<{
+  sha: string;
+  commit: {
+    message: string;
+    author?: {
+      name?: string | null;
+      date?: string | null;
+    } | null;
+  };
+  author?: {
+    avatar_url?: string;
+  } | null;
+  parents: Array<{ sha: string }>;
+}>;
 
 type ModuleCandidate = {
   moduleName: string;
@@ -202,6 +247,17 @@ async function fetchRepositoryContent(
 ) {
   return fetchGitHubJson<GitHubContentResponse>(
     `/repos/${repoFullName}/contents/${path}`,
+    { token },
+  );
+}
+
+async function fetchRepositoryCommits(
+  token: string,
+  repoFullName: string,
+  branch: string,
+) {
+  return fetchGitHubJson<GitHubCommitResponse>(
+    `/repos/${repoFullName}/commits?sha=${encodeURIComponent(branch)}&per_page=6`,
     { token },
   );
 }
@@ -447,6 +503,131 @@ function dedupeMatches(matches: BucketModuleMatch[]) {
   });
 }
 
+type TreeEntry = {
+  children?: Map<string, TreeEntry>;
+};
+
+function buildFileTree(paths: string[]) {
+  const root = new Map<string, TreeEntry>();
+
+  for (const path of paths) {
+    const segments = path.split("/").filter(Boolean);
+    let current = root;
+
+    segments.forEach((segment, index) => {
+      const isLeaf = index === segments.length - 1;
+      const existing = current.get(segment);
+
+      if (!existing) {
+        current.set(segment, isLeaf ? {} : { children: new Map<string, TreeEntry>() });
+      }
+
+      if (!isLeaf) {
+        const next =
+          current.get(segment)?.children ?? new Map<string, TreeEntry>();
+        const entry = current.get(segment);
+        if (entry) {
+          entry.children = next;
+        }
+        current = next;
+      }
+    });
+  }
+
+  function toNodes(tree: Map<string, TreeEntry>): RepoFileTreeNode[] {
+    return [...tree.entries()]
+      .sort(([left], [right]) => left.localeCompare(right))
+      .map(([name, value]) => {
+        const children = value.children ? toNodes(value.children) : undefined;
+        return children && children.length > 0 ? { name, children } : { name };
+      });
+  }
+
+  return toNodes(root);
+}
+
+function buildActivitySeries(commits: RepoCommitSummary[]): RepoActivityEntry[] {
+  const counts = new Map<string, number>();
+
+  for (const commit of commits) {
+    const isoDate = commit.date.slice(0, 10);
+    counts.set(isoDate, (counts.get(isoDate) ?? 0) + 1);
+  }
+
+  const end = new Date();
+  end.setHours(0, 0, 0, 0);
+
+  return Array.from({ length: 91 }, (_, index) => {
+    const date = new Date(end);
+    date.setDate(end.getDate() - (90 - index));
+    const key = date.toISOString().slice(0, 10);
+
+    return {
+      date: key,
+      count: counts.get(key) ?? 0,
+    };
+  });
+}
+
+function buildCommitRefs(index: number, branch: string): string[] | undefined {
+  if (index === 0) {
+    return [branch, `origin/${branch}`];
+  }
+
+  if (index === 1) {
+    return ["scan-window"];
+  }
+
+  return undefined;
+}
+
+function toRepoCommitSummary(
+  commit: GitHubCommitResponse[number],
+  index: number,
+  branch: string,
+): RepoCommitSummary {
+  return {
+    hash: commit.sha,
+    message: commit.commit.message.split("\n")[0] ?? commit.sha.slice(0, 7),
+    author: {
+      name: commit.commit.author?.name ?? "Unknown author",
+      avatarUrl: commit.author?.avatar_url,
+    },
+    date: commit.commit.author?.date ?? new Date().toISOString(),
+    parents: commit.parents.map((parent) => parent.sha.slice(0, 7)),
+    refs: buildCommitRefs(index, branch),
+  };
+}
+
+function toRepoSummary(repo: GitHubRepoResponse): RepoSummary {
+  return {
+    id: repo.id,
+    name: repo.name,
+    fullName: repo.full_name,
+    htmlUrl: repo.html_url,
+    description: repo.description,
+    stargazersCount: repo.stargazers_count,
+    forksCount: repo.forks_count,
+    language: repo.language,
+    topics: repo.topics ?? [],
+    archived: repo.archived,
+    fork: repo.fork,
+    updatedAt: repo.updated_at,
+    license: repo.license
+      ? {
+          key: repo.license.key,
+          name: repo.license.name,
+          spdxId: repo.license.spdx_id,
+        }
+      : null,
+    owner: {
+      login: repo.owner.login,
+      avatarUrl: repo.owner.avatar_url,
+      htmlUrl: repo.owner.html_url,
+    },
+  };
+}
+
 export async function scanRepository(options: {
   token?: string;
   repoFullName: string;
@@ -460,10 +641,10 @@ export async function scanRepository(options: {
     throw new Error("Repository must be in owner/name format.");
   }
 
-  const repoMeta = await fetchGitHubJson<{
-    default_branch: string;
-    full_name: string;
-  }>(`/repos/${options.repoFullName}`, { token });
+  const repoMeta = await fetchGitHubJson<GitHubRepoResponse>(
+    `/repos/${options.repoFullName}`,
+    { token },
+  );
 
   const defaultBranch = options.defaultBranch ?? repoMeta.default_branch;
   const treeResponse = await fetchRepositoryTree(
@@ -514,11 +695,31 @@ export async function scanRepository(options: {
     .map((key) => getLanguageProfile(key))
     .sort((left, right) => left.rank - right.rank);
 
+  const commitsResponse = await fetchRepositoryCommits(
+    token,
+    options.repoFullName,
+    defaultBranch,
+  );
+  const commits = commitsResponse.map((commit, index) =>
+    toRepoCommitSummary(commit, index, defaultBranch),
+  );
+  const manifestTree = buildFileTree(manifests.map((manifest) => manifest.manifestPath));
+  const highlightedPaths = manifests.slice(0, 8).map((manifest) => manifest.manifestPath);
+  const expandedPaths = manifestTree
+    .flatMap((node) => collectExpandablePaths(node))
+    .slice(0, 8);
+
   return {
     repoFullName: repoMeta.full_name,
     defaultBranch,
     authMode: options.authMode,
     scannedAt: new Date().toISOString(),
+    repo: toRepoSummary(repoMeta),
+    activity: buildActivitySeries(commits),
+    commits,
+    manifestTree,
+    highlightedPaths,
+    expandedPaths,
     detectedLanguages,
     manifests,
     bucketGroups: bucketizeMatches(matches),
@@ -529,4 +730,19 @@ export async function scanRepository(options: {
       mappedModules: matches.length,
     },
   };
+}
+
+function collectExpandablePaths(
+  node: RepoFileTreeNode,
+  parentPath = "",
+): string[] {
+  const path = parentPath ? `${parentPath}/${node.name}` : node.name;
+  if (!node.children?.length) {
+    return [];
+  }
+
+  return [
+    path,
+    ...node.children.flatMap((child) => collectExpandablePaths(child, path)),
+  ];
 }

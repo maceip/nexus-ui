@@ -5,7 +5,7 @@ description: GitHub repository preview card with metadata, status badges, and to
 
 import RepoCardDefault from "@/components/nexus-ui/examples/repo-card/default";
 
-Display GitHub repository metadata in a compact card that matches Nexus UI styling. `RepoCard` supports build-time fetching, pre-fetched data, and visibility toggles for language, license, updated date, and topic tags.
+Display GitHub repository metadata in a compact card that matches Nexus UI styling. `RepoCard` is a presentational component that accepts pre-fetched data, while `fetchGitHubRepo` is available when you want to load GitHub metadata on the server first.
 
 <DemoWithCode src="components/nexus-ui/examples/repo-card/default.tsx">
   <RepoCardDefault />
@@ -55,14 +55,16 @@ bunx shadcn@latest add @nexus-ui/repo-card
 ## Usage
 
 ```tsx keepBackground
-import { RepoCard } from "@/components/nexus-ui/repo-card";
+import { RepoCard, fetchGitHubRepo } from "@/components/nexus-ui/repo-card";
 ```
 
 ```tsx keepBackground
-<RepoCard owner="shadcn-ui" repo="ui" />
+const data = await fetchGitHubRepo("shadcn-ui", "ui");
+
+<RepoCard owner="shadcn-ui" repo="ui" data={data} />
 ```
 
-Async server component. By default it fetches the GitHub API and caches the result for one hour with Next.js revalidation. Pass `data` to skip the fetch and render pre-fetched repository details instead.
+Use `fetchGitHubRepo` in a server component, route handler, or loader when you want cached GitHub metadata. Pass `data` to `RepoCard` to render the card without any async work during client rendering.
 
 ## API Reference
 
@@ -115,7 +117,7 @@ Async server component. By default it fetches the GitHub API and caches the resu
     },
     data: {
       type: "GitHubRepoData | null",
-      description: "Optional pre-fetched repository payload. When provided, no API request is made.",
+      description: "Optional pre-fetched repository payload used by the presentational card.",
     },
     className: {
       type: "string",
@@ -126,7 +128,8 @@ Async server component. By default it fetches the GitHub API and caches the resu
 
 ## Notes
 
-- `RepoCard` is an async server component and is safe to render directly in app-router server pages.
-- The optional `GITHUB_TOKEN` environment variable raises GitHub API rate limits for server-side fetches.
+- `RepoCard` is safe to use in both client and server components because it no longer performs async fetches during render.
+- Use `fetchGitHubRepo` when you want cached GitHub API data before rendering the card.
+- The optional `GITHUB_TOKEN` environment variable raises GitHub API rate limits for `fetchGitHubRepo`.
 - Archived repositories render a warning badge; forked repositories render a fork badge.
 - Unknown languages fall back to a neutral dot color.
