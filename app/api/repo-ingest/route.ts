@@ -37,7 +37,10 @@ export async function POST(request: Request) {
 
   try {
     if (body.action === "recent") {
-      const repos = await fetchRecentRepos(body.pat ?? "", body.authMode ?? "pat");
+      const repos = await fetchRecentRepos(
+        body.pat ?? "",
+        body.authMode ?? "pat",
+      );
       return NextResponse.json({ ok: true, repos });
     }
 
@@ -50,7 +53,7 @@ export async function POST(request: Request) {
     }
 
     const result = await scanRepository({
-      token: body.pat ?? "",
+      token: body.pat,
       repoFullName: repo,
       authMode: body.authMode ?? "pat",
     });

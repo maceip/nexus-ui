@@ -42,7 +42,7 @@ const RECENT_REPOS_QUERY = `
 `;
 
 type FetchJsonOptions = {
-  token: string;
+  token?: string;
   method?: "GET" | "POST";
   body?: string;
 };
@@ -106,14 +106,19 @@ async function fetchGitHubJson<T>(
   path: string,
   { token, method = "GET", body }: FetchJsonOptions,
 ): Promise<T> {
+  const headers: Record<string, string> = {
+    Accept: "application/vnd.github+json",
+    "Content-Type": "application/json",
+    "User-Agent": "nexus-ui-repo-ingest",
+  };
+
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+
   const response = await fetch(`${GITHUB_API_URL}${path}`, {
     method,
-    headers: {
-      Accept: "application/vnd.github+json",
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-      "User-Agent": "nexus-ui-repo-ingest",
-    },
+    headers,
     body,
     cache: "no-store",
   });
@@ -443,15 +448,12 @@ function dedupeMatches(matches: BucketModuleMatch[]) {
 }
 
 export async function scanRepository(options: {
-  token: string;
+  token?: string;
   repoFullName: string;
   authMode: AuthMode;
   defaultBranch?: string;
 }): Promise<RepoScanResult> {
-  const token = getGitHubToken(options.token, options.authMode);
-  if (!token) {
-    throw new Error("A GitHub token is required to scan a repository.");
-  }
+  const token = getGitHubToken(options.token, options.authMode) ?? "";
 
   const [repoOwner, repoName] = options.repoFullName.split("/");
   if (!repoOwner || !repoName) {

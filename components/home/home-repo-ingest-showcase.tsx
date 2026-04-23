@@ -400,12 +400,14 @@ export function HomeRepoIngestShowcase() {
   }, []);
 
   React.useEffect(() => {
-    if (!pat.trim()) {
+    if (authMode === "pat" && !pat.trim()) {
       setRecentRepos([]);
       return;
     }
 
-    window.localStorage.setItem("repo-ingest-pat", pat);
+    if (pat.trim()) {
+      window.localStorage.setItem("repo-ingest-pat", pat);
+    }
 
     const controller = new AbortController();
     const timeoutId = window.setTimeout(async () => {
