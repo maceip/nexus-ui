@@ -13,6 +13,16 @@ import {
   type ContextualInputKind,
   validateContextualInput,
 } from "@/components/nexus-ui/contextual-text-input";
+import {
+  FoundationBlueprint,
+  FoundationConstellation,
+  FoundationDock,
+  FoundationRail,
+  FOUNDATION_STACKS,
+  type FoundationLayerStyle,
+  type FoundationIconToken,
+  type FoundationStackId,
+} from "@/components/nexus-ui/foundation-layers";
 import { Button } from "@/components/ui/button";
 import {
   Message,
@@ -63,6 +73,20 @@ const imgUser = "/assets/user-avatar.avif";
 const imgAssistant = "/assets/nexus-avatar.png";
 
 type ProviderKey = "claude" | "v0" | "gemini" | "chatgpt";
+
+const foundationLayerStyles = [
+  "dock",
+  "rail",
+  "constellation",
+  "blueprint",
+] as const satisfies readonly FoundationLayerStyle[];
+
+const foundationLayerLabels: Record<FoundationLayerStyle, string> = {
+  dock: "Dock",
+  rail: "Rail",
+  constellation: "Constellation",
+  blueprint: "Blueprint",
+};
 
 type ProviderModel = {
   value: string;
@@ -238,6 +262,12 @@ export default function MessageDemo() {
   }, []);
 
   const [provider, setProvider] = React.useState<ProviderKey>("claude");
+  const [foundationStyle, setFoundationStyle] =
+    React.useState<FoundationLayerStyle>("dock");
+  const [foundationStack, setFoundationStack] =
+    React.useState<FoundationStackId>("aws-arbitrage");
+  const [activeFoundationIcon, setActiveFoundationIcon] =
+    React.useState<FoundationIconToken>("amazon-bedrock");
   const [providerState, setProviderState] = React.useState(() => ({
     claude: {
       model: providers.claude.models[0].value,
@@ -331,6 +361,22 @@ export default function MessageDemo() {
 
   const activeProvider = providers[provider];
   const activeProviderState = providerState[provider];
+  const activeFoundationStack = FOUNDATION_STACKS.find(
+    (stack) => stack.id === foundationStack,
+  )!;
+
+  const FoundationLayerComponent = React.useMemo(() => {
+    switch (foundationStyle) {
+      case "blueprint":
+        return FoundationBlueprint;
+      case "rail":
+        return FoundationRail;
+      case "constellation":
+        return FoundationConstellation;
+      default:
+        return FoundationDock;
+    }
+  }, [foundationStyle]);
   const activeContextChips = React.useMemo(
     () =>
       [
@@ -642,6 +688,16 @@ export default function MessageDemo() {
               </Button>
             </div>
           ) : null}
+          <div className="rounded-[24px] border border-border/70 bg-card/90 p-2 shadow-sm">
+            <FoundationLayerComponent
+              stackId={foundationStack}
+              onStackChange={setFoundationStack}
+              activeIcon={activeFoundationIcon}
+              onActiveIconChange={setActiveFoundationIcon}
+              defaultCollapsed
+              className="w-full"
+            />
+          </div>
           <PromptInput
             onSubmit={(v) => void handleSubmit(v)}
             className="gap-3 rounded-[28px] border-border/70 bg-card/95 p-3 shadow-lg dark:bg-background/95"
@@ -710,6 +766,60 @@ export default function MessageDemo() {
                       className="w-[360px] rounded-2xl border-border/70 bg-popover/95 p-4 shadow-modal"
                     >
                       <div className="space-y-4">
+                        <div className="space-y-1">
+                          <p className="text-xs font-semibold tracking-[0.16em] text-muted-foreground uppercase">
+                            Foundation layer
+                          </p>
+                          <div className="grid grid-cols-2 gap-2">
+                            {FOUNDATION_STACKS.map((stack) => (
+                              <button
+                                key={stack.id}
+                                type="button"
+                                onClick={() => setFoundationStack(stack.id)}
+                                className={`rounded-xl border px-3 py-2 text-left transition-colors ${
+                                  foundationStack === stack.id
+                                    ? "border-foreground/20 bg-muted text-foreground"
+                                    : "border-border/70 bg-background text-muted-foreground hover:bg-muted/70"
+                                }`}
+                              >
+                                <span className="block text-sm font-medium">
+                                  {stack.label}
+                                </span>
+                                <span className="mt-1 block text-xs">
+                                  {stack.bestFor}
+                                </span>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div className="space-y-1">
+                          <p className="text-xs font-semibold tracking-[0.16em] text-muted-foreground uppercase">
+                            Foundation style
+                          </p>
+                          <div className="grid grid-cols-2 gap-2">
+                            {foundationLayerStyles.map((style) => (
+                              <button
+                                key={style}
+                                type="button"
+                                onClick={() => setFoundationStyle(style)}
+                                className={`rounded-xl border px-3 py-2 text-left transition-colors ${
+                                  foundationStyle === style
+                                    ? "border-foreground/20 bg-muted text-foreground"
+                                    : "border-border/70 bg-background text-muted-foreground hover:bg-muted/70"
+                                }`}
+                              >
+                                <span className="block text-sm font-medium">
+                                  {foundationLayerLabels[style]}
+                                </span>
+                                <span className="mt-1 block text-xs">
+                                  Minimized base layer for infra stack context
+                                </span>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
                         <div className="space-y-1">
                           <p className="text-xs font-semibold tracking-[0.16em] text-muted-foreground uppercase">
                             API provider
@@ -837,8 +947,13 @@ export default function MessageDemo() {
                           <span className="font-medium text-foreground">
                             {activeProvider.label}
                           </span>{" "}
-                          powers the chat. Model and tool details stay inside
-                          this popover so the composer itself remains universal.
+                          powers the chat, while{" "}
+                          <span className="font-medium text-foreground">
+                            {activeFoundationStack.label}
+                          </span>{" "}
+                          defines the active infra stack layer. Model, tool, and
+                          stack details stay inside this popover so the composer
+                          itself remains universal.
                         </div>
                       </div>
                     </PopoverContent>
