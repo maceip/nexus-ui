@@ -6,6 +6,7 @@ import { DynamicCodeBlock } from "fumadocs-ui/components/dynamic-codeblock";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Copy01Icon, Tick02Icon } from "@hugeicons/core-free-icons";
 import { cn } from "@/lib/utils";
+import { HomeRepoIngestShowcase } from "./home-repo-ingest-showcase";
 import type { HomeDemoSourceKey } from "./home-demo-sources";
 import { homeDemoSources } from "./home-demo-sources";
 import { HOME_MODEL_DEMOS, HomeDemoModelTabs } from "./home-demo-model-tabs";
@@ -110,7 +111,9 @@ export function HomeDemoSection() {
   };
 
   return (
-    <div className="flex h-[calc(100vh-352px)] min-h-0 w-full flex-col justify-between gap-6 overflow-hidden px-4 pt-0 pb-4 md:flex-row md:gap-4 md:px-6 md:py-4 lg:h-[calc(100vh-480px)]">
+    <div className="flex min-h-0 w-full flex-col gap-6 overflow-hidden px-4 pt-0 pb-4 md:px-6 md:py-4">
+      <HomeRepoIngestShowcase />
+      <div className="flex h-[calc(100vh-352px)] min-h-[680px] w-full flex-col justify-between gap-6 overflow-hidden md:flex-row md:gap-4 lg:h-[calc(100vh-480px)]">
       <motion.div
         className="order-2 flex h-fit w-full shrink-0 md:order-1 md:h-full md:min-h-0 md:w-fit md:shrink"
         initial={demoSectionFade.initial}
@@ -232,6 +235,7 @@ export function HomeDemoSection() {
           />
         </div>
       </motion.div>
+      </div>
     </div>
   );
 }

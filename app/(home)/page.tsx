@@ -5,6 +5,7 @@ import { motion } from "motion/react";
 import { Button } from "@/components/ui/button";
 import { GithubIcon } from "@/components/navbar";
 import { HomeDemoSection } from "@/components/home/home-demo-section";
+import { HomeRepoIngestShowcase } from "@/components/home/home-repo-ingest-showcase";
 
 export default function HomePage() {
   return (
@@ -83,6 +84,7 @@ export default function HomePage() {
         </motion.div>
       </div>
 
+      <HomeRepoIngestShowcase />
       <HomeDemoSection />
     </main>
   );
