@@ -1,0 +1,22 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "commit-graph",
+  "title": "Commit Graph",
+  "description": "Topological git graph with branch rails and commit detail popovers.",
+  "dependencies": [
+    "lucide-react"
+  ],
+  "registryDependencies": [
+    "@nexus-ui/nexus-ui-theme",
+    "avatar",
+    "popover"
+  ],
+  "files": [
+    {
+      "path": "registry/new-york/commit-graph/commit-graph.tsx",
+      "type": "registry:file",
+      "target": "~/components/nexus-ui/commit-graph.tsx"
+    }
+  ],
+  "type": "registry:ui"
+}

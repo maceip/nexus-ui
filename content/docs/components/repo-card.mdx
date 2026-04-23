@@ -1,0 +1,132 @@
+---
+title: Repo Card
+description: GitHub repository preview card with metadata, status badges, and topic tags
+---
+
+import RepoCardDefault from "@/components/nexus-ui/examples/repo-card/default";
+
+Display GitHub repository metadata in a compact card that matches Nexus UI styling. `RepoCard` supports build-time fetching, pre-fetched data, and visibility toggles for language, license, updated date, and topic tags.
+
+<DemoWithCode src="components/nexus-ui/examples/repo-card/default.tsx">
+  <RepoCardDefault />
+</DemoWithCode>
+
+## Installation
+
+<Tabs items={["CLI", "Manual"]} framed={false}>
+<Tab value="CLI">
+<Tabs items={["npm", "pnpm", "yarn", "bun"]}>
+<Tab value="npm">
+```bash
+npx shadcn@latest add @nexus-ui/repo-card
+```
+</Tab>
+<Tab value="pnpm">
+```bash
+pnpm dlx shadcn@latest add @nexus-ui/repo-card
+```
+</Tab>
+<Tab value="yarn">
+```bash
+yarn dlx shadcn@latest add @nexus-ui/repo-card
+```
+</Tab>
+<Tab value="bun">
+```bash
+bunx shadcn@latest add @nexus-ui/repo-card
+```
+</Tab>
+</Tabs>
+</Tab>
+<Tab value="Manual">
+<Steps>
+<Step>
+<h3>Copy and paste the following code into your project.</h3>
+
+<ComponentSource src="registry/new-york/repo-card/repo-card.tsx" title="components/nexus-ui/repo-card.tsx" />
+</Step>
+<Step>
+<h3>Update the import paths to match your project setup.</h3>
+</Step>
+</Steps>
+</Tab>
+</Tabs>
+
+## Usage
+
+```tsx keepBackground
+import { RepoCard } from "@/components/nexus-ui/repo-card";
+```
+
+```tsx keepBackground
+<RepoCard owner="shadcn-ui" repo="ui" />
+```
+
+Async server component. By default it fetches the GitHub API and caches the result for one hour with Next.js revalidation. Pass `data` to skip the fetch and render pre-fetched repository details instead.
+
+## API Reference
+
+<TypeTable
+  type={{
+    owner: {
+      type: "string",
+      description: "GitHub owner or organization login.",
+      required: true,
+    },
+    repo: {
+      type: "string",
+      description: "GitHub repository name.",
+      required: true,
+    },
+    variant: {
+      type: '"default" | "outline" | "ghost" | "muted"',
+      default: '"default"',
+      description: "Visual treatment for the card shell.",
+    },
+    size: {
+      type: '"sm" | "default" | "lg"',
+      default: '"default"',
+      description: "Controls spacing and metadata sizing.",
+    },
+    showLanguage: {
+      type: "boolean",
+      default: "true",
+      description: "Shows the language dot and language label when available.",
+    },
+    showTopics: {
+      type: "boolean",
+      default: "true",
+      description: "Shows repository topics as chips.",
+    },
+    showLicense: {
+      type: "boolean",
+      default: "true",
+      description: "Shows the detected license badge row.",
+    },
+    showUpdated: {
+      type: "boolean",
+      default: "true",
+      description: "Shows the relative updated timestamp.",
+    },
+    maxTopics: {
+      type: "number",
+      default: "4",
+      description: "Maximum number of topics to render when `showTopics` is enabled.",
+    },
+    data: {
+      type: "GitHubRepoData | null",
+      description: "Optional pre-fetched repository payload. When provided, no API request is made.",
+    },
+    className: {
+      type: "string",
+      description: "Additional classes for the outer card element.",
+    },
+  }}
+/>
+
+## Notes
+
+- `RepoCard` is an async server component and is safe to render directly in app-router server pages.
+- The optional `GITHUB_TOKEN` environment variable raises GitHub API rate limits for server-side fetches.
+- Archived repositories render a warning badge; forked repositories render a fork badge.
+- Unknown languages fall back to a neutral dot color.

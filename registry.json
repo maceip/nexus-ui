@@ -204,6 +204,85 @@
           "target": "~/components/nexus-ui/citation.tsx"
         }
       ]
+    },
+    {
+      "name": "repo-card",
+      "type": "registry:ui",
+      "title": "Repo Card",
+      "description": "GitHub repository preview card with stars, forks, language metadata, and optional topics.",
+      "dependencies": [
+        "class-variance-authority",
+        "lucide-react"
+      ],
+      "registryDependencies": [
+        "@nexus-ui/nexus-ui-theme"
+      ],
+      "files": [
+        {
+          "path": "registry/new-york/repo-card/repo-card.tsx",
+          "type": "registry:file",
+          "target": "~/components/nexus-ui/repo-card.tsx"
+        }
+      ]
+    },
+    {
+      "name": "commit-graph",
+      "type": "registry:ui",
+      "title": "Commit Graph",
+      "description": "Topological git graph with branch rails and commit detail popovers.",
+      "dependencies": [
+        "lucide-react"
+      ],
+      "registryDependencies": [
+        "@nexus-ui/nexus-ui-theme",
+        "avatar",
+        "popover"
+      ],
+      "files": [
+        {
+          "path": "registry/new-york/commit-graph/commit-graph.tsx",
+          "type": "registry:file",
+          "target": "~/components/nexus-ui/commit-graph.tsx"
+        }
+      ]
+    },
+    {
+      "name": "file-tree",
+      "type": "registry:ui",
+      "title": "File Tree",
+      "description": "Collapsible file and folder tree with highlight paths and configurable icon styles.",
+      "dependencies": [
+        "lucide-react"
+      ],
+      "registryDependencies": [
+        "@nexus-ui/nexus-ui-theme"
+      ],
+      "files": [
+        {
+          "path": "registry/new-york/file-tree/file-tree.tsx",
+          "type": "registry:file",
+          "target": "~/components/nexus-ui/file-tree.tsx"
+        }
+      ]
+    },
+    {
+      "name": "activity-graph",
+      "type": "registry:ui",
+      "title": "Activity Graph",
+      "description": "GitHub-style activity heatmap with tooltip details and an animated loading mode.",
+      "dependencies": [
+        "radix-ui"
+      ],
+      "registryDependencies": [
+        "@nexus-ui/nexus-ui-theme"
+      ],
+      "files": [
+        {
+          "path": "registry/new-york/activity-graph/activity-graph.tsx",
+          "type": "registry:file",
+          "target": "~/components/nexus-ui/activity-graph.tsx"
+        }
+      ]
     }
   ]
 }
