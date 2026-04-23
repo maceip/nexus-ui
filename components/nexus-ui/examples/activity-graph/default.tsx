@@ -13,5 +13,23 @@ const data = Array.from({ length: 91 }, (_, index) => {
 });
 
 export default function ActivityGraphDefault() {
-  return <ActivityGraph data={data} weeks={13} className="max-w-xl" />;
+  return (
+    <div className="flex w-full max-w-2xl flex-col gap-6">
+      <div className="space-y-2">
+        <p className="font-medium text-foreground text-sm">Heatmap</p>
+        <ActivityGraph data={data} weeks={13} className="max-w-xl" />
+      </div>
+
+      <div className="space-y-2">
+        <p className="font-medium text-foreground text-sm">Loading mode</p>
+        <ActivityGraph
+          data={[]}
+          weeks={13}
+          loading
+          loadingSpeed={0.7}
+          className="max-w-xl"
+        />
+      </div>
+    </div>
+  );
 }

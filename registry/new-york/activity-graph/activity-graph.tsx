@@ -143,7 +143,10 @@ function ActivityGraph({
                           height: effectiveBlockSize,
                           borderRadius: blockRadius,
                           backgroundColor: color,
-                          opacity: loading ? 0.45 + intensity * 0.14 : 1,
+                          opacity: loading ? 0.24 + intensity * 0.16 : 1,
+                          transform: loading
+                            ? `translateX(${Math.max(0, intensity - 1) * 1.5}px)`
+                            : undefined,
                           animation: loading
                             ? `activity-graph-side-scroll ${Math.max(
                                 loadingSpeed,
@@ -242,12 +245,12 @@ function getIntensityLevel(
 }
 
 function getLoadingLevel(index: number, loadingSpeed: number): 0 | 1 | 2 | 3 | 4 {
-  const progress = ((index / 5) * Math.max(loadingSpeed, 0.4)) % 4;
+  const progress = ((index / 6) * Math.max(loadingSpeed, 0.4)) % 6;
   const wave = Math.abs(Math.sin(progress));
-  if (wave < 0.2) return 0;
-  if (wave < 0.4) return 1;
-  if (wave < 0.6) return 2;
-  if (wave < 0.8) return 3;
+  if (wave < 0.5) return 0;
+  if (wave < 0.7) return 1;
+  if (wave < 0.82) return 2;
+  if (wave < 0.92) return 3;
   return 4;
 }
 
