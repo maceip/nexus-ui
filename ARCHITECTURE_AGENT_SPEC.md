@@ -5,6 +5,7 @@
 The server architecture outputs a **self-sufficient, portable runtime contract**:
 
 - **No required third-party runtime** (Docker, Kubernetes, etc.). The user experience is: **copy a directory** (thumb drive, zip, rsync, large email attachment link) and **run a native binary** on Windows, macOS, or Linux—same OS/arch expectations as any other shipped application. Large total size (e.g. **tens of GB** for weights) is explicitly allowed.
+- **Vendored Python is allowed when required** (e.g. for vLLM): ship a **pinned** interpreter and dependencies **inside** the portable tree. The user does **not** install Python on the host; the **native launcher** is still the documented entrypoint and may invoke the vendored stack as a subprocess.
 - **One inference stack** on the machine: **one vLLM engine** with **Automatic Prefix Caching (APC)** enabled, **one model load**.
 - **Multiple roles** use **Multi-Tenant Prefix (MTP)** layout: stable shared prompt layers + role-specific tails so APC reuses KV blocks across roles **without reloading weights**.
 - The bundle ships **manifest** (including a **memory management policy**), **roles**, **frozen prefixes**, **tool policies**, and the **native launcher binary**. Optional: weights ship beside the binary or download on first run with hash verification.

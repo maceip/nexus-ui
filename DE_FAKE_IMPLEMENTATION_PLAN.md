@@ -4,10 +4,12 @@
 
 This plan replaces prototype behavior with a **production-grade, self-sufficient runtime** that runs **entirely on the user’s machine**. There is **no remote training service**, **no supernode**, **no thin-client control plane**, and **no required third-party runtime** (Docker, Podman, Kubernetes, etc. are **out of scope as dependencies**—the shipped product must be **copy-paste portable**).
 
+**Vendored Python is allowed and expected when vLLM requires it:** the portable tree may include a **pinned, read-only Python runtime** (stdlib + wheels) used only by the shipped stack. The user must **not** install Python, `pyenv`, or `pip` on the host—that is what “self-sufficient” means. The **entrypoint** remains a **native launcher** (or platform equivalent); it may exec the vendored interpreter as an implementation detail.
+
 ### Portability invariant (non-negotiable)
 
-- **One native executable** (PE / Mach-O / ELF) per supported OS, or a **documented equivalent** (e.g. signed `.app` bundle on macOS) that the user treats as a single artifact.
-- The user can **copy the install directory to a thumb drive**, **rsync it**, **zip it**, or **email a link** to a large archive—the distribution model explicitly allows **tens of GB** (model weights + cache policy + tools); portability means **behavior**, not small download size.
+- **One native executable** (PE / Mach-O / ELF) per supported OS, or a **documented equivalent** (e.g. signed `.app` bundle on macOS) that the user treats as a single artifact—the **user-facing** command to start the agent is this binary (it may spawn vendored Python + vLLM under the hood).
+- The user can **copy the install directory to a thumb drive**, **rsync it**, **zip it**, or **email a link** to a large archive—the distribution model explicitly allows **tens of GB** (model weights + vendored runtime + tools); portability means **behavior**, not small download size.
 - On a fresh machine: **extract → run** (or double-click where applicable) with **no** `docker pull`, **no** daemon, **no** admin-only dependency beyond what the OS already needs for GPU drivers.
 - **Optional**: developers may use Docker **internally** for CI; that must never appear in end-user documentation as a requirement.
 
@@ -142,7 +144,7 @@ Security: APC side-channel note for shared-host multi-tenant; default product is
 #### Explicit non-goals
 
 - **No** `Dockerfile` in the user-facing quickstart.
-- **No** requirement to install Python/pip for end users unless you deliberately ship a **self-extracting** dev bundle—default is **fully packaged** runtime.
+- **No** requirement to install **system** Python/pip/pyenv for end users—the default is a **fully packaged** tree including **vendored Python** whenever the inference stack (e.g. vLLM) needs it.
 
 #### Build / registry (narrowed)
 
@@ -284,9 +286,11 @@ Illustrative fields (exact names in zod when implemented):
 
 ## 8) Open Engineering Decisions
 
-1. **vLLM distribution**: static link vs bundled `.so` vs subprocess to a **vendored** `vllm` Python env **inside** the portable tree (still “no user Docker,” but may ship embedded interpreter—call this out honestly in README).
-2. **Apple / Windows signing** and notarization lanes.
+1. **vLLM distribution** (pick one primary per platform; document in README):
+   - **Recommended default:** **vendored Python** + pinned `vllm`/torch/cuda wheels inside the portable tree, launched by the native entrypoint (no host `pip install`).
+   - Alternatives only if proven for your pin: static link, bundled `.so` only—do not block shipping on exotic layouts if vendored Python is reliable.
+2. **Apple / Windows signing** and notarization lanes (sign **both** the native launcher and, where required, the vendored runtime layout).
 3. **Exact vLLM memory knobs** available at the pinned version (map `memory` manifest → engine args).
-4. **Single binary vs thin directory** (binary + `lib/`): both satisfy portability if documented as one copyable unit.
+4. **Single binary vs thin directory** (binary + `python/` + `lib/`): both satisfy portability if documented as **one copyable unit**; vendored Python implies a **multi-file tree**—that is still “portable.”
 
 Link ADRs after resolution.
