@@ -27,6 +27,8 @@ The schema should encode:
 - `roles[]`, prefix layer references
 - `artifacts.dropper_executable` — per-platform tiny installer (< 5 MB budget; CI size gate)
 - `artifacts.native_executable` — stage-2 `agent-runtime` (per profile if needed)
+- **Channel index** — not emitted only by Next: build pipeline publishes **schema-versioned** `bundles.json` (see implementation plan §1.0.1): `profiles[]` with `stage2_archive_url`, `stage2_archive_sha256`, `stage2_archive_bytes`, predicates (`requires_metal`, etc.); dropper bootstrap URL priority (CLI → env → embedded → sidecar file)
+- **Install root** — stage-2 **`manifest.json` directory** is the canonical root for all relative paths; `bundle_schema_version` + `build_profile` must match the installed profile
 
 **Removed from target design:** training-first workflow, supernode / thin-client expansion.
 

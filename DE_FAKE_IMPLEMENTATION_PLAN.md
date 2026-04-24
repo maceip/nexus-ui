@@ -68,7 +68,51 @@ This document explicitly addresses:
 
 **Windows branch:** download **`bundle-windows-…`** (CUDA variant vs CPU-only may use the same probe pattern: NVIDIA driver present → CUDA bundle; else CPU or fail with clear message).
 
-**Bundle index:** dropper fetches a **signed** `bundles.json` (or equivalent) listing `{ profile_id, url, sha256, min_os, signatures }` so selection logic is versioned server-side without redeploying the dropper for every hotfix (only index + CDN).
+**Bundle index:** dropper fetches a **signed** channel document (default name `bundles.json`; treat as **schema-versioned** JSON, not ad hoc). Normative fields are in **§1.0.1** so implementers do not invent incompatible shapes.
+
+**Linux branch:** same two-stage pattern: **`bundle-linux-cuda-…`** vs **`bundle-linux-cpu-…`** (or `rocm` if you ship it)—probe selects **exactly one** row; document unsupported GPU → fail-fast vs CPU fallback in product policy (must be explicit in index, not undefined).
+
+#### 1.0.1 Bundle channel index — normative contract (`bundles.json`)
+
+The index is the **source of truth** for URLs and hashes; the dropper must **never** trust CDN directory listings alone.
+
+| Field | Required | Meaning |
+|-------|----------|---------|
+| `index_schema_version` | yes | Integer; **must** be ≤ dropper’s embedded `max_supported_index_schema`; dropper refuses unknown majors (forward-compat). Optional `min_dropper_version` on profile rows gates features |
+| `channel` / `product_id` | yes | Stable string; e.g. `nexus-agent` |
+| `released_at` | yes | ISO-8601; used for staleness warnings only |
+| `profiles[]` | yes | One object per selectable stage-2 artifact |
+
+Each **`profiles[]`** entry:
+
+| Field | Required | Meaning |
+|-------|----------|---------|
+| `profile_id` | yes | Stable id: `macos-metal`, `macos-fallback`, `windows-cuda`, `windows-cpu`, `linux-cuda`, `linux-cpu`, … |
+| `stage2_archive_url` | yes | HTTPS URL to **one** file (`.zip` / `.tar.zst` / `.tar.gz`—pick **one** format per product and document) |
+| `stage2_archive_sha256` | yes | Hash of the **entire** archive file on disk after download (before unpack) |
+| `stage2_archive_bytes` | yes | Exact byte length; dropper rejects download if `Content-Length` (if present) mismatches or final size ≠ this |
+| `stage2_unpacked_min_bytes` | yes | **Minimum free disk** required before download starts (compressed + peak unpack temp; be conservative) |
+| `min_os_version` / `max_os_version` | yes / optional | Inclusive semver or platform-specific tuples (e.g. mac `14.0+`); **probe must implement same comparator** as CI fixtures |
+| `cpu_arch` | yes | `arm64` \| `x86_64` \| `universal` (if ever used—define semantics) |
+| `requires_metal` | optional | If true, select only when Metal probe passes |
+| `requires_cuda` | optional | If true, NVIDIA driver + capability probe passes |
+| `min_dropper_version` | optional | Reject if dropper too old to verify this profile’s format |
+| `detached_signature_url` | recommended | Signature over `stage2_archive_sha256` + `profile_id` + `stage2_archive_bytes` (define exact signed payload in ADR) |
+| `release_notes_url` | optional | Human-readable |
+
+**Index integrity:** ship **detached signature** over canonical JSON bytes of `bundles.json` **or** sign a **manifest list hash**; dropper embeds **ed25519** (or min RSA) pubkey; **rotation**: support **pubkey id** in index header + multiple embedded keys in dropper until rotation completes.
+
+**Ill-defined unless fixed:** “signed `bundles.json`” without **which bytes are signed** and **which key** is a release blocker—lock in ADR before first ship.
+
+#### 1.0.2 Dropper bootstrap URL (resolve chicken-and-egg)
+
+The dropper must know **where to fetch the first index** without user pasting a 60 GB URL. Define **in priority order**:
+
+1. **CLI / env**: `--index-url`, `AGENT_BUNDLE_INDEX_URL` (highest for IT deployments).
+2. **Embedded default** in binary: `https://cdn.example.com/.../bundles.json` (product CDN).
+3. **Sidecar file** next to dropper: `bundles.index.url` one line (for thumb-drive enterprise mirrors).
+
+If all missing → exit with **actionable** error (exit code documented). **No** silent fallback to hardcoded third-party URLs not owned by the vendor.
 
 ### 1.1 Conceptual model (after stage 2 is installed)
 
@@ -122,16 +166,24 @@ Postgres / object storage apply **only** if you host a remote bundle build regis
 
 #### Deliverables
 
-- **`manifest.json`** includes:
-  - `vllm`: version pin, `enable_prefix_caching: true`, allowlisted CLI/engine args; optional `build_profile` (`metal` | `cuda` | `cpu`, …) echoing what the dropper installed.
-  - `model`: id + **pinned revision** + on-disk layout or first-run download spec.
+- **`manifest.json`** (at **stage-2 install root** only; single canonical path) includes:
+  - **`bundle_schema_version`** (required): semver for this manifest shape; `agent-runtime` **refuses** unknown major.
+  - `vllm`: version pin, `enable_prefix_caching: true`, allowlisted CLI/engine args; **`build_profile`** required in shipped builds (`metal` \| `cuda` \| `cpu` \| …) and must **equal** the `profile_id` the dropper installed (detect skew → fail fast).
+  - `model`: id + **pinned revision** + on-disk layout or first-run download spec; **every** path in manifest must be **relative** to install root or explicitly tagged `user_data_relative`—no absolute paths baked at spec-server emit time for end-user machines.
   - `roles[]`, `apc` / `mtp` policy id.
   - **`memory`**: see §2.4 (required block—no silent defaults).
   - **`updates`** (optional but recommended): base URL or channel id for **dropper** to check for stage-2 updates (same trust model as initial download).
+  - **`distribution`** (recommended): `dropper_min_version`, `stage2_archive_format` echo for support scripts.
+
+#### Path resolution (must be specified in code + doc)
+
+- **Install root**: directory containing `manifest.json` (definitive).
+- **`agent-runtime`**: resolves all `roles/*`, `prefixes/*`, `models/*` relative to install root; **rejects** `..` segments that escape root after `realpath`/normalize (prevents symlink escape if unpack uses symlinks).
 
 #### Acceptance
 
-- `agent-runtime validate ./bundle` exits 0 only if hashes, cross-refs, and memory policy validate.
+- `agent-runtime validate <install_root>` exits 0 only if hashes, cross-refs, memory policy, and **`build_profile` vs disk layout** checks pass (stage 2 self-consistency).
+- **Ill-defined without this:** “relative to executable” vs “relative to cwd”—**install root = directory of `manifest.json`** wins.
 
 ---
 
@@ -144,6 +196,23 @@ Same layered prefix model as before (global → shared context → role header �
 - Tests: token-prefix goldens; optional GPU prefill latency regression.
 
 Security: APC side-channel note for shared-host multi-tenant; default product is **single-user sovereign** machine.
+
+#### 2.2.1 Tokenization path (otherwise APC “will not work” as designed)
+
+APC matches on **token-id prefixes**, not raw UTF-8. The plan is **ill-defined** unless you pick **one** canonical serialization for every request:
+
+- **Either** always use the model’s **chat template** (`apply_chat_template`) with a fixed `add_generation_prompt` policy **or** always use a single raw-string format—**never mix** per role without documenting separate APC domains.
+- **Whitespace and newlines** are part of the prefix: golden tests must include **final newline policy**.
+- **BPE stability**: rare unicode normalization differences across OS—document NFC vs as-is for user paste.
+
+#### 2.2.2 Guided decoding / grammar vs APC (vLLM behavior)
+
+vLLM may **disable or skip prefix-cache reads** for certain features (e.g. when extra logits / constrained decoding modes conflict with cache hits—behavior is **version-specific**). If a role uses **GBNF / JSON schema** grammar:
+
+- Document for that **pinned vLLM** whether APC hits are still expected for the **static prefix** portion.
+- If not, MTP still saves **weight reload**; latency win moves to **decode** / structure only—**do not claim APC prefill wins** in docs without measuring that pin.
+
+**Code smell to avoid:** passing `grammar_file` as a path string into a hypothetical `SamplingParams` field that does not exist in your pinned vLLM—**bind to real API** in ADR per version.
 
 ---
 
@@ -159,16 +228,37 @@ Security: APC side-channel note for shared-host multi-tenant; default product is
 2. **Resolve**: fetch **signed** bundle index over HTTPS; select **exactly one** stage-2 profile (e.g. `macos-metal`, `macos-fallback`, `windows-cuda`, `windows-cpu`).
 3. **Download**: chunked stream, **resume**, **SHA256** (and optional **sigstore** / detached sig) verification before unpack.
 4. **Install**: unpack to canonical user-writable location; atomic rename; record `installed_profile` + version for support.
-5. **Handoff**: exec `agent-runtime` from stage 2 (or spawn installer MSI/exe on Windows if product uses that layout—still no Docker).
+5. **Handoff**: `exec` / `CreateProcess` **`agent-runtime`** from stage-2 install root with `argv[0]` set predictably; working directory = install root (or pass `--install-root`—pick **one** and test).
 
-**Security:** TLS pinning or trust-on-first-use policy documented; index signature verified with **embedded** public key in dropper (small); reject downgrades if manifest requires minimum stage-2 version.
+**Security:** TLS: default **system CA store**; if using **pinning**, document **corporate SSL inspection** breakage and IT override (`--index-url` / custom CA path). Index signature verified with **embedded** pubkey (§1.0.1). **Downgrade protection:** if installed `manifest.bundle_schema_version` > dropper-supported max, dropper must **not** overwrite with older CDN artifact—abort with error.
+
+#### 2.3.1b Install atomicity, locking, and partial failure (undefined → required)
+
+| Concern | Required behavior |
+|---------|-------------------|
+| **Concurrent runs** | Second dropper instance must detect **lock file** (`install.lock` with PID + timestamp) under staging parent; exit **or** wait with timeout (product choice—document). |
+| **Atomic swap** | Download to `*.partial` then `rename` into `stage2-<version>/`; **Unix**: `rename` over directory only if empty target removed first—use versioned dir + symlink `current` **or** rename temp root. **Windows**: file locking may block rename of running `agent-runtime`—support **side-by-side version dirs** + `current` junction, or instruct user to exit before update (must be explicit). |
+| **Resume** | Partial files named `archive.part`; resume only if **length matches** partial state stored in sidecar JSON; on hash mismatch after complete download, **delete** partial and retry (bounded retries). |
+| **Disk full mid-unpack** | Catch failure; delete incomplete staging dir; surface “need N GB” using `stage2_unpacked_min_bytes` from index. |
+| **Quarantine (macOS)** | Downloaded binaries may carry `com.apple.quarantine`; document **one** flow: signed+notarized dropper + signed stage-2 unpack path, or `xattr` doc for dev only—not mixed messages. |
+
+#### 2.3.1c Probe matrix (must be table-driven in code + tests)
+
+**Ill-defined** if probes are only prose. Ship a **`probe_matrix.json`** (or embedded table in dropper tests) listing: `(os, arch, metal?, cuda_driver?, free_disk?) → expected profile_id`. Minimum rows:
+
+- macOS arm64, Metal yes, OS ≥ min → `macos-metal`
+- macOS arm64, Metal no or OS below min → `macos-fallback`
+- Windows x86_64, NVIDIA driver ≥ floor → `windows-cuda`
+- Windows x86_64, no NVIDIA → `windows-cpu` **or** hard fail (choose one per product—**index must not list both without disjoint predicates**)
+
+**Rosetta:** if you ship **arm64-only** stage-2, dropper on **x86_64 Mac** must **fail fast** with “unsupported arch”—do not download arm64 bundle silently.
 
 #### 2.3.2 Stage 2 — `agent-runtime` + bundle (unchanged semantics)
 
-- Locates `manifest.json` per documented rule relative to install root.
-- Verifies hashes; ensures weights (ship or download per manifest).
-- Starts **one** vLLM build **matching** the installed profile (Metal build on Metal path, etc.).
-- Local loopback control for watchers.
+- Locates **`manifest.json` at install root** (§2.1); refuses to run if cwd-only discovery would pick wrong tree.
+- Verifies **embedded** `MANIFEST.sha256` or per-file manifest in bundle if you ship file lists; ensures weights (ship or download per manifest).
+- Starts **one** vLLM build **matching** `build_profile` and binary layout on disk.
+- **Local loopback only** (`127.0.0.1` bind + optional Unix socket)—document default port; **fail closed** if bind fails (no wildcard `0.0.0.0` in default secure profile).
 
 #### Explicit non-goals
 
@@ -213,6 +303,9 @@ Illustrative fields (exact names in zod when implemented):
 | `disk_spill_dir` | Optional path for temporary decode buffers / downloaded shards (must default under bundle dir) |
 | `download_chunk_mb` | Bounded in-memory buffering for first-run model fetch |
 | `idle_release_policy` | After N minutes idle: optional unload of **non-weight** caches (not full model unload unless explicit user mode) |
+| `host_ram_min_bytes` | **Dropper + runtime**: refuse start if physical RAM below floor (OOM avoidance before GPU) |
+
+**Gap closed:** `memory.gpu_memory_utilization_cap` is **meaningless** on **CPU-only** profiles—validator must require **`device_class`** (`gpu` \| `cpu` \| `metal`) and conditional-field rules so invalid combos fail at `validate` time, not at vLLM launch.
 
 #### 2.4.3 Runtime behaviors (must implement or explicitly defer with ADR)
 
@@ -241,16 +334,46 @@ Illustrative fields (exact names in zod when implemented):
 ### 2.5 Harden API contract (spec server)
 
 - Zod at route boundary; `ApiErrorBody` with `requestId`.
+- **Body size limit** for `POST` (e.g. max JSON bytes) to avoid accidental DoS—currently unbounded in many Next handlers.
+- **Timeout** on `generateBundleSpec` if future steps add I/O—today pure CPU but document max wall time for RSC.
 
 ---
 
-### 2.6 Typed YAML + tests
+### 2.6 Cross-cutting “will not work” checklist (release gate)
+
+Use as CI or human gate before calling a milestone done:
+
+| Item | Failure if omitted |
+|------|---------------------|
+| `bundles.json` schema version + signed bytes spec | Supply-chain or bricking on CDN typo |
+| Dropper bootstrap URL priority (§1.0.2) | User cannot install offline without docs |
+| `stage2_archive_sha256` + length verify before unpack | Malware / corrupted half-install |
+| Install lock + atomic unpack | Corrupted tree or race |
+| `build_profile` matches installed binaries | Runtime SIGILL or wrong GPU path |
+| Single chat-template serialization for MTP (§2.2.1) | APC never hits despite “same” English prompt |
+| `memory.device_class` conditional validation | CPU bundle with GPU-only fields crashes obscurely |
+| Loopback bind default secure | Accidental LAN exposure |
+| Windows: MSVC runtime present for wheel ABI | “DLL load failed” at first vLL import—document **redist** bundled in stage 2 or static link choice |
+| macOS: minimum OS for Metal build vs fallback | Wrong binary on older macOS |
+| **WSL** | **Out of scope** unless explicitly tested—state in README to avoid “works on Ubuntu” support tickets for WSL2 GPU passthrough |
+
+---
+
+### 2.7 Observability, uninstall, and updates (minimum viable)
+
+- **Logging**: structured logs under install root `logs/` with rotation cap (manifest `logging.max_mb`); default **no** remote telemetry.
+- **Uninstall**: ship `agent-runtime uninstall` that removes install root **version dir** and `current` pointer; **never** delete arbitrary parent paths—validate root contains `manifest.json` before delete.
+- **Updates**: dropper `--reinstall` or `agent-runtime update` re-invokes dropper with same trust chain; **delta updates** out of scope unless ADR adds binary diff format.
+
+---
+
+### 2.8 Typed YAML + tests
 
 - Library-backed YAML; round-trip + snapshots for bundle outputs.
 
 ---
 
-### 2.7 Integration tests (revised)
+### 2.9 Integration tests (revised)
 
 | Test | Purpose |
 |------|---------|
@@ -314,10 +437,12 @@ Illustrative fields (exact names in zod when implemented):
 ## 7) Security and Operations
 
 - **Dropper**: TLS, signed bundle index, hash/signature verify on every stage-2 byte; mitigate CDN swap; document upgrade policy.
+- **HTTP(S) proxy**: honor `HTTPS_PROXY` / `NO_PROXY` for enterprise; document interaction with TLS pinning if enabled.
 - Model hash verify on first run; **resume** partial downloads.
 - Tool execution: least privilege; **no Docker required**—use OS sandbox primitives.
 - APC timing: documented for multi-user edge case; sovereign default is single-user.
 - Secrets: env + OS keychain hooks in binary, not plaintext in manifest.
+- **Air-gap**: document **`--bundle-path`** (or env) to install from pre-copied archive **without** index fetch, still requiring **local** hash verify against **sidecar** `.sha256` shipped with thumb drive.
 
 ---
 
@@ -328,6 +453,7 @@ Illustrative fields (exact names in zod when implemented):
 3. **Apple / Windows signing**: sign **dropper** and **stage-2** layout; notarization for macOS dropper (stapling policy).
 4. **Exact vLLM memory knobs** at pinned version (map `memory` manifest → engine args).
 5. **Dropper implementation language** (Rust/Go/C++) vs size budget—must stay **< 5 MB** with HTTPS + verify deps.
-6. **Offline**: whether dropper supports `--bundle-path ./preseed.zip` to skip network (product choice).
+6. **Offline**: dropper **`--bundle-path`** + optional `--expected-sha256`** (required if no signature infra)—close before “air-gap” milestone.
+7. **WSL / devcontainers**: explicitly **unsupported** or **supported** with CI matrix—pick one; undefined = support debt.
 
-Link ADRs after resolution.
+Link ADRs after resolution (minimum: **signed index bytes**, **stage-2 archive format**, **Metal vs fallback probe**, **TLS pinning policy**).
