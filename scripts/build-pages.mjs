@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "fs";
+import { cpSync, existsSync, mkdirSync, readdirSync, rmSync, statSync, writeFileSync } from "fs";
 import { join } from "path";
 
 const root = process.cwd();
@@ -66,6 +66,11 @@ function normalizeHtmlOutputs(dir) {
     mkdirSync(routeDir, { recursive: true });
     cpSync(absolute, join(routeDir, "index.html"));
   }
+
+  const notFoundHtml = join(dir, "_not-found.html");
+  if (existsSync(notFoundHtml)) {
+    cpSync(notFoundHtml, join(dir, "404.html"));
+  }
 }
 
 function copyPublicAssets(sourceDir, targetDir) {
@@ -74,6 +79,9 @@ function copyPublicAssets(sourceDir, targetDir) {
   for (const relativePath of entries) {
     const source = join(sourceDir, relativePath);
     const target = join(targetDir, relativePath);
+    if (existsSync(target)) {
+      continue;
+    }
     const parent = target.split("/").slice(0, -1).join("/");
     mkdirSync(parent, { recursive: true });
     cpSync(source, target);
@@ -81,7 +89,6 @@ function copyPublicAssets(sourceDir, targetDir) {
 }
 
 function listFiles(dir, prefix = "") {
-  const { readdirSync, statSync } = await import("fs");
   const entries = readdirSync(join(dir, prefix));
   const files = [];
 
