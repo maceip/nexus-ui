@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { cpSync, existsSync, mkdirSync, readdirSync, rmSync, statSync, writeFileSync } from "fs";
+import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from "fs";
 import { join } from "path";
 
 const root = process.cwd();
@@ -8,6 +8,7 @@ const outDir = join(root, "out");
 const nextAppDir = join(root, ".next", "server", "app");
 const nextStaticDir = join(root, ".next", "static");
 const publicDir = join(root, "public");
+const basePath = (process.env.NEXT_PUBLIC_BASE_PATH || "").replace(/\/$/, "");
 
 rmSync(outDir, { recursive: true, force: true });
 mkdirSync(outDir, { recursive: true });
@@ -48,6 +49,7 @@ function copyRenderedTree(sourceDir, targetDir) {
   });
 
   normalizeHtmlOutputs(targetDir);
+  rewriteBasePathReferences(targetDir);
 }
 
 function normalizeHtmlOutputs(dir) {
@@ -70,6 +72,31 @@ function normalizeHtmlOutputs(dir) {
   const notFoundHtml = join(dir, "_not-found.html");
   if (existsSync(notFoundHtml)) {
     cpSync(notFoundHtml, join(dir, "404.html"));
+  }
+}
+
+function rewriteBasePathReferences(dir) {
+  if (!basePath) return;
+
+  const entries = listFiles(dir);
+
+  for (const file of entries) {
+    if (!/\.(html|css|js|txt|xml|json)$/.test(file)) continue;
+
+    const absolute = join(dir, file);
+    const source = readFileSync(absolute, "utf8");
+    const rewritten = source
+      .replaceAll('href="/', `href="${basePath}/`)
+      .replaceAll('src="/', `src="${basePath}/`)
+      .replaceAll('content="/', `content="${basePath}/`)
+      .replaceAll('url(/', `url(${basePath}/`)
+      .replaceAll('="/_next/', `="${basePath}/_next/`)
+      .replaceAll("'/_next/", `'${basePath}/_next/`)
+      .replaceAll('"/_next/', `"${basePath}/_next/`);
+
+    if (rewritten !== source) {
+      writeFileSync(absolute, rewritten);
+    }
   }
 }
 
