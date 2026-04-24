@@ -1,7 +1,13 @@
 "use client";
 
+import * as React from "react";
+
 import { ActivityGraph } from "@/components/nexus-ui/activity-graph";
 import { CommitGraph, type Commit } from "@/components/nexus-ui/commit-graph";
+import {
+  ContextualTextInput,
+  validateContextualInput,
+} from "@/components/nexus-ui/contextual-text-input";
 import { FileTree, type FileTreeNode } from "@/components/nexus-ui/file-tree";
 import { RepoCard } from "@/components/nexus-ui/repo-card";
 
@@ -185,11 +191,20 @@ const activityData = Array.from({ length: 364 }, (_, index) => {
 });
 
 export default function GalleryPage() {
+  const [githubRepo, setGithubRepo] = React.useState("github.com/shadcn-ui/ui");
+  const [huggingfaceRepo, setHuggingfaceRepo] = React.useState(
+    "huggingface.co/google/gemma-3-1b",
+  );
   const component =
     typeof window !== "undefined"
       ? new URLSearchParams(window.location.search).get("component")
       : null;
   const showAll = !component;
+  const githubValidation = validateContextualInput("github", githubRepo);
+  const huggingfaceValidation = validateContextualInput(
+    "huggingface",
+    huggingfaceRepo,
+  );
 
   return (
     <main className="min-h-screen bg-[#050505] px-6 py-14 text-white sm:px-8 lg:px-12">
@@ -257,6 +272,40 @@ export default function GalleryPage() {
             <ActivityGraph data={activityData} />
             <ActivityGraph data={[]} loading className="max-w-[1000px]" />
           </div>
+          </section>
+        ) : null}
+
+        {showAll || component === "contextual-inputs" ? (
+          <section className="space-y-6">
+          <SectionTitle
+            title="Contextual inputs"
+            description="Context-specific GitHub and Hugging Face input shells with anchored icons and built-in validation."
+          />
+            <div
+              data-testid="contextual-inputs-preview"
+              className="grid gap-5 lg:grid-cols-2"
+            >
+              <ContextualTextInput
+                kind="github"
+                value={githubRepo}
+                onChange={setGithubRepo}
+              />
+              <ContextualTextInput
+                kind="huggingface"
+                value={huggingfaceRepo}
+                onChange={setHuggingfaceRepo}
+              />
+            </div>
+            <div className="grid gap-4 rounded-2xl border border-white/8 bg-white/[0.02] p-4 text-sm text-white/72 lg:grid-cols-2">
+              <div>
+                <p className="font-medium text-white">GitHub normalized</p>
+                <p>{githubValidation.normalizedValue ?? "Invalid repo"}</p>
+              </div>
+              <div>
+                <p className="font-medium text-white">Hugging Face normalized</p>
+                <p>{huggingfaceValidation.normalizedValue ?? "Invalid repo"}</p>
+              </div>
+            </div>
           </section>
         ) : null}
 
