@@ -45,14 +45,7 @@ jobs:
           GITHUB_PAGES: "true"
           NEXT_PUBLIC_BASE_PATH: /${{ github.event.repository.name }}
           NEXT_PUBLIC_SITE_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}
-        run: |
-          rm -rf out .next
-          npm run build
-          mkdir -p out
-          cp -R .next/static out/_next-static
-          cp -R .next/server/app out/app-static
-          cp -R public/* out/ 2>/dev/null || true
-          echo > out/.nojekyll
+        run: npm run build:pages
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3

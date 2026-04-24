@@ -7,7 +7,6 @@ const nextConfig: NextConfig = {
   ...(isPagesBuild
     ? {
         output: "export",
-        distDir: "out",
         trailingSlash: true,
         images: {
           unoptimized: true,
