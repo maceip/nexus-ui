@@ -15,6 +15,8 @@ vLLM APC: https://docs.vllm.ai/en/latest/features/automatic_prefix_caching/
 
 There is **no** bundled training step, **no** supernode, and **no** thin-client control plane in the target design.
 
+**Normative v1 detail** lives only in `DE_FAKE_IMPLEMENTATION_PLAN.md` (Frozen product choices + Appendix A): **`.tar.zst` only**, **Ed25519** index + embedded per-profile stage-2 sig, **no TLS pinning**, **`chat_messages` MTP only**, **`FILES.sha256` required**, Next emits **`distribution.profile_id: "draft"`** until the release packer overwrites it.
+
 ## 2) Server Components
 
 ### A) Contract schema (`lib/server/agent-spec/schema.ts` — evolving to `BundleSpec`)

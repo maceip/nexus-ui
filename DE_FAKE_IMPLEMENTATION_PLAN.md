@@ -31,6 +31,30 @@ This document explicitly addresses:
 6. **Typed YAML serialization** + contract tests.
 7. **Integration tests** proving droppers and full bundles (not script stubs) and, where CI has a GPU, APC-friendly behavior.
 
+### Frozen product choices (v1 — normative)
+
+These are **binding** for the first shippable vertical slice. Do not add parallel formats or “v2 hooks” in the same artifact family without bumping `index_schema_version` / `bundle_schema_version`.
+
+| Topic | v1 decision |
+|-------|-------------|
+| **Stage-2 archive** | **`.tar.zst` only** (Zstandard). No `.zip` / `.tar.gz` in v1. `distribution.stage2_archive_format` is always `"tar.zst"`. |
+| **Index + artifact crypto** | **Ed25519** only. Index carries **required** `signing_key_id`, `index_signature_algorithm` (`ed25519`), `index_signature_b64`. Each profile carries **required** `stage2_detached_signature_b64` **embedded in the index** (base64 signature bytes)—**no second HTTPS fetch** for stage-2 sig in v1. (CDN may still ship `.sig` sidecar for humans; dropper **must not depend** on it.) |
+| **Signed bytes (index)** | Payload = UTF-8 **`canonical_json(signing_object)`** where `signing_object` is exactly `{ "channel", "index_schema_version", "profiles", "released_at" }` with **`profiles` sorted ascending by `profile_id`** and each profile object’s keys **sorted ASCII ascending**. `canonical_json` = JSON with **no insignificant whitespace**, UTF-8, no trailing newline. Signature covers those bytes end-to-end. |
+| **Signed bytes (stage-2)** | Message = UTF-8 string **exactly** `"{profile_id}\n{stage2_archive_sha256}\n{stage2_archive_bytes}\n"` (trailing newline mandatory). Sign with **same** Ed25519 key type; verify before unpack. |
+| **TLS** | **System CA trust store only.** **No** TLS public-key pinning in v1 (avoids dead installs behind corporate SSL inspection). |
+| **Dropper second instance** | If `install_parent/install.lock` exists and PID alive → **exit 6 immediately** (no wait queue). |
+| **Windows in-place update** | **Versioned dirs** `versions/<semver>/` + **`current` junction**. If `agent-runtime` is running from `current`, **`agent-setup install` exits 7** with message to run `agent-runtime stop` first (no forced kill from dropper). |
+| **Linux `min_os_version`** | Compare to **`VERSION_ID`** from **`/etc/os-release`** (strip quotes). If file missing or `VERSION_ID` missing → **no Linux profile matches** (exit 3). Do **not** use kernel `uname` for OS floor in v1. |
+| **macOS `min_os_version`** | Compare to **`sysctl kern.osproductversion`** string (e.g. `14.2.1`): split `.`, zero-pad numeric tuple, lexicographic ≥. |
+| **Windows `min_os_version`** | String **`10.0.19045`** form (major.minor.build): compare using **RtlGetVersion**-equivalent (`osversion` struct): require **each component ≥** parsed minimum (build number required in v1 rows). |
+| **MTP serialization** | **`chat_messages` only** for v1 (`manifest.mtp.serialization_mode` literal). No raw-string mode. |
+| **Guided decoding** | **None in v1** (no GBNF / JSON-schema sampler constraints in role definitions). Eliminates “APC vs grammar” undefined behavior until v2. |
+| **Unicode** | All prefix files **UTF-8 NFC** at rest; reject non-NFC on `validate`. |
+| **Integrity file** | **`FILES.sha256` required** in every shipped stage-2 tree; `validate` fails if missing. |
+| **WSL / devcontainers** | **Unsupported** in v1 (document in README; CI does not test). |
+| **Metal pipeline** | v1 **requires** a **working Metal-capable vLLM build** in `macos-metal` profile or that profile is **omitted from index** (ship only `macos-fallback`). The plan does not assume upstream readiness—**release index lists only profiles you have built**. |
+| **Spec server vs release manifest** | Next app emits **`distribution.profile_id`: `"draft"`** only. Release packer **overwrites** to real `profile_id` and injects **`bundle_schema_version`** / hashes—**never** publish CDN artifacts straight from Next without packer pass. |
+
 ---
 
 ## 0) Codebase Inventory (Today)
@@ -64,7 +88,7 @@ This document explicitly addresses:
 | **1** | `agent-setup.exe` / `Agent Setup` / `agent-setup` | **< 5 MB** per platform | Probe machine; resolve **bundle channel** (macOS Metal vs fallback, Windows, Linux); HTTPS download with verify + resume; unpack; optionally register shortcut / PATH; launch or delegate to stage 2 |
 | **2** | Full portable directory or signed archive | Large (GB–60 GB+) | Self-sufficient runtime: `agent-runtime`, vendored Python if needed, vLLM build **matched to probe** (Metal on Apple GPU path, etc.), manifest, roles, weights per product policy |
 
-**macOS branch (required behavior in plan):** if probes determine **Metal-capable** hardware + **supported macOS version** + **Metal build of vLLM** is available for this product pin, download **`bundle-macos-metal-…`** (name illustrative). Else download the documented **`bundle-macos-fallback-…`** (e.g. CPU-only or older OS).
+**macOS branch:** index must list **`macos-metal`** (priority **10**) with `requires_metal: true` and **`macos-fallback`** (priority **100**) with `requires_metal: false`; selection algorithm (§A.3) picks **`macos-metal`** iff Metal + OS predicates pass, else **`macos-fallback`**. If `macos-metal` row is absent from CDN, Metal Macs fall through to fallback only—**do not ship that accidentally**; omit metal row only when no Metal build exists.
 
 **Windows branch:** download **`bundle-windows-…`** (CUDA variant vs CPU-only may use the same probe pattern: NVIDIA driver present → CUDA bundle; else CPU or fail with clear message).
 
@@ -81,9 +105,9 @@ The index is the **source of truth** for URLs and hashes; the dropper must **nev
 | `index_schema_version` | yes | Integer; **must** be ≤ dropper’s embedded `max_supported_index_schema`; dropper refuses unknown majors (forward-compat) |
 | `channel` / `product_id` | yes | Stable string; e.g. `nexus-agent` |
 | `released_at` | yes | ISO-8601; used for staleness warnings only |
-| `signing_key_id` | recommended | String id of pubkey used to verify `index_signature_*` (supports rotation) |
-| `index_signature_algorithm` | recommended | e.g. `ed25519` |
-| `index_signature_b64` | recommended | Base64 signature over **canonical UTF-8 bytes** of the JSON object **with these three fields omitted** (`index_signature_algorithm`, `index_signature_b64`, `signing_key_id`) and with **`profiles` sorted by `profile_id`** (stable canonicalization—implement exact algorithm in ADR and test vectors) |
+| `signing_key_id` | yes | Must match one of the dropper’s embedded pubkey ids |
+| `index_signature_algorithm` | yes | Literal **`ed25519`** |
+| `index_signature_b64` | yes | Ed25519 signature over **`canonical_json(signing_object)`** per **Frozen product choices** table (signing object keys: `channel`, `index_schema_version`, `profiles`, `released_at` only) |
 | `profiles[]` | yes | One object per selectable stage-2 artifact |
 
 Each **`profiles[]`** entry:
@@ -91,8 +115,9 @@ Each **`profiles[]`** entry:
 | Field | Required | Meaning |
 |-------|----------|---------|
 | `profile_id` | yes | Stable id: `macos-metal`, `macos-fallback`, `windows-cuda`, `windows-cpu`, `linux-cuda`, `linux-cpu`, … |
+| `bundle_schema_version` | yes | Semver of **`manifest.json` inside** this stage-2 archive; used for **downgrade detection** before download |
 | `selection_priority` | yes | Integer **≥ 0**; **lower value = higher priority**. After filtering to rows whose predicates pass, pick the **passing row with minimum `selection_priority`**; tie-breaker lexicographic `profile_id`. **Without this field, multiple rows can match one machine** (e.g. fallback and metal both “pass” if `requires_metal` is only one-way)—do not ship an index without priorities |
-| `stage2_archive_url` | yes | HTTPS URL to **one** file (`.zip` / `.tar.zst` / `.tar.gz`—pick **one** format per product and document) |
+| `stage2_archive_url` | yes | HTTPS URL to **one** `.tar.zst` file (v1 only) |
 | `stage2_archive_sha256` | yes | Hash of the **entire** archive file on disk after download (before unpack) |
 | `stage2_archive_bytes` | yes | Exact byte length; dropper rejects download if `Content-Length` (if present) mismatches or final size ≠ this |
 | `stage2_unpacked_min_bytes` | yes | **Minimum free disk** required before download starts (compressed + peak unpack temp; be conservative) |
@@ -102,12 +127,10 @@ Each **`profiles[]`** entry:
 | `requires_no_metal` | optional | If **true**, host must **fail** Metal probe (CPU-only / software-render path)—use for explicit CPU bundles on macOS when you must exclude Metal-capable hosts |
 | `requires_cuda` | optional | If true, NVIDIA driver + capability probe passes |
 | `min_dropper_version` | optional | Reject if dropper too old to verify this profile’s format |
-| `detached_signature_url` | recommended | Signature over `stage2_archive_sha256` + `profile_id` + `stage2_archive_bytes` (define exact signed payload in ADR) |
+| `stage2_detached_signature_b64` | yes | Ed25519 signature over the **stage-2 message** per **Frozen product choices** (same key type as index; key id in `signing_key_id`) |
 | `release_notes_url` | optional | Human-readable |
 
-**Index integrity:** ship **detached signature** over canonical JSON bytes of `bundles.json` **or** sign a **manifest list hash**; dropper embeds **ed25519** (or min RSA) pubkey; **rotation**: support **pubkey id** in index header + multiple embedded keys in dropper until rotation completes.
-
-**Ill-defined unless fixed:** “signed `bundles.json`” without **which bytes are signed** and **which key** is a release blocker—lock in ADR before first ship.
+**Key rotation:** dropper embeds a **fixed map** `pubkeys: Record<signing_key_id, ed25519_public_key_bytes>` (≤4 keys). Index `signing_key_id` selects the verify key. Revoke old keys by shipping new dropper before CDN stops signing with old key.
 
 #### 1.0.2 Dropper bootstrap URL (resolve chicken-and-egg)
 
@@ -173,13 +196,13 @@ Postgres / object storage apply **only** if you host a remote bundle build regis
 
 - **`manifest.json`** (at **stage-2 install root** only; single canonical path) includes:
   - **`bundle_schema_version`** (required): semver for this manifest shape; `agent-runtime` **refuses** unknown major.
-  - `vllm`: version pin, `enable_prefix_caching: true`, allowlisted CLI/engine args.
-  - **`distribution.profile_id`** (required): **exact copy** of the `profiles[].profile_id` from `bundles.json` that was installed (e.g. `macos-metal`, `windows-cuda`). Validator compares this string only—**do not** use a separate short `build_profile` enum that can drift from the index.
-  - `model`: id + **pinned revision** + on-disk layout or first-run download spec; **every** path in manifest must be **relative** to install root or explicitly tagged `user_data_relative`—no absolute paths baked at spec-server emit time for end-user machines.
-  - `roles[]`, `apc` / `mtp` policy id.
-  - **`memory`**: see §2.4 (required block—no silent defaults).
-  - **`updates`** (optional but recommended): base URL or channel id for **dropper** to check for stage-2 updates (same trust model as initial download).
-  - **`distribution`** (required object): at minimum `profile_id` (see above), `stage2_archive_format` (`zip` \| `tar.zst` \| `tar.gz`), `dropper_min_version` (semver of oldest dropper allowed to update this tree), optional `channel_url` echo for support.
+  - **`vllm`**: version pin, `enable_prefix_caching: true`, allowlisted CLI/engine args.
+  - **`model`**: id + **pinned revision** + on-disk layout or first-run download spec; **every** path must be **relative** to install root or tagged `user_data_relative`—no absolute paths from the spec server for end-user trees.
+  - **`roles[]`**, **`apc`** / **`mtp`** policy ids.
+  - **`memory`**: see §2.4 (required).
+  - **`updates`** (optional): `{ "channel_url": "<https>" }` for support links only.
+  - **`distribution`** (required): `profile_id` (**exact** CDN `profiles[].profile_id`, or **`"draft"`** only from Next pre-pack); `stage2_archive_format` **`"tar.zst"`**; `dropper_min_version` (semver); `channel_url` (HTTPS URL of `bundles.json`).
+  - **`mtp`**: includes **`serialization_mode": "chat_messages"`** (v1 mandatory).
 
 #### Path resolution (must be specified in code + doc)
 
@@ -188,7 +211,7 @@ Postgres / object storage apply **only** if you host a remote bundle build regis
 
 #### Acceptance
 
-- `agent-runtime validate <install_root>` exits 0 only if hashes, cross-refs, memory policy, and **`distribution.profile_id` vs on-disk layout** checks pass (stage 2 self-consistency).
+- `agent-runtime validate <install_root>` exits **0** only if `FILES.sha256` passes, memory/device rules pass, and **`distribution.profile_id` ≠ `"draft"`**. **`run`** requires the same (draft manifests are authoring-only).
 - **Ill-defined without this:** “relative to executable” vs “relative to cwd”—**install root = directory of `manifest.json`** wins.
 
 ---
@@ -203,22 +226,16 @@ Same layered prefix model as before (global → shared context → role header �
 
 Security: APC side-channel note for shared-host multi-tenant; default product is **single-user sovereign** machine.
 
-#### 2.2.1 Tokenization path (otherwise APC “will not work” as designed)
+#### 2.2.1 Tokenization path (v1)
 
-APC matches on **token-id prefixes**, not raw UTF-8. The plan is **ill-defined** unless you pick **one** canonical serialization for every request:
+APC matches on **token-id prefixes**. v1 **always** builds **OpenAI-style `messages[]`**, then runs them through the model tokenizer’s **`apply_chat_template`** with **`add_generation_prompt: true`** on the final assistant turn construction path (exact call site lives in `agent-runtime`; must be identical for the same logical prefix layers).
 
-- **Either** always use the model’s **chat template** (`apply_chat_template`) with a fixed `add_generation_prompt` policy **or** always use a single raw-string format—**never mix** per role without documenting separate APC domains.
-- **Whitespace and newlines** are part of the prefix: golden tests must include **final newline policy**.
-- **BPE stability**: rare unicode normalization differences across OS—document NFC vs as-is for user paste.
+- **Whitespace and newlines** in `prefixes/*.txt` are **significant**; golden tests lock trailing newline presence/absence per file.
+- **Unicode:** NFC at rest (Frozen table).
 
-#### 2.2.2 Guided decoding / grammar vs APC (vLLM behavior)
+#### 2.2.2 Guided decoding (v1)
 
-vLLM may **disable or skip prefix-cache reads** for certain features (e.g. when extra logits / constrained decoding modes conflict with cache hits—behavior is **version-specific**). If a role uses **GBNF / JSON schema** grammar:
-
-- Document for that **pinned vLLM** whether APC hits are still expected for the **static prefix** portion.
-- If not, MTP still saves **weight reload**; latency win moves to **decode** / structure only—**do not claim APC prefill wins** in docs without measuring that pin.
-
-**Code smell to avoid:** passing `grammar_file` as a path string into a hypothetical `SamplingParams` field that does not exist in your pinned vLLM—**bind to real API** in ADR per version.
+**Not supported.** No GBNF, no `guided_json`, no logits processor fields in `roles/*.yaml` for v1. Revisit in `bundle_schema_version` **2.x** only with a separate APC measurement spec.
 
 ---
 
@@ -236,13 +253,13 @@ vLLM may **disable or skip prefix-cache reads** for certain features (e.g. when 
 4. **Install**: unpack to canonical user-writable location; atomic rename; record `installed_profile` + version for support.
 5. **Handoff**: `exec` / `CreateProcess` **`agent-runtime`** from stage-2 install root with `argv[0]` set predictably; working directory = install root (or pass `--install-root`—pick **one** and test).
 
-**Security:** TLS: default **system CA store**; if using **pinning**, document **corporate SSL inspection** breakage and IT override (`--index-url` / custom CA path). Index signature verified with **embedded** pubkey (§1.0.1). **Downgrade protection:** if installed `manifest.bundle_schema_version` > dropper-supported max, dropper must **not** overwrite with older CDN artifact—abort with error.
+**Security:** TLS uses **system CA store only** (Frozen table). Verify index **then** verify embedded per-profile **`stage2_detached_signature_b64`** **before** download starts (fail-fast on bad CDN row). **Downgrade protection:** let `V_old` = `bundle_schema_version` read from `install_parent/current/manifest.json` if present, else null. Let `V_new` = selected profile’s **`bundle_schema_version`** from index. If `V_old` not null and `semver(V_new) < semver(V_old)` and **`--allow-downgrade` absent** → **`install` exits 10** (no network). If `major(V_old) > dropper_max_supported_bundle_major` → **`install` exits 10**. If **`--allow-downgrade`** passed → skip semver `<` check only.
 
 #### 2.3.1b Install atomicity, locking, and partial failure (undefined → required)
 
 | Concern | Required behavior |
 |---------|-------------------|
-| **Concurrent runs** | Second dropper instance must detect **lock file** (`install.lock` with PID + timestamp) under staging parent; exit **or** wait with timeout (product choice—document). |
+| **Concurrent runs** | If `install_parent/install.lock` exists and owning PID is alive → **exit 6** (Frozen table). If stale (PID dead), dropper deletes lock and proceeds. |
 | **Atomic swap** | Download to `*.partial` then `rename` into `stage2-<version>/`; **Unix**: `rename` over directory only if empty target removed first—use versioned dir + symlink `current` **or** rename temp root. **Windows**: file locking may block rename of running `agent-runtime`—support **side-by-side version dirs** + `current` junction, or instruct user to exit before update (must be explicit). |
 | **Resume** | Partial files named `archive.part`; resume only if **length matches** partial state stored in sidecar JSON; on hash mismatch after complete download, **delete** partial and retry (bounded retries). |
 | **Disk full mid-unpack** | Catch failure; delete incomplete staging dir; surface “need N GB” using `stage2_unpacked_min_bytes` from index. |
@@ -255,16 +272,16 @@ vLLM may **disable or skip prefix-cache reads** for certain features (e.g. when 
 - macOS arm64, Metal yes, OS ≥ min → `macos-metal`
 - macOS arm64, Metal no or OS below min → `macos-fallback`
 - Windows x86_64, NVIDIA driver ≥ floor → `windows-cuda`
-- Windows x86_64, no NVIDIA → `windows-cpu` **or** hard fail (choose one per product—**index must not list both without disjoint predicates**)
+- Windows x86_64, no NVIDIA → `windows-cpu` (**v1 index ships `windows-cpu` with higher `selection_priority` than `windows-cuda`** so CUDA wins when driver probe passes; both may appear in index)
 
 **Rosetta:** if you ship **arm64-only** stage-2, dropper on **x86_64 Mac** must **fail fast** with “unsupported arch”—do not download arm64 bundle silently.
 
 #### 2.3.2 Stage 2 — `agent-runtime` + bundle (unchanged semantics)
 
 - Locates **`manifest.json` at install root** (§2.1); refuses to run if cwd-only discovery would pick wrong tree.
-- Verifies **embedded** `MANIFEST.sha256` or per-file manifest in bundle if you ship file lists; ensures weights (ship or download per manifest).
+- Verifies **`FILES.sha256`** (required): recomputes every listed file; then verifies weights if `model.weights_relative_path` points at on-disk files (or runs first-run download per manifest before starting vLLM).
 - Starts **one** vLLM build **matching** `manifest.distribution.profile_id` and the on-disk wheel/native layout for that profile.
-- **Local loopback only** (`127.0.0.1` bind + optional Unix socket)—document default port; **fail closed** if bind fails (no wildcard `0.0.0.0` in default secure profile).
+- **Loopback only:** vLLM child binds **`127.0.0.1:8000`** (internal). `agent-runtime` HTTP router binds **`127.0.0.1:8765`**; metrics **`127.0.0.1:8766`**. No `0.0.0.0` binds in v1. If any bind fails → **exit 9**.
 
 #### Explicit non-goals
 
@@ -295,9 +312,9 @@ This subsystem is **first-class** in `manifest.json` and enforced by `agent-runt
 - **APC-friendly**: preserve hot prefix blocks for **high-priority roles** under pressure.
 - **Large-bundle friendly**: weights may be **60 GB+**; memory policy must cover **disk cache**, **mmap** (where supported), and **streaming download** without filling RAM.
 
-#### 2.4.2 Manifest schema (`memory` block) — implementers must ship defaults
+#### 2.4.2 Manifest schema (`memory` block) — required fields (zod 1:1)
 
-Illustrative fields (exact names in zod when implemented):
+Implement **exactly** these keys (no additional keys in v1 `memory` object—reject unknown keys at validate):
 
 | Field | Purpose |
 |-------|---------|
@@ -310,20 +327,19 @@ Illustrative fields (exact names in zod when implemented):
 | `download_chunk_mb` | Bounded in-memory buffering for first-run model fetch |
 | `idle_release_policy` | After N minutes idle: optional unload of **non-weight** caches (not full model unload unless explicit user mode) |
 | `host_ram_min_bytes` | **Dropper + runtime**: refuse start if physical RAM below floor (OOM avoidance before GPU) |
+| `min_vram_bytes` | Required when `device_class` is `gpu` or `metal`; **must be 0** when `device_class` is `cpu` |
 
-**Gap closed:** `memory.gpu_memory_utilization_cap` is **meaningless** on **CPU-only** profiles—validator must require **`device_class`** (`gpu` \| `cpu` \| `metal`) and conditional-field rules so invalid combos fail at `validate` time, not at vLLM launch.
+**Validation rules (zod):** If `device_class === "cpu"` → forbid non-zero `gpu_memory_utilization_cap`, `min_vram_bytes`, and `requires_cuda`-style fields; `cpu_offload_policy` must be `"none"`. If `device_class` is `gpu` or `metal` → `gpu_memory_utilization_cap` required in `(0,1]`; `min_vram_bytes` required **> 0**.
 
-#### 2.4.3 Runtime behaviors (must implement or explicitly defer with ADR)
+**v1 closed key set for `memory` (reject any other key):** `device_class`, `host_ram_min_bytes`, `min_vram_bytes`, `gpu_memory_utilization_cap`, `max_concurrent_requests`, `cpu_offload_policy`, `prefix_cache_budget_tokens`, `download_chunk_mb`, `apc_priority_roles`, `idle_release_policy`, `disk_spill_dir`. Omit unused keys in shipped manifests or set **`disk_spill_dir`** to **`"logs/spill"`** (relative string).
 
-1. **Admission control**: Router queues invocations when `max_concurrent_requests` saturated; returns structured error to local clients (HTTP 429 or CLI message).
-2. **Preflight check**: On startup, estimate **minimum VRAM** from manifest + model card; if below threshold, **fail fast** with clear message (prefer failing to half-running and OOM-killing).
-3. **Token budgeting**: Per-role `max_prompt_tokens` / `max_total_tokens` to cap pathological prompts that blow KV and evict useful APC entries.
-4. **LRU awareness**: Document interaction with vLLM’s APC LRU behavior; optionally expose metrics (prefill ms, queue depth) on localhost admin port.
-5. **Graceful degradation ladder** (product-defined order, implement one default):
-   - (a) shrink concurrent slots  
-   - (b) shorten retained tool transcripts in volatile tail only—not shared prefixes  
-   - (c) drop lowest-priority role’s warm prefix **last**  
-   - (d) optional: user-invoked “cold mode” that disables APC for debugging only  
+#### 2.4.3 Runtime behaviors (v1 — implement exactly this)
+
+1. **Admission control**: When in-flight requests ≥ `memory.max_concurrent_requests`, new HTTP `POST /v1/invoke` returns **`429`** JSON `{ "error": { "code": "CAPACITY", "message": "…", "requestId" } }`; CLI `invoke` prints same to stderr and exits **11**.
+2. **Preflight:** Before spawning vLLM, read **`memory.host_ram_min_bytes`** and **`memory.min_vram_bytes`** (add this required field next to `device_class`—see §2.4.2 table); if host RAM or reported GPU VRAM below floor → **exit 8** with one stderr line listing measured vs required.
+3. **Token budgeting:** Enforce per-role `roles/*.yaml` `sampling.max_prompt_tokens` / `max_total_tokens` in router **before** HTTP to vLLM; reject with **`413`** / exit **12** if exceeded.
+4. **Metrics:** Expose **`GET http://127.0.0.1:8766/metrics`** (JSON) with `{ "queue_depth", "in_flight", "vllm_restarts" }` only—no Prometheus in v1.
+5. **Degradation:** v1 implements **(a) only**: when under sustained `429`, operators lower `max_concurrent_requests` in manifest and reinstall—no automatic APC disable in v1.
 
 #### 2.4.4 Tests
 
@@ -339,9 +355,9 @@ Illustrative fields (exact names in zod when implemented):
 
 ### 2.5 Harden API contract (spec server)
 
-- Zod at route boundary; `ApiErrorBody` with `requestId`.
-- **Body size limit** for `POST` (e.g. max JSON bytes) to avoid accidental DoS—currently unbounded in many Next handlers.
-- **Timeout** on `generateBundleSpec` if future steps add I/O—today pure CPU but document max wall time for RSC.
+- Zod at route boundary; `ApiErrorBody` with `requestId` (shape: `{ error: { code, message, details?, requestId } }`).
+- **Max request body:** **512 KiB** hard cap on `POST /api/bundle-spec` (return **413** if larger).
+- **Wall clock:** handler must complete within **10s** CPU work; abort with **504** if exceeded (prevents hung RSC).
 
 ---
 
@@ -351,17 +367,17 @@ Use as CI or human gate before calling a milestone done:
 
 | Item | Failure if omitted |
 |------|---------------------|
-| `bundles.json` schema version + signed bytes spec | Supply-chain or bricking on CDN typo |
+| `bundles.json` matches **Frozen** canonical signing + Ed25519 | Supply-chain or bricking on CDN typo |
 | Dropper bootstrap URL priority (§1.0.2) | User cannot install offline without docs |
 | `stage2_archive_sha256` + length verify before unpack | Malware / corrupted half-install |
 | Install lock + atomic unpack | Corrupted tree or race |
 | `distribution.profile_id` matches installed tree / binaries | Runtime SIGILL or wrong GPU path |
-| Single chat-template serialization for MTP (§2.2.1) | APC never hits despite “same” English prompt |
+| `serialization_mode` is `chat_messages` only | APC never hits despite “same” English prompt |
 | `memory.device_class` conditional validation | CPU bundle with GPU-only fields crashes obscurely |
 | Loopback bind default secure | Accidental LAN exposure |
 | Windows: MSVC runtime present for wheel ABI | “DLL load failed” at first vLL import—document **redist** bundled in stage 2 or static link choice |
 | macOS: minimum OS for Metal build vs fallback | Wrong binary on older macOS |
-| **WSL** | **Out of scope** unless explicitly tested—state in README to avoid “works on Ubuntu” support tickets for WSL2 GPU passthrough |
+| **WSL** | **Unsupported v1** (README one-liner) |
 
 ---
 
@@ -369,7 +385,7 @@ Use as CI or human gate before calling a milestone done:
 
 - **Logging**: structured logs under install root `logs/` with rotation cap (manifest `logging.max_mb`); default **no** remote telemetry.
 - **Uninstall**: ship `agent-runtime uninstall` that removes install root **version dir** and `current` pointer; **never** delete arbitrary parent paths—validate root contains `manifest.json` before delete.
-- **Updates**: dropper `--reinstall` or `agent-runtime update` re-invokes dropper with same trust chain; **delta updates** out of scope unless ADR adds binary diff format.
+- **Updates:** `agent-setup install` when `current` already exists → **full replace** of target `versions/<semver>/` after successful download (same atomic rules). **No delta/binary patches in v1.**
 
 ---
 
@@ -388,7 +404,7 @@ Use as CI or human gate before calling a milestone done:
 | Bundle index + selection | Probe fixtures → correct profile URL chosen |
 | Bundle validator | manifest + `memory` + role refs |
 | MTP prefix golden | Stable shared prefixes |
-| Optional GPU | APC warm-path or prefill timing (stage 2) |
+| GPU smoke (optional CI) | If runner has GPU: two `POST /v1/invoke` same `role_id` → second request **prefill wall time ≤ first** by ≥25% OR log vLLM cache stat if exposed in pinned vLLM |
 
 ---
 
@@ -443,7 +459,7 @@ Use as CI or human gate before calling a milestone done:
 ## 7) Security and Operations
 
 - **Dropper**: TLS, signed bundle index, hash/signature verify on every stage-2 byte; mitigate CDN swap; document upgrade policy.
-- **HTTP(S) proxy**: honor `HTTPS_PROXY` / `NO_PROXY` for enterprise; document interaction with TLS pinning if enabled.
+- **HTTP(S) proxy:** honor `HTTPS_PROXY` / `NO_PROXY` for `agent-setup` fetch only.
 - Model hash verify on first run; **resume** partial downloads.
 - Tool execution: least privilege; **no Docker required**—use OS sandbox primitives.
 - APC timing: documented for multi-user edge case; sovereign default is single-user.
@@ -452,17 +468,11 @@ Use as CI or human gate before calling a milestone done:
 
 ---
 
-## 8) Open Engineering Decisions
+## 8) Release signing (binaries) — v1
 
-1. **vLLM distribution** (per **stage-2 profile**): vendored Python + wheels inside each large bundle; **Metal** macOS build vs **CUDA/CPU** others—separate CI matrices per profile.
-2. **Metal on macOS**: confirm upstream/build pipeline for a **pinned** vLLM (or supported fork) for Apple GPU; define exact `macos-metal` vs `macos-fallback` probe matrix (OS version, chip, driver).
-3. **Apple / Windows signing**: sign **dropper** and **stage-2** layout; notarization for macOS dropper (stapling policy).
-4. **Exact vLLM memory knobs** at pinned version (map `memory` manifest → engine args).
-5. **Dropper implementation language** (Rust/Go/C++) vs size budget—must stay **< 5 MB** with HTTPS + verify deps.
-6. **Offline**: dropper **`--bundle-path`** + optional `--expected-sha256`** (required if no signature infra)—close before “air-gap” milestone.
-7. **WSL / devcontainers**: explicitly **unsupported** or **supported** with CI matrix—pick one; undefined = support debt.
-
-Link ADRs after resolution (minimum: **signed index bytes**, **stage-2 archive format**, **Metal vs fallback probe**, **TLS pinning policy**).
+- **Windows:** Authenticode-sign **`agent-setup.exe`** and **`agent-runtime.exe`**; ship **`vc_redist.x64.exe`** inside stage-2 `support/` and run silent install from dropper on first install if MSVC runtime probe fails (probe: attempt `LoadLibrary` on `vcruntime140.dll` in `System32`—if missing, run redist **once**).
+- **macOS:** Sign **both** binaries with **Developer ID**; **notarize** both; staple tickets. Gatekeeper is product requirement for default download path.
+- **Linux:** Sign with **GPG detached** optional; **not required** for v1 CI—`FILES.sha256` + HTTPS from vendor CDN is minimum. Enterprise mirrors use `--bundle-path`.
 
 ---
 
@@ -491,7 +501,7 @@ After unpack, **`manifest.json` MUST exist at**:
 ```
 <install_root>/
   manifest.json
-  FILES.sha256              # optional: line format "hexhash  relative/path" (two spaces); used by validate
+  FILES.sha256              # required (v1): line format "<64-hex><two spaces><relative/path>"
   agent-runtime             # or agent-runtime.exe on Windows
   python/                   # vendored CPython layout (platform-specific; document in build doc)
     bin/python3
@@ -524,6 +534,7 @@ After unpack, **`manifest.json` MUST exist at**:
   "profiles": [
     {
       "profile_id": "macos-metal",
+      "bundle_schema_version": "1.0.0",
       "selection_priority": 10,
       "cpu_arch": "arm64",
       "min_os_version": "14.0",
@@ -532,10 +543,11 @@ After unpack, **`manifest.json` MUST exist at**:
       "stage2_archive_sha256": "<64-hex>",
       "stage2_archive_bytes": 12345678901,
       "stage2_unpacked_min_bytes": 20000000000,
-      "detached_signature_url": "https://cdn.example.com/stage2/macos-metal-1.4.0.tar.zst.sig"
+      "stage2_detached_signature_b64": "<base64-ed25519-sig>"
     },
     {
       "profile_id": "macos-fallback",
+      "bundle_schema_version": "1.0.0",
       "selection_priority": 100,
       "cpu_arch": "arm64",
       "min_os_version": "13.0",
@@ -543,7 +555,8 @@ After unpack, **`manifest.json` MUST exist at**:
       "stage2_archive_url": "https://cdn.example.com/stage2/macos-fallback-1.4.0.tar.zst",
       "stage2_archive_sha256": "<64-hex>",
       "stage2_archive_bytes": 9876543210,
-      "stage2_unpacked_min_bytes": 15000000000
+      "stage2_unpacked_min_bytes": 15000000000,
+      "stage2_detached_signature_b64": "<base64-ed25519-sig>"
     }
   ]
 }
@@ -587,12 +600,13 @@ After unpack, **`manifest.json` MUST exist at**:
   "memory": {
     "device_class": "metal",
     "host_ram_min_bytes": 8589934592,
+    "min_vram_bytes": 17179869184,
     "gpu_memory_utilization_cap": 0.85,
     "max_concurrent_requests": 4,
     "download_chunk_mb": 32,
     "apc_priority_roles": ["orchestrator", "executor"]
   },
-  "mtp": { "policy_id": "mtp-v1" },
+  "mtp": { "policy_id": "mtp-v1", "serialization_mode": "chat_messages" },
   "roles": [
     { "id": "orchestrator", "definition_relative_path": "roles/orchestrator.yaml", "prefix_layer_ids": ["global", "orchestrator_header"] }
   ],
@@ -625,21 +639,29 @@ agent-setup [global-options] <command>
 Global options:
   --index-url <https URL>     Override bundle index (highest priority)
   --install-parent <path>     Override default install_parent (§A.1)
+  --allow-downgrade           Skip semver downgrade block (§2.3.1)
   --verbose                   Log probe + selection to stderr
 
 Commands:
-  install                     Probe → fetch index → verify → download stage2 → unpack → update current → exec agent-runtime
-  install --bundle-path <path> [--expected-sha256 <64-hex>]
-                              Offline: skip index fetch; verify local archive size+hash then unpack
-  doctor                      Print probe results + which profile would be selected + disk paths (no network)
+  install                     Probe → fetch index → verify index sig + row sig → download stage2 → verify sha256+len → verify stage2 sig → unpack → update current → exec agent-runtime
+  install --bundle-path <path> --expected-sha256 <64-hex> --expected-bytes <int> --profile-id <id> --bundle-schema-version <semver> --stage2-signature-b64 <b64>
+                              Offline v1: no network; file must match sha256+bytes; Ed25519 verify message uses **`profile_id` + sha256 + bytes** from CLI args (must match post-unpack `manifest.json`); downgrade rule uses **`--bundle-schema-version`** as `V_new` vs disk `V_old`
+  doctor                      Print probe results + selected `profile_id` + disk paths (dry-run; fetches index unless `--offline`)
 
-Exit codes: 0 success | 1 usage | 2 network/TLS | 3 no matching profile | 4 verify/hash fail | 5 disk full | 6 locked | 10 downgrade blocked
+Exit codes: **0** success | **1** usage | **2** network/TLS | **3** no matching profile | **4** verify/hash/sig fail | **5** disk full | **6** install locked (live PID) | **7** Windows in-use (`agent-runtime` running—stop first) | **10** downgrade blocked | **11** capacity (reserved—CLI wrapper) | **12** token limit (reserved)
 ```
 
 ### A.7 `agent-runtime` CLI (normative contract)
 
 ```
-agent-runtime [--install-root <path>] <command>   # default: env NEXUS_AGENT_INSTALL_ROOT or cwd if manifest.json in cwd
+agent-runtime [--install-root <path>] <command>
+
+Install root resolution (first match wins):
+1. `--install-root` if set
+2. else `NEXUS_AGENT_INSTALL_ROOT` env
+3. else if **`./manifest.json`** exists in cwd → **cwd**
+4. else resolve **`current`** junction: read `install_parent/current/manifest.json` using same `install_parent` defaults as §A.1
+5. else **exit 1** (“no manifest”)
 
 Commands:
   run [--foreground]        Start vLLM child + router; foreground keeps vLLM logs attached (optional)
@@ -649,7 +671,7 @@ Commands:
   version                     Print manifest bundle_schema_version + distribution.profile_id + binary git sha
 ```
 
-**HTTP (local):** default `127.0.0.1:8765` (pick one port; document in README)—`POST /v1/invoke` JSON `{ "role_id", "messages" | "input" }`—exact JSON schema in OpenAPI fragment under `docs/` (add file in implementation PR).
+**HTTP (local):** **`127.0.0.1:8765`** — `POST /v1/invoke` body **JSON** `{ "role_id": string, "session_id": string, "user_turn": string, "tool_results"?: { "role": string, "text": string }[] }` (matches §A.13). **`127.0.0.1:8766`** — `GET /metrics` JSON per §2.4.3.
 
 ### A.8 Stage-2 archive contents rule
 
