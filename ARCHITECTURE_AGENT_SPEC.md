@@ -15,7 +15,9 @@ vLLM APC: https://docs.vllm.ai/en/latest/features/automatic_prefix_caching/
 
 There is **no** bundled training step, **no** supernode, and **no** thin-client control plane in the target design.
 
-**Normative v1 detail** lives only in `DE_FAKE_IMPLEMENTATION_PLAN.md` (Frozen product choices + Appendix A): **`.tar.zst` only**, **Ed25519** index + embedded per-profile stage-2 sig, **no TLS pinning**, **`chat_messages` MTP only**, **`FILES.sha256` required**, Next emits **`distribution.profile_id: "draft"`** until the release packer overwrites it.
+**Normative v1 detail** lives only in `DE_FAKE_IMPLEMENTATION_PLAN.md` (Frozen product choices + Appendix A): **`.tar.zst` only**, **Ed25519** index + embedded per-profile stage-2 sig, **dropper uses OS-native TLS** (WinHTTP / NSURLSession / system libcurl on Linux), **`chat_messages` MTP only**, **`FILES.sha256` required**, Next emits **`distribution.profile_id: "draft"`** until the release packer overwrites it.
+
+**End-user UX (same doc):** fatal errors → **native GUI** (MessageBox / NSAlert / zenity) before exit; **Documents** folder **symlink/junction** to `current` + **open in Finder/Explorer** after install; macOS ships **`Agent.app`**; Windows/Linux embed **icons**; **first-run** `http://127.0.0.1:8765/setup` + **`user_config.json`**; default SKU favors **small** task-tuned models for tolerable CPU fallback and USB-sized payloads.
 
 ## 2) Server Components
 
@@ -28,7 +30,7 @@ The schema should encode:
 - `manifest.memory` — **required** smart memory block (GPU caps, concurrency, APC priority roles, download chunking, optional spill paths)
 - `roles[]`, prefix layer references
 - `artifacts.dropper_executable` — per-platform tiny installer (< 5 MB budget; CI size gate)
-- `artifacts.native_executable` — stage-2 `agent-runtime` (per profile if needed)
+- `artifacts.native_executable` — stage-2 launcher: **`Agent.app`** (macOS) or **`agent-runtime.exe`** / **`agent-runtime`** (Windows/Linux) per plan §A.2
 - **Channel index** — not emitted only by Next: build pipeline publishes **schema-versioned** `bundles.json` (see implementation plan §1.0.1): `profiles[]` with `stage2_archive_url`, `stage2_archive_sha256`, `stage2_archive_bytes`, predicates (`requires_metal`, etc.); dropper bootstrap URL priority (CLI → env → embedded → sidecar file)
 - **Install root** — stage-2 **`manifest.json` directory** is the canonical root for all relative paths; `bundle_schema_version` + **`distribution.profile_id`** must match the installed profile (same string as `bundles.json` `profiles[].profile_id`)
 
