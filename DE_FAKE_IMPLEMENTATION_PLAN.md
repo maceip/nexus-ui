@@ -2,497 +2,306 @@
 
 ## Purpose
 
-This plan replaces all prototype behavior with production-grade server-side components that real users can trust for packaging, training, deployment, and multi-agent operations.
+This plan replaces prototype behavior with a **production-grade, self-sufficient agent bundle** that runs **entirely on the user’s machine** (or their chosen single host). There is **no remote training service**, **no supernode**, and **no thin-client control plane**.
 
-It explicitly addresses:
+The core runtime idea is the **Multi-Tenant Prefix (MTP) architecture**: several **roles** (agents, tools policies, style adapters, etc.) share **one loaded model** and are distinguished by **structured, stable prompt prefixes** per role. That layout maximizes **Automatic Prefix Caching (APC)** in **vLLM**: shared prefixes hit the prefix cache so later requests skip redundant prefill work—**without reloading weights** when switching roles.
 
-1. Real binary builder pipeline (Windows/macOS/Linux)
-2. Real train/infer backend (adapters, checkpoints, GPU jobs)
-3. Real supernode + thin client protocol
-4. Hardened API contract and error model
-5. Typed YAML serialization + contract tests
-6. Integration tests proving real artifacts (not stubs)
+References (external, for implementers):
+
+- vLLM Automatic Prefix Caching: https://docs.vllm.ai/en/latest/features/automatic_prefix_caching/
+- APC is enabled in serving via flags such as `--enable-prefix-caching` (CLI) or `enable_prefix_caching=True` (Python `LLM`).
+
+This document explicitly addresses:
+
+1. **Self-sufficient bundle** layout (model pins, configs, roles, vLLM launch contract, local tools).
+2. **MTP + vLLM APC** — prefix design rules, scheduling, observability, and security implications of shared prefix caches.
+3. **Real binary / container packaging** (Windows/macOS/Linux) for the **runtime** only (no training pipeline).
+4. **Hardened API contract** for the **spec server** (Next app) that emits bundle manifests.
+5. **Typed YAML serialization** + contract tests.
+6. **Integration tests** that prove native artifacts and a **single vLLM process** serving multiple roles with measurable prefix reuse (where CI has a GPU).
 
 ---
 
 ## 0) Codebase Inventory (Today)
 
-Use these paths as the integration surface for every workstream.
-
-| Area | Current implementation | Notes |
-|------|------------------------|-------|
-| Agent spec schema | `lib/server/agent-spec/schema.ts` | Zod `agentSpecSchema`; `schema_version: "1.2"` |
-| Spec generation | `lib/server/agent-spec/service.ts` | Heuristics on `userRequest` + `llmResponse`; always `artifacts.executable: "agent.exe"` |
-| YAML emission | `lib/server/agent-spec/yaml.ts` | Manual string lines + `JSON.stringify` for quoting (not a YAML library) |
-| HTTP API | `app/api/agent-spec/route.ts` | `POST` parses JSON with **no** `AgentSpecInput` zod parse; no error envelope |
-| Architecture doc | `ARCHITECTURE_AGENT_SPEC.md` | Describes intended contract; keep in sync after changes |
-| E2E harness | `scripts/e2e-agent-binaries.sh` | Writes a **Node script** to `.artifacts/e2e/windows/agent.exe` — the canonical “fake binary” to eliminate |
-
-Other API routes (`app/api/chat/route.ts`, etc.) follow patterns you should mirror for validation (local request types exist; agent-spec does not).
+| Area | Path | Notes |
+|------|------|-------|
+| Agent spec schema | `lib/server/agent-spec/schema.ts` | Still encodes `training_flag`, `expansion_mode`, supernode fields — **must evolve** toward MTP bundle contract |
+| Spec generation | `lib/server/agent-spec/service.ts` | Heuristics; hard-coded `agent.exe`; thin-client strings — **replace** with bundle + role prefix emitters |
+| YAML | `lib/server/agent-spec/yaml.ts` | Manual assembly — replace with typed serializer (unchanged workstream goal) |
+| HTTP API | `app/api/agent-spec/route.ts` | Unvalidated JSON body |
+| Architecture | `ARCHITECTURE_AGENT_SPEC.md` | Describes train + supernode — **must align** with this plan |
+| E2E | `scripts/e2e-agent-binaries.sh` | Node stub + toy “train” — **replace** with bundle smoke + optional vLLM APC check |
 
 ---
 
-## 0.1) Current Gaps to Remove
+## 0.1) Gaps to Remove (Revised)
 
 ### Fabrications to eliminate
 
-- **Script-named “binaries”**: `scripts/e2e-agent-binaries.sh` generates `agent.exe` as executable Node source (see inline `agentScript` in the script). Replace with: CI downloads or builds a **native** artifact per OS, or fails.
-- **Hard-coded executable name**: `generateAgentSpec` in `service.ts` sets `executable: "agent.exe"` for all platforms. Replace with: per-platform names from build registry (`agent.exe`, `agent`, `Agent.app/...`) or a single cross-compile story with documented naming.
-- **Toy training**: E2E `train()` is a bag-of-words logistic loop, not HF/PEFT/QLoRA. Training service must call a real stack and persist checkpoints adapters the runtime can load.
-- **Metadata-only lifecycle**: Spec references `selected_model` and `source_datasets` but nothing verifies download, checksum, license, or compatibility with a built binary version.
-- **Thin client / supernode**: `deployment.thin_client_command` is a fixed string (`agent.exe --mode thin-client --connect supernode`). No registration, lease, queue, or wire protocol exists server-side.
-- **Multi-agent in bundle**: E2E appends profile id to `agents-registry.json` only — no real profile isolation, secrets, or bundle layout.
+- **Fake “training”**: No `--train`, no toy logistic loop, no HF fine-tune story in the product contract unless it is **explicitly out of scope** (it is: weights are **prepared upstream**, bundle only **pins** revisions).
+- **Supernode / thin client**: Remove `thin-client-to-supernode`, `supernode_enabled`, `thin_client_command`, and any server-side remote dispatch narrative.
+- **Script-as-binary E2E**: `agent.exe` as a Node file must go; bundle entrypoint should be a **real** launcher (native or container) that starts **vLLM** + local agent controller per manifest.
+- **“Multi-agent” as JSON append only**: Replace with **role registry** + **canonical prefix templates** so APC can reuse KV blocks across roles that share stable headers.
 
-### Reliability gaps
+### Reliability and safety gaps
 
-- **Agent-spec route**: `await req.json()` is unchecked; malformed body throws before `generateAgentSpec`, typically yielding opaque 500s.
-- **YAML drift**: Adding a field to `AgentSpec` requires editing both `schema.ts` and `yaml.ts` by hand; easy to miss keys or ordering.
-- **No signing / provenance**: No manifest, SBOM, or signature verification path.
-- **No job orchestration**: No Postgres tables, queue, idempotency, or retry policy for build/train/publish.
+- **Unvalidated agent-spec POST** → opaque 500s.
+- **Manual YAML** → schema drift.
+- **APC side channels**: Shared prefix caches can leak timing across tenants on a **shared** GPU host; for **local single-user** bundles the primary risk is **cross-role** accidental prefix collision or **co-hosted** multi-user deployments. Plan must call out **cache salting / isolation** options for multi-user hosts (see §7).
 
 ---
 
-## 1) Target Production Architecture
+## 1) Target Architecture
 
-### 1.1 Control Plane (Server-side only)
+### 1.1 Conceptual model
 
-#### Components
+```
+┌─────────────────────────────────────────────────────────────┐
+│  Self-sufficient bundle (directory or OCI image)           │
+│  ├── manifest.json          # version, model pin, vLLM opts  │
+│  ├── roles/                 # one definition per logical role│
+│  │     ├── orchestrator.yaml                               │
+│  │     ├── retriever.yaml                                  │
+│  │     └── executor.yaml                                   │
+│  ├── prefixes/              # frozen prefix text / tokenizer│
+│  ├── tools/                 # local tool manifests + policies│
+│  ├── models/                # OR download spec (HF commit sha)│
+│  └── bin/                   # launcher(s) per OS             │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+                 ┌────────────────────────┐
+                 │  vLLM (single process)  │
+                 │  APC ON                 │
+                 │  one weight load        │
+                 └────────────────────────┘
+```
 
-- **AgentSpec API** — input validation, schema versioning, synchronous normalized response (today: `POST /api/agent-spec`).
-- **Build Orchestrator API** — enqueue package jobs, return `buildJobId` (new).
-- **Training Orchestrator API** — enqueue/resume training jobs (new).
-- **Artifact Registry API** — immutable version id, manifest, checksums, signatures, compatibility matrix (binary version × adapter version × model id).
-- **Supernode API** — registration, auth, dispatch, tenant isolation (new; may be separate deployable service).
+- **One vLLM server** (or one in-process engine) loads **one** base model.
+- **Roles** are not separate models; they are **routes** in your agent controller that build prompts using **role-specific suffixes** appended after a **shared multi-tenant prefix stack** (see §2.2).
+- **MTP** means: intentionally design that stack so that **common layers** (system policy, safety, tool grammar, shared RAG context digest) are **byte-stable** across roles where possible, and **role-specific** content appears **after** shared layers so APC hits maximize.
 
-#### Storage
+### 1.2 Control plane (server-side, this repo)
 
-| Store | Responsibility |
+Only what is needed to **author and validate** bundles—not to run inference in production for the end user:
+
+| Component | Responsibility |
+|-----------|------------------|
+| **AgentSpec / BundleSpec API** | Validate inputs; emit `manifest.json` + role files + YAML for RSC |
+| **Build Orchestrator** (optional) | Produce signed tarball/OCI from a frozen `BundleSpec` |
+| **Artifact Registry** (optional) | Store bundle versions, SBOM, signatures |
+
+**Removed:** Training orchestrator, training workers, dataset pipelines, supernode APIs, `POST /api/agent-train`, `POST /api/agent-runtime/register`.
+
+### 1.3 Data plane (bundle runtime, not necessarily in this repo)
+
+| Piece | Responsibility |
 |-------|----------------|
-| **Postgres** | Job state machines, tenant/agent metadata, idempotency keys (unique constraints), audit log append-only table |
-| **Object storage (S3-compatible)** | Checkpoints, LoRA adapters, final binaries, `artifact-manifest.json`, training reports, dataset snapshots (hashed) |
-| **Redis (or queue broker)** | Job queues, lease/heartbeat keys, rate limits, short-lived idempotency cache for fast rejects |
+| **vLLM** | Serves OpenAI-compatible HTTP; **APC enabled**; GPU memory holds one model + prefix cache |
+| **Agent controller** | Maps user tasks → role; assembles prompts from `prefixes/` + live suffix; calls vLLM |
+| **Tool host** | Executes local tools (filesystem, browser driver, etc.) per `tools/` policy |
 
-#### Job workers
+### 1.4 Storage (when you add orchestration)
 
-- **Build worker** — cross-compile matrix, reproducible flags, signing, manifest upload.
-- **Training worker** — GPU job, checkpoint cadence, eval gate, writes model card + metrics to object storage + Postgres.
-- **Publish worker** — promote immutable version, update registry index, attach provenance (git commit, build id, signing key id).
-
-### 1.2 Runtime Plane
-
-#### Single binary runtime modes (contract-level; implementation language TBD)
-
-- `agent --train`
-- `agent --run` (default inference)
-- `agent --agent add <profile-id>`
-- `agent --mode thin-client` with explicit supernode URL + credentials (replace placeholder `--connect supernode`)
-
-#### Embedded capabilities (already described in `AgentSpec`; implementation must honor version pins)
-
-- Embedded LLM serving, LiteLLM routing, tool calling, KV-cache APIs — **runtime must refuse start** if loaded adapter/build/manifest triple fails verification (see Definition of Done).
+| Store | Use |
+|-------|-----|
+| Postgres | `bundle_build_jobs`, tenant ids, audit (if SaaS builds bundles for customers) |
+| Object storage | Immutable bundle tarballs / OCI layers |
+| Redis | Optional: rate limits on build API only |
 
 ---
 
 ## 2) Detailed Implementation Plan
 
-Each subsection below lists: **schema / storage**, **API**, **service logic**, **tests**, and **acceptance** so an engineer can implement without inferring scope.
-
----
-
-### 2.1 Replace fake binary generation with real builder pipeline
+### 2.1 Bundle manifest and directory contract
 
 #### Deliverables
 
-- Builder producing **native** PE / Mach-O / ELF per target.
-- `artifact-manifest.json` per build: `sha256`, `build_id`, `toolchain`, `target_triple`, `agent_spec_schema_version`, `git_sha`, `signed_by` (key id).
-- Signing: Windows Authenticode; Apple codesign + notarization **hooks** (document CI secrets layout); Linux detached sig + SHA256SUMS file.
+- **`manifest.json`** (versioned schema, e.g. `bundle_schema_version: "1.0"`) containing at minimum:
+  - `vllm`: `{ "version_pin": "...", "enable_prefix_caching": true, "extra_args": [...] }` (args documented against a pinned vLLM release).
+  - `model`: `{ "id": "org/model", "revision": "git_sha_or_tag", "quantization": "..." }`.
+  - `roles`: ordered list of `{ "id", "definition_path", "prefix_layers": ["layer_a", "layer_b"] }`.
+  - `apc`: `{ "shared_stack_id": "uuid-or-hash", "layering_policy": "mtp-v1" }`.
+- **`roles/*.yaml`**: per-role objectives, allowed tools, temperature defaults, **suffix template** references (not full prompts inlined if they churn).
+- **`prefixes/`**: files that are **content-addressed** (hash in filename) so the build is reproducible and the controller can assert “prefix file X is exactly what spec server emitted”.
 
-#### Data model (Postgres) — illustrative DDL
+#### Steps
 
-Implement via your migration tool (Prisma/Drizzle/Knex); columns are the contract:
+1. Define Zod `bundleSpecSchema` (new) or extend `agentSpecSchema` with a breaking bump — pick **one** canonical spec name (`BundleSpec` recommended) and deprecate train/supernode fields in `ARCHITECTURE_AGENT_SPEC.md`.
+2. Implement `generateBundleSpec(input)` (rename or wrap `generateAgentSpec`) that emits manifest + embedded role list + **no** training commands.
+3. Add JSON Schema or zod export for `manifest.json` consumers written in Go/Rust if the launcher is not TypeScript.
 
-```sql
--- build_jobs: one row per enqueue
-CREATE TABLE build_jobs (
-  id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  tenant_id       UUID NOT NULL,
-  agent_spec_hash TEXT NOT NULL,        -- hash of canonical AgentSpec JSON
-  targets         TEXT[] NOT NULL,      -- e.g. {'windows-amd64','darwin-arm64','linux-amd64'}
-  signing_profile TEXT NOT NULL,
-  status          TEXT NOT NULL,        -- queued|building|signing|verifying|published|failed
-  idempotency_key TEXT UNIQUE,
-  error_code      TEXT,
-  error_detail    JSONB,
-  created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at      TIMESTAMPTZ NOT NULL DEFAULT now()
-);
+#### Acceptance
 
-CREATE TABLE build_artifacts (
-  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  build_job_id  UUID NOT NULL REFERENCES build_jobs(id),
-  target_triple TEXT NOT NULL,
-  object_key    TEXT NOT NULL,          -- s3 key
-  sha256        TEXT NOT NULL,
-  manifest_key  TEXT NOT NULL,
-  signature_bundle_key TEXT,            -- optional per-target
-  UNIQUE (build_job_id, target_triple)
-);
-```
-
-#### State machine (explicit transitions)
-
-| From | To | Trigger |
-|------|-----|---------|
-| `queued` | `building` | Worker lease |
-| `building` | `signing` | All target binaries exist + checksum recorded |
-| `signing` | `verifying` | Signers finished (or skipped in dev profile) |
-| `verifying` | `published` | Signature + manifest verification passed |
-| * | `failed` | Any hard failure; set `error_code` from a fixed enum |
-
-#### Build worker — implementation constraints
-
-- **Language**: Rust or Go as stated; if Rust, prefer `cargo build --target <triple>` with locked `Cargo.lock`; record `rustc` version in manifest.
-- **Determinism**: Document any non-determinism (timestamps); for reproducible builds, set `SOURCE_DATE_EPOCH` and disable embedding volatile build ids where possible.
-- **Cross-compile**: Use explicit target triples; CI matrix must match `AgentSpec.runtime.target_platforms` semantics (map `windows` → `x86_64-pc-windows-msvc` etc. in one central config file).
-
-#### API (new)
-
-`POST /api/agent-builds`
-
-- **Body (zod)**: `{ agentSpecVersion: string, spec: AgentSpec | { id: string }, targets: SupportedTriple[], signingProfile: string, idempotencyKey?: string }`
-- **Response**: `{ buildJobId: string }` or `409` with same `buildJobId` for duplicate idempotency key.
-- **Errors**: Use unified envelope (section 2.4).
-
-#### Repository integration
-
-- Add route `app/api/agent-builds/route.ts` (or under `app/api/v1/...` if versioning).
-- Do **not** extend `generateAgentSpec` to perform builds synchronously; keep spec generation fast and enqueue async.
-
-#### Acceptance criteria
-
-- E2E or CI job fails if output is not valid PE/Mach-O/ELF (use `file` command, or parse magic bytes in Node/Python helper).
-- Manifest and signatures verifiable via a small CLI or `GET /api/artifacts/:version/manifest`.
-- Rebuild with same inputs yields documented checksum policy (identical or listed variance).
+- A fresh checkout can `validate-bundle ./out/bundle` (CLI to add) and exit 0 only if all hashes and cross-references resolve.
 
 ---
 
-### 2.2 Replace toy trainer with real train/infer backend
+### 2.2 Multi-Tenant Prefix (MTP) layout for vLLM APC
+
+#### Concept
+
+vLLM APC reuses KV for **identical token prefixes** across requests (block granularity; see vLLM docs). MTP means you **engineer** prompts so that:
+
+1. **Layer 0 — Global** (same for all roles on this bundle): e.g. system date format, safety policy, output format instructions. **Frozen** in bundle.
+2. **Layer 1 — Shared task context** (optional): e.g. digest of retrieved docs for this session, **identical** across roles that participate in the same user session when you want reuse.
+3. **Layer 2 — Role header**: short, stable delimiter + role id (constant per role).
+4. **Layer 3 — Volatile user content**: user message, tool results — **not** reused across roles except via Layer 1.
+
+Roles that only differ in Layer 3 still benefit from Layers 0–2. Roles with different Layer 2 trade some reuse—that is an explicit **product** decision.
 
 #### Deliverables
 
-- Training pipeline: base model fetch (pinned revision), QLoRA/LoRA config, eval metrics, **promotion gate** before adapter is linked to a release version.
-- Checkpoint manager: periodic writes to object storage, resume token in Postgres, retention policy (e.g. keep last N + best eval).
+- **Prefix composition spec** in repo: e.g. `docs/mtp-prefix-v1.md` describing concatenation order, tokenizer caveats (BPE stability), and max layer sizes to avoid blowing context.
+- **Controller algorithm**: `buildPrompt(roleId, sessionContext) -> messages[]` that is deterministic given bundle + session state.
+- **Metrics**: log `prompt_token_ids_length`, `estimated_apc_hit_ratio` if vLLM exposes stats endpoints for your pinned version; otherwise add lightweight timing (prefill ms) A/B with and without shared prefix artificially perturbed in tests.
 
-#### Data model (Postgres)
+#### Tests
 
-```sql
-CREATE TABLE training_jobs (
-  id                UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  tenant_id         UUID NOT NULL,
-  base_model_id     TEXT NOT NULL,       -- e.g. HF repo@revision
-  dataset_manifest  TEXT NOT NULL,       -- object key to validated manifest
-  adapter_config    JSONB NOT NULL,      -- ranks, alpha, target modules
-  status            TEXT NOT NULL,       -- queued|staging|running|evaluating|promoted|failed|cancelled
-  gpu_pool          TEXT,
-  checkpoint_key    TEXT,
-  latest_step       INT,
-  idempotency_key   TEXT UNIQUE,
-  build_artifact_id UUID REFERENCES build_artifacts(id), -- optional: train against a specific binary build
-  created_at        TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at        TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-```
+- **Unit**: same Layer 0+1+2, different Layer 3 → prompt token prefix of first N blocks matches golden fixture.
+- **Integration** (GPU CI): two roles, alternating requests 100×, assert median prefill latency for role B after warm role A is below baseline cold start by a threshold **or** assert vLLM-reported cache hit metric if available.
 
-#### Dataset pipeline (required steps)
+#### Security note (multi-user hosts)
 
-1. **Ingest**: User-provided URLs or HF dataset id → snapshot to object storage with content hash.
-2. **Validate**: Schema (columns, types), train/val split, PII/license flags per org policy.
-3. **Manifest**: Write `dataset-manifest.json` with `sha256`, row counts, split ratios, license field.
+- If multiple **human tenants** share one OS user or one vLLM process, APC + timing can create **cross-tenant** side channels (academic and industry awareness in 2025–2026). For **strict** multi-tenant SaaS on shared GPUs, document: separate vLLM processes, `cache_salt` / request-level isolation if supported in your vLLM pin, or disable APC for conflicting tenants. For **local single-user** bundle, document residual risk when running **untrusted** remote workloads against the same engine.
 
-#### Training worker — implementation sketch
+#### Acceptance
 
-- Container image with CUDA + pinned `transformers`/`peft`/`torch` versions.
-- Entrypoint args: `training_job_id`, read config from env or sidecar JSON from object storage.
-- Loop: train → eval → if metric threshold → set status `promoted` and write **immutable** `adapter_version` record; else `failed` with reason in JSON.
-
-#### API (new)
-
-`POST /api/agent-train`
-
-- **Body**: `{ trainingJobSpec: { baseModel, datasetManifestKey, adapterConfig, evalThresholds }, idempotencyKey?: string }`
-- **Response**: `{ trainingJobId }`
-
-#### Link to `AgentSpec`
-
-- Extend schema (bump `schema_version` to `1.3` when ready) with optional `artifacts.build_version` / `artifacts.adapter_version` once registry exists; until then, store ids only in API responses, not in heuristic `service.ts`.
-
-#### Acceptance criteria
-
-- Worker restart mid-job resumes from `latest_step` / last checkpoint key.
-- Produced adapter loads in the **same** runtime major version as recorded in compatibility matrix.
-- Model card JSON stored next to adapter in object storage.
+- Documented prefix layout with examples in `docs/mtp-prefix-v1.md`.
+- CI proves **at least** prefix-token equality for shared layers; GPU job optional but recommended.
 
 ---
 
-### 2.3 Implement real supernode + thin client protocol
+### 2.3 Packaging: self-sufficient launcher + vLLM
 
 #### Deliverables
 
-- **Auth**: Short-lived runtime tokens (JWT or macaroon-style) scoped to `tenant_id` + `agent_profile_id`; rotation on reconnect.
-- **Transport**: Prefer WebSocket or HTTP/2 bidirectional stream with binary framing; document choice in `ARCHITECTURE_AGENT_SPEC.md`.
-- **Dispatch**: Server-assigned work items with `idempotency_key` per invoke; at-least-once delivery with client-side dedup.
+- **Per-OS launcher** (or single static binary) that:
+  - Verifies `manifest.json` signature (if signed bundles enabled).
+  - Ensures model files exist or runs **pinned** download (HF with commit sha).
+  - Starts `vllm serve ... --enable-prefix-caching` with args from manifest (memory, tensor parallel, etc.).
+  - Starts agent controller subprocess with `VLLM_BASE_URL` set.
 
-#### Message schema (minimum set)
+#### Build / registry (narrowed scope)
 
-Define protobuf or JSON Schema **versioned** (`supernode.protocol_version`):
+- `build_jobs` / `build_artifacts` tables remain valid **only for bundling** (tarball/OCI), not training artifacts.
+- Manifest lists **model revision** only; no `adapter_version` from training.
 
-| Message | Direction | Fields |
-|---------|-----------|--------|
-| `Register` | client → server | `runtime_capabilities`, `supported_spec_versions`, `build_id`, `adapter_version` |
-| `RegisterAck` | server → client | `session_token`, `lease_ttl_seconds`, `heartbeat_interval_seconds` |
-| `Heartbeat` | client → server | `session_token`, `queue_depth`, `last_ack_seq` |
-| `Invoke` | server → client | `invoke_id`, `idempotency_key`, `tool`, `payload`, `deadline_ms` |
-| `InvokeResult` | client → server | `invoke_id`, `status`, `result`, `error` (typed) |
-| `Disconnect` | either | reason code |
+#### Acceptance
 
-#### Server components
-
-- **Registration handler**: validate token, persist session row with expiry.
-- **Dispatch queue**: Redis list or Kafka subject `tenant.{id}.invokes`; workers push; thin client long-polls or holds WebSocket subscription.
-- **DLQ**: After max retries, move to `dead_letter_invokes` table with last error.
-
-#### API (new)
-
-`POST /api/agent-runtime/register`
-
-- **Body**: `{ tenantCredential, capabilityProfile, buildArtifactVersion, adapterVersion }`
-- **Response**: `{ sessionToken, supernodeWsUrl, leaseExpiresAt }`
-
-Update `service.ts` so `thin_client_command` includes **placeholder substitution** documented for integrators, e.g. `agent --mode thin-client --supernode-url ${SUPERNODE_URL}` until UI injects values.
-
-#### Acceptance criteria
-
-- Heartbeat timeout marks session stale; new `Register` succeeds; queued work redispatched or cancelled per policy.
-- Cross-tenant invoke leakage blocked by integration test (attempt invoke for wrong `tenant_id` → 403 + audit row).
+- CI produces PE/Mach-O/ELF **or** OCI image with `docker run` smoke: vLLM health + one completion per role without second weight load (verify single process count).
 
 ---
 
 ### 2.4 Harden API contract and errors
 
-#### Deliverables
+(Unchanged intent, narrowed examples.)
 
-- Zod parse **at HTTP boundary** for every JSON body (start with `app/api/agent-spec/route.ts`, mirror `ChatRequestBody` style in `chat/route.ts`).
-- Typed error envelope and centralized mapper.
+- Add `bundleSpecInputSchema` (or extend `agentSpecInputSchema`) with zod.
+- `POST /api/agent-spec` may become `POST /api/bundle-spec` with backward-compatible alias during migration.
+- Return `ApiErrorBody` on all validation failures (`requestId`, stable `code`).
 
-#### Types (implement in `lib/server/http/errors.ts` or similar)
+#### Acceptance
 
-```ts
-export type ApiErrorBody = {
-  error: {
-    code: string;           // stable machine code, e.g. AGENT_SPEC_VALIDATION
-    message: string;        // human safe
-    details?: unknown;      // optional, zod flatten or field errors
-    requestId: string;
-  };
-};
-```
-
-#### Route handler pattern (agent-spec)
-
-1. `const requestId = req.headers.get("x-request-id") ?? crypto.randomUUID()`.
-2. `const parsed = agentSpecInputSchema.safeParse(await req.json())`.
-3. If `!parsed.success` → `NextResponse.json({ error: { code: "...", message: "Invalid body", details: parsed.error.flatten(), requestId } }, { status: 400 })`.
-4. Call `generateAgentSpec(parsed.data)` inside `try/catch`; map known failures to 4xx/5xx with envelope.
-
-#### `AgentSpecInput` schema
-
-Add `lib/server/agent-spec/input-schema.ts`:
-
-- `userRequest`: `z.string().min(1).max(…)`
-- `llmResponse`: `z.string().min(1).max(…)`
-- `contexts`: optional nested object with URL validation if needed
-
-Export `agentSpecInputSchema` and use in route **only**; keep `AgentSpecInput` type as `z.infer<typeof agentSpecInputSchema>`.
-
-#### Logging
-
-- Structured log: `{ requestId, route, tenantId?, durationMs, status }` — use existing logger if present, else `console` with JSON line in worker.
-
-#### Acceptance criteria
-
-- Fuzz tests: random JSON → never unhandled exception; always JSON error body with `requestId`.
-- OpenAPI or `README` snippet listing codes for `POST /api/agent-spec` (optional but recommended).
+- Fuzz POST bodies → never unhandled exception.
 
 ---
 
-### 2.5 Swap manual YAML assembly for typed serializer + tests
+### 2.5 Typed YAML + tests
 
-#### Deliverables
-
-- Single source of truth: **`agentSpecSchema` → YAML** without maintaining parallel field lists in `yaml.ts`.
-
-#### Implementation approach
-
-1. Add dependency `yaml` (npm `yaml` package) **or** `zod-to-json-schema` + JSON stringify is **not** acceptable for YAML-specific escaping — use a real YAML serializer.
-2. Replace `toAgentSpecYaml` implementation:
-   - Build a plain object that satisfies the same shape as `AgentSpec` (already true).
-   - `YAML.stringify(obj, { sortMapKeys: true, lineWidth: 0 })` (or equivalent) for stable key order.
-3. Keep `yamlQuote` tests if you still need quoted strings for contract template literals in `buildAgentSpecResponseContract` — or generate that template from schema metadata once.
-
-#### Tests (`lib/server/agent-spec/yaml.test.ts` or vitest/jest)
-
-| Test | Assertion |
-|------|-----------|
-| Round-trip | `YAML.parse(toAgentSpecYaml(spec))` deep-equals spec for **golden** fixtures |
-| Key order | Snapshot of YAML string for a frozen fixture (detect accidental reorder policy change) |
-| Escaping | Strings with `:`, quotes, newlines round-trip |
-| Schema bump | When `schema_version` changes, fixture set must be updated intentionally |
-
-#### Contract fixtures
-
-- Store `lib/server/agent-spec/__fixtures__/spec-otp-min.json` (canonical `AgentSpec` object) and matching `spec-otp-min.expected.yaml`.
-
-#### Acceptance criteria
-
-- Removing a field from `agentSpecSchema` causes compile failure or test failure when building YAML from typed object (no orphaned manual line in `yaml.ts`).
+- Serialize `BundleSpec` / role YAML via library (`yaml` npm package).
+- Round-trip and snapshot tests for `roles/*.yaml` and top-level bundle export.
 
 ---
 
-### 2.6 Add integration tests proving real artifacts
+### 2.6 Integration tests (revised)
 
-#### Deliverables
+| Test | Purpose |
+|------|---------|
+| Bundle validator | Hashes, cross-refs, vLLM arg allowlist |
+| Native / OCI gate | Reject Node stub as “binary” |
+| MTP prefix golden | Token prefix stability |
+| Optional GPU | vLLM APC warm-path latency or cache metric |
 
-- CI workflow that **cannot pass** with the current `e2e-agent-binaries.sh` Node stub (either replace script entirely or add a **gate** step that validates magic bytes).
-
-#### Concrete changes to `scripts/e2e-agent-binaries.sh`
-
-1. After artifact generation, run **`file` / `go version -m` / `strings`** checks appropriate to OS (on Linux CI, at least validate ELF for linux target; for Windows PE use `hexdump` head or `objdump` if available).
-2. If native build not available in lightweight CI, **split** into two jobs: `agent-spec-contract` (no binary) and `native-artifact-e2e` (runs only on runner with toolchain) — document in script header.
-
-#### Ephemeral services (docker-compose for CI)
-
-- Postgres + Redis + MinIO (S3 API).
-- Seed migration for job tables.
-- Run one build job to completion against a **hello-world** agent binary repo to keep CI fast.
-
-#### Assertions
-
-| Step | Check |
-|------|-------|
-| Build | Manifest `sha256` matches downloaded bytes |
-| Train | Checkpoint file appears in MinIO at expected key |
-| Coupling | Runtime binary exits non-zero when `adapter_version` mismatches manifest (negative test) |
-
-#### Acceptance criteria
-
-- Deliberately commit a text file named `agent.exe` and assert CI **fails** the format gate.
+Remove assertions about training checkpoints, supernode register, or adapter promotion.
 
 ---
 
-## 3) Server-Side Interfaces for RSC Consumers
+## 3) HTTP API Surface (Revised)
 
-### Versioning policy
+### `POST /api/agent-spec` (interim) or `POST /api/bundle-spec` (target)
 
-- Prefix new routes with `/api/v1/...` **or** add `apiVersion` field in body until clients migrate.
-- Bump `schema_version` in `agentSpecSchema` when adding required fields; document migration in `ARCHITECTURE_AGENT_SPEC.md`.
+| Field | Behavior |
+|-------|----------|
+| Input | Validated zod; same `userRequest` / `llmResponse` / `contexts` or evolved fields |
+| Output | `{ spec \| bundle, yaml, manifest?, roles?, responseContractYaml, validation }` — exact shape to version |
 
-### `POST /api/agent-spec` (existing)
+### `POST /api/agent-builds` (optional)
 
-| Aspect | Specification |
-|--------|----------------|
-| Input | `AgentSpecInput` validated by zod (section 2.4) |
-| Output | Unchanged shape `{ spec, yaml, responseContractYaml, executableValidation }` unless versioned; if breaking, add `v2` route |
-| New behavior | Strict validation + error envelope; optional `requestId` echo |
+Body references **bundle** only: `{ bundleSpec, targets[], signingProfile, idempotencyKey? }` → `{ buildJobId }`.
 
-### `POST /api/agent-builds` (new)
+### Removed endpoints
 
-| Field | Type | Notes |
-|-------|------|-------|
-| `spec` | object or `{ id }` | Full spec inline or reference to stored spec by id |
-| `targets` | string[] | Triples or enum mapped server-side |
-| `signingProfile` | string | Maps to secret refs in worker |
-| `idempotencyKey` | string? | Client-generated UUID |
-
-### `POST /api/agent-train` (new)
-
-| Field | Type | Notes |
-|-------|------|-------|
-| `baseModel` | `repo@revision` | Pinned |
-| `datasetManifestKey` | string | Must exist in object storage |
-| `adapterConfig` | object | Validated against training worker schema |
-
-### `POST /api/agent-runtime/register` (new)
-
-Returns connection parameters for thin client mode.
-
-### `GET /api/jobs/:id` (new)
-
-Unified status: `type: build|train|publish`, `status`, `progress`, `artifacts[]`, `errors[]`.
+- `POST /api/agent-train`
+- `POST /api/agent-runtime/register`
+- `GET /api/jobs/:id` **unless** repurposed for `bundle_build_jobs` only
 
 ---
 
 ## 4) Milestone Plan (Phased)
 
-Phases are **ordered dependencies**; calendar scheduling is left to the team.
-
 | Phase | Scope | Exit criteria |
-|-------|--------|-----------------|
-| **1** | API hardening (`agent-spec` + error envelope + request IDs) + `AgentSpecInput` zod | All malformed bodies return 400 with `ApiErrorBody`; logs include `requestId` |
-| **2** | Typed YAML + fixtures + round-trip tests | `yaml.ts` no longer hand-assembles spec YAML; snapshot tests green |
-| **3** | Postgres migrations + `build_jobs` / `build_artifacts` + enqueue API + stub worker → real native build | At least one triple produces verifiable native binary in CI |
-| **4** | Signing + manifest + registry GET | Signature verification in CI |
-| **5** | `training_jobs` + dataset manifest + GPU worker + eval gate | Resume + promoted adapter artifact |
-| **6** | Runtime compatibility check | Binary refuses mismatched adapter/version |
-| **7** | Supernode protocol + register API + dispatch + DLQ | Integration test: register → invoke → result → idempotent retry |
-| **8** | Full integration compose + E2E gate | Stub `agent.exe` text file rejected |
+|-------|--------|----------------|
+| **1** | Schema redesign: remove train/supernode; add `BundleSpec`, roles, vLLM/APC block | Types compile; docs updated |
+| **2** | `generateBundleSpec` + YAML + manifest emission | Golden tests pass |
+| **3** | API zod + error envelope | 400 on bad input; `requestId` always |
+| **4** | Launcher + `vllm serve` wiring + example bundle | Local smoke doc |
+| **5** | MTP prefix doc + controller + metrics hooks | Prefix tests + optional GPU job |
+| **6** | Build registry + signed bundles (if SaaS) | CI verifies tarball + optional OCI |
 
 ---
 
-## 5) Definition of Done (Strict)
+## 5) Definition of Done (Strict, Revised)
 
-The implementation is considered real only if all conditions pass:
-
-1. Produced artifacts are native signed binaries for each target platform (verified in CI).
-2. Training uses actual model pipeline and persists resumable checkpoints.
-3. Runtime can only execute when artifact/training version compatibility checks pass.
-4. Supernode/thin-client flows are authenticated, tenant-scoped, retriable, and observable.
-5. API boundary enforces strict validation and explicit error semantics.
-6. YAML generation is typed, round-trippable, and covered by contract tests.
-7. CI integration tests verify real artifact formats and reject script stubs.
+1. Bundle runs **one** vLLM instance with **APC enabled** and **one** model load; switching roles does not reload weights.
+2. **MTP prefix layout** is specified, implemented, and tested (at least token-prefix goldens; GPU APC test optional).
+3. No training pipeline, no supernode, no thin-client protocol in product artifacts or public API.
+4. Packaging produces **verifiable** native or OCI artifacts; stub scripts fail CI.
+5. Spec / bundle API uses strict validation and typed errors.
+6. YAML (or JSON) contract tests cover bundle outputs.
+7. Security posture for APC on **shared** hosts is documented; default local bundle documents single-user assumption.
 
 ---
 
 ## 6) PR Breakdown (Suggested)
 
-| PR | Content | Touches (indicative) |
-|----|---------|----------------------|
-| **A** | `agentSpecInputSchema`, route zod parse, `ApiErrorBody`, request id | `app/api/agent-spec/route.ts`, new `input-schema.ts`, `http/errors.ts` |
-| **B** | YAML library + `toAgentSpecYaml` rewrite + fixtures | `yaml.ts`, `package.json`, tests |
-| **C** | Migrations `build_jobs` / `build_artifacts`, `POST /api/agent-builds`, enqueue only | `app/api/agent-builds/`, `db/` |
-| **D** | Build worker + manifest + signing + publish | worker repo or `workers/build/` |
-| **E** | `training_jobs`, dataset manifest validation, training worker | `workers/train/`, APIs |
-| **F** | Supernode protocol + register + dispatch + thin client URL in spec | `service.ts`, new WS server or edge route |
-| **G** | `docker-compose.ci.yml`, integration tests, E2E script gate | `scripts/`, `.github/workflows/` |
+| PR | Content |
+|----|---------|
+| **A** | Schema: `BundleSpec`, remove train/supernode fields; bump `schema_version` |
+| **B** | `generateBundleSpec`, `yaml.ts` typed emit, `manifest.json` builder |
+| **C** | Route validation + `ApiErrorBody` |
+| **D** | `docs/mtp-prefix-v1.md` + prefix builder module + unit tests |
+| **E** | Launcher + example bundle + docker-compose for local vLLM |
+| **F** | CI: bundle validator + native/OCI gate; optional GPU workflow |
+| **G** | Optional: `bundle_build_jobs` + signed artifact publish |
 
 ---
 
-## 7) Security and Operations Checklist (Non-optional)
+## 7) Security and Operations (Revised)
 
-- **Secrets**: Signing keys only in worker KMS / CI secrets; never in `AgentSpec` YAML returned to browser.
-- **Tenancy**: Every job row has `tenant_id`; RLS on Postgres if using shared DB.
-- **Audit**: Append-only `audit_log` for register, train start, publish, failed auth.
-- **Rate limits**: Per-tenant on enqueue endpoints (Redis token bucket).
-- **PII**: Dataset manifest flags; training logs must not store raw emails by default in shared logs.
+- **Model supply chain**: pin HF revision; verify hashes in manifest.
+- **Tool sandbox**: local tools run with OS-level boundaries (containers recommended).
+- **APC multi-tenant timing**: see §2.2; for enterprise shared inference, add ADR on isolation vs performance.
+- **Secrets**: API keys for cloud models (if any) stay out of bundle plaintext; use OS keychain integration in launcher where applicable.
 
 ---
 
-## 8) Open Engineering Decisions (Resolve Early)
+## 8) Open Engineering Decisions
 
-Document outcomes in this file or `ARCHITECTURE_AGENT_SPEC.md`:
+1. **Bundle transport**: raw directory vs single `.tar.zst` vs OCI only.
+2. **Controller language**: TypeScript (reuse zod in-process) vs Rust sidecar.
+3. **vLLM pin cadence**: how often to bump `vllm` minor and re-run APC regression tests.
+4. **Role count limits**: max roles per bundle vs GPU memory for long shared prefixes.
 
-1. **Monorepo vs split worker repo** for Rust/Go builder.
-2. **HF hub auth** in training worker (org tokens, OIDC).
-3. **Apple notarization** in CI vs manual release lane.
-4. **WebSocket vs gRPC** for supernode (firewall friendliness vs efficiency).
-
-Once decided, link the ADR filename here for traceability.
+Link ADRs here after resolution.

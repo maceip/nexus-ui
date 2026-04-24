@@ -2,65 +2,58 @@
 
 ## 1) Restated Request
 
-The requested server architecture should output a simplified packaging contract where:
+The server architecture outputs a **self-sufficient local bundle** contract:
 
-- there is one binary per platform (`agent.exe` on Windows and equivalents on macOS/Linux),
-- that single binary is trained with `--train`,
-- the same binary then runs the task in runtime mode,
-- and adding a second agent should avoid creating another fat binary.
+- **One inference stack** on the machine: typically **one vLLM process** with **Automatic Prefix Caching (APC)** enabled, loading **one** base model (weights loaded once).
+- **Multiple roles** (orchestrator, retriever, executor, etc.) run as **multi-tenant prefixes (MTP)**: each role uses a **structured, stable prefix layout** so shared prompt layers hash-identically and APC reuses KV across roles—**without reloading model weights** when switching roles.
+- The bundle ships **manifest**, **role definitions**, **frozen prefix files**, **tool policies**, and **launchers** per OS (or an OCI image). There is **no** bundled “train this model” step and **no** supernode / thin-client remote control plane in this architecture.
 
-For multi-agent growth, the architecture supports two expansion choices:
-
-1. **multi-agent-in-bundle**: register another agent profile inside the existing bundle,
-2. **thin-client-to-supernode**: generate a thin client configuration that connects to a supernode.
+vLLM APC is the standard mechanism for prefix reuse; see upstream docs: https://docs.vllm.ai/en/latest/features/automatic_prefix_caching/
 
 ## 2) Server Components
 
-### A) Contract schema (`lib/server/agent-spec/schema.ts`)
+### A) Contract schema (`lib/server/agent-spec/schema.ts` — evolving to bundle contract)
 
-The schema now encodes a single-executable workflow:
+The schema should encode a **bundle-first** workflow (names may shift to `bundle-spec` / `BundleSpec`):
 
-- `artifacts.executable`
-- `artifacts.training_flag` (`--train`)
-- `artifacts.expansion_mode`
-- `agent.profile_id`
-- `deployment.supernode_enabled`
-- `deployment.thin_client_command`
-- `deployment.multi_agent_growth_command`
+- `manifest`: vLLM version pin, `enable_prefix_caching`, model id + **pinned revision**
+- `roles[]`: role id, definition path, prefix layer ids
+- `artifacts`: launcher executable(s) per platform, bundle layout version
+- **Removed from target design**: `training_flag`, `requires_training` as product requirements; `expansion_mode` thin-client/supernode; `supernode_enabled`, `thin_client_command`
 
-This keeps the output directly consumable by server actions and React Server Components.
+Legacy fields may remain temporarily behind a `schema_version` bump for migration.
 
 ### B) Spec service (`lib/server/agent-spec/service.ts`)
 
-`generateAgentSpec(input)` now:
+`generateBundleSpec(input)` (or renamed pipeline) should:
 
-- infers runtime/model/dataset details from user + LLM text,
-- emits the single-binary packaging contract,
-- sets training-first validation as `agent.exe --train` before runtime,
-- sets expansion strategy to either thin client/supernode or in-bundle multi-agent growth.
+- Infer **roles** and shared vs role-specific context needs from user + LLM text
+- Emit **MTP prefix plan** references (layer ids, content-addressed prefix files)
+- Emit **vLLM launch fragment** (args compatible with APC)
+- **Not** emit supernode URLs or training-before-run narratives
 
-### C) YAML renderer + contract template (`lib/server/agent-spec/yaml.ts`)
+### C) YAML / JSON renderer (`lib/server/agent-spec/yaml.ts`)
 
-Both generated YAML outputs were updated to include the new single-binary and expansion fields so downstream prompting and orchestration stay aligned.
+Generated artifacts should include bundle manifest fragments and per-role YAML aligned with the MTP layout so downstream orchestration and RSC stay consistent.
 
-### D) API boundary (`app/api/agent-spec/route.ts`)
+### D) API boundary (`app/api/agent-spec/route.ts` or `/api/bundle-spec`)
 
-`POST /api/agent-spec` continues to return server-normalized outputs for RSC/server-side callers.
+POST continues to return server-normalized outputs for RSC/server-side callers, with strict validation and typed errors.
 
 ## 3) Validation Target
 
-Done criteria now focus on one executable:
+Done criteria focus on **one model load, many roles, APC-friendly prefixes**:
 
-1. `agent.exe --train` must complete first,
-2. `agent.exe` runtime mode must use the produced artifacts,
-3. multi-agent growth must reuse the same bundle (or thin client mode),
-4. packaging emits artifacts for Windows, macOS, and Linux.
+1. vLLM starts once with APC enabled per `manifest`.
+2. Role switches reuse shared prefix layers; no second weight load.
+3. Tool and policy boundaries are defined per role in the bundle.
+4. Packaging emits launchable artifacts for Windows, macOS, and Linux (or documented container-only path).
 
 ## 4) E2E Demonstration Shape
 
-The E2E harness now validates:
+The E2E harness should validate:
 
-- single executable generation,
-- training via `--train`,
-- runtime inference from trained artifact,
-- adding a second profile via `--agent add <profile-id>`.
+- bundle directory or image contains `manifest.json` and `roles/`
+- launcher starts vLLM + controller smoke
+- alternating requests across two roles show **prefix-stable** composition (token-prefix tests) and, on GPU CI, optional APC warm-path metrics
+- **no** stub “training” loop and **no** supernode registration
