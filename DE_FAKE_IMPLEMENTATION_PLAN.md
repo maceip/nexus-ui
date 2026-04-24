@@ -10,7 +10,7 @@ This plan replaces prototype behavior with a **production-grade, self-sufficient
 
 - **Stage 1 — Dropper** (per OS): a **native** binary **under 5 MB** (release budget; CI should assert size) that **probes** OS version, CPU arch, GPU/Metal availability (macOS), CUDA/driver floor (Windows/Linux where applicable), and free disk space. It then **downloads and verifies** (TLS, signatures, SHA256, resume) the **Stage 2** artifact for that profile—e.g. on macOS: **Metal-capable vLLM/runtime bundle** when probes pass; otherwise a **fallback** bundle (CPU or older macOS) documented in the bundle index.
 - **Stage 2 — Full bundle**: large portable tree (weights + vendored Python + `agent-runtime` + manifest, etc.). Same copy-anywhere semantics **after** materialized under a stable install dir (e.g. `%LOCALAPPDATA%\...` / `~/Library/Application Support/...` / `$XDG_DATA_HOME/...`—exact paths in product doc).
-- The user may **email only the dropper** or host a **small** link. **v1 product target:** stage-2 payloads favor **small, task-specific open-source models** (order **1–8B-class** weights where possible) so **CPU fallback bundles stay in the low single-digit GB** range and USB/offline copy is realistic; multi‑tens‑GB bundles remain **allowed** only for explicit “full model” product lines, not the default consumer SKU.
+- The user may **email only the dropper** or host a **small** link. Every stage-2 artifact is labeled with a **bundle tier** **`S` | `M` | `L` | `XL`** (see **§1.0.3**). Users who **generate** bundles (spec server / product UI) pick a tier; the dropper downloads the matching row from `bundles.json` using **`--tier`** / **`AGENT_BUNDLE_TIER`** (default **`M`**).
 - **End-user UX is mandatory**, not optional: fatal conditions **must** show an **OS-native graphical alert** before exit when a GUI session is available (see §2.3.3). Exit codes remain for logs/IT; **they are not sufficient alone**.
 - **No** `docker pull`, **no** user-installed Python for either stage.
 - **Optional**: developers may use Docker **internally** for CI; that must never appear in end-user documentation as a requirement.
@@ -24,7 +24,7 @@ References (external, for implementers):
 
 This document explicitly addresses:
 
-1. **Two-stage distribution** — per-platform **dropper** binary (**< 5 MB**) that probes the machine, then downloads the correct **full runtime bundle** (e.g. macOS **Metal** vLLM build when supported; otherwise a documented fallback; **Windows** bundle on Windows; Linux variant on Linux).
+1. **Two-stage distribution** — per-platform **dropper** (**< 5 MB**) probes the machine, resolves **`bundle_tier`** (`S` / `M` / `L` / `XL` — §1.0.3), then downloads the matching **stage-2** `.tar.zst` (Metal / CUDA / CPU per `bundles.json`).
 2. **Portable full bundle** + **self-sufficient runtime** (manifest, roles, prefixes, tools, model pin, optional vendored Python).
 3. **MTP + vLLM APC** — prefix design, router/skill model, observability, APC security notes.
 4. **Smart memory management** — GPU/CPU budget, cache pools, backpressure, spill/eviction, graceful degradation.
@@ -50,7 +50,7 @@ These are **binding** for the first shippable vertical slice. Do not add paralle
 | **GUI fatal errors (dropper)** | On fatal exits, if **not** `--headless` and a GUI session exists: **MessageBoxW** (Windows), **NSAlert** (macOS), **`zenity --error`** else **`kdialog`** else **`~/Documents/<Product>/LAST_ERROR.txt`** (Linux). Map each exit code to a **localized** title + body + next step. **`--headless`:** stderr only (CI/IT). |
 | **macOS stage-2 shell** | User runs **`Agent.app`**. Binary: **`Agent.app/Contents/MacOS/agent-runtime`**. Bundle root: **`Agent.app/Contents/Resources/runtime/`** (`manifest.json`, `python/`, `models/`, …). **`Info.plist`:** `CFBundleIconFile`, `LSMinimumSystemVersion`, display name. |
 | **Windows icons** | **`agent-setup.exe`** and **`agent-runtime.exe`** embed **`.ico`** (256 + 48). |
-| **Model / payload sizing** | **Default consumer SKU:** task-tuned **≤8B-parameter-class** weights for CPU/GPU bundles so stage-2 **targets ≤8 GB unpacked** where feasible; **>30B-class** bundles are **non-default** SKUs only. |
+| **Model / payload sizing** | Use **`S` / `M` / `L` / `XL`** tiers (§1.0.3). **`S`** = **≤300 MB** unpacked hard cap for that row; **`M`** ≤3 GB; **`L`** ≤12 GB; **`XL`** documented per row. |
 | **Linux `min_os_version`** | Compare to **`VERSION_ID`** from **`/etc/os-release`** (strip quotes). If file missing or `VERSION_ID` missing → **no Linux profile matches** (exit 3). Do **not** use kernel `uname` for OS floor in v1. |
 | **macOS `min_os_version`** | Compare to **`sysctl kern.osproductversion`** string (e.g. `14.2.1`): split `.`, zero-pad numeric tuple, lexicographic ≥. |
 | **Windows `min_os_version`** | String **`10.0.19045`** form (major.minor.build): compare using **RtlGetVersion**-equivalent (`osversion` struct): require **each component ≥** parsed minimum (build number required in v1 rows). |
@@ -59,7 +59,7 @@ These are **binding** for the first shippable vertical slice. Do not add paralle
 | **Unicode** | All prefix files **UTF-8 NFC** at rest; reject non-NFC on `validate`. |
 | **Integrity file** | **`FILES.sha256` required** in every shipped stage-2 tree; `validate` fails if missing. |
 | **WSL / devcontainers** | **Unsupported** in v1 (document in README; CI does not test). |
-| **Metal pipeline** | v1 **requires** a **working Metal-capable vLLM build** in `macos-metal` profile or that profile is **omitted from index** (ship only `macos-fallback`). The plan does not assume upstream readiness—**release index lists only profiles you have built**. |
+| **Metal pipeline** | If no Metal build exists, **omit all `macos-metal-*`** rows; only `macos-fallback-*` tiers appear. **Release index lists only rows you have built and signed.** |
 | **Spec server vs release manifest** | Next app emits **`distribution.profile_id`: `"draft"`** only. Release packer **overwrites** to real `profile_id` and injects **`bundle_schema_version`** / hashes—**never** publish CDN artifacts straight from Next without packer pass. |
 
 ---
@@ -93,9 +93,9 @@ These are **binding** for the first shippable vertical slice. Do not add paralle
 | Stage | Artifact | Size (target) | Role |
 |-------|-----------|---------------|------|
 | **1** | `agent-setup.exe` / `Agent Setup` / `agent-setup` | **< 5 MB** per platform | Probe machine; resolve **bundle channel** (macOS Metal vs fallback, Windows, Linux); HTTPS download with verify + resume; unpack; optionally register shortcut / PATH; launch or delegate to stage 2 |
-| **2** | Full portable directory inside `.tar.zst` | **Default SKU: low single-digit GB unpacked** (task-tuned ≤8B-class models); large SKUs allowed | Self-sufficient runtime: **`Agent.app`** shell on macOS; **`agent-runtime`** + vendored Python + vLLM + manifest + roles + weights |
+| **2** | Full tree inside `.tar.zst` | **Tier-sized** per **§1.0.3** (`S` ≤300 MB … `XL` large) | **`Agent.app`** (macOS) + **`agent-runtime`** + vendored Python + vLLM + manifest + roles + weights |
 
-**macOS branch:** index must list **`macos-metal`** (priority **10**) with `requires_metal: true` and **`macos-fallback`** (priority **100**) with `requires_metal: false`; selection algorithm (§A.3) picks **`macos-metal`** iff Metal + OS predicates pass, else **`macos-fallback`**. If `macos-metal` row is absent from CDN, Metal Macs fall through to fallback only—**do not ship that accidentally**; omit metal row only when no Metal build exists.
+**macOS branch:** index lists **tiered** rows per §1.0.3, e.g. **`macos-metal-S`** / **`macos-metal-M`** (priority **10**, `requires_metal: true`) and **`macos-fallback-S`** / **`macos-fallback-M`** (priority **100**, `requires_metal: false`). Selection picks best **priority** among rows matching **host + `bundle_tier`**. Omit **`macos-metal-*`** only when no Metal build exists.
 
 **Windows branch:** download **`bundle-windows-…`** (CUDA variant vs CPU-only may use the same probe pattern: NVIDIA driver present → CUDA bundle; else CPU or fail with clear message).
 
@@ -121,7 +121,8 @@ Each **`profiles[]`** entry:
 
 | Field | Required | Meaning |
 |-------|----------|---------|
-| `profile_id` | yes | Stable id: `macos-metal`, `macos-fallback`, `windows-cuda`, `windows-cpu`, `linux-cuda`, `linux-cpu`, … |
+| `profile_id` | yes | Full id including tier suffix: `macos-metal-S`, `macos-metal-M`, `macos-fallback-S`, `windows-cuda-L`, … (see §1.0.3) |
+| `bundle_tier` | yes | **`S`** \| **`M`** \| **`L`** \| **`XL`** — must match suffix of `profile_id` (`…-S` → `S`, `…-XL` → `XL`); **validate** in CI |
 | `bundle_schema_version` | yes | Semver of **`manifest.json` inside** this stage-2 archive; used for **downgrade detection** before download |
 | `selection_priority` | yes | Integer **≥ 0**; **lower value = higher priority**. After filtering to rows whose predicates pass, pick the **passing row with minimum `selection_priority`**; tie-breaker lexicographic `profile_id`. **Without this field, multiple rows can match one machine** (e.g. fallback and metal both “pass” if `requires_metal` is only one-way)—do not ship an index without priorities |
 | `stage2_archive_url` | yes | HTTPS URL to **one** `.tar.zst` file (v1 only) |
@@ -130,7 +131,7 @@ Each **`profiles[]`** entry:
 | `stage2_unpacked_min_bytes` | yes | **Minimum free disk** required before download starts (compressed + peak unpack temp; be conservative) |
 | `min_os_version` / `max_os_version` | yes / optional | Inclusive semver or platform-specific tuples (e.g. mac `14.0+`); **probe must implement same comparator** as CI fixtures |
 | `cpu_arch` | yes | `arm64` \| `x86_64` \| `universal` (if ever used—define semantics) |
-| `requires_metal` | optional | If **true**, host must pass Metal probe. If **false**, no constraint (host may or may not have Metal)—**therefore** fallback rows **must** use higher `selection_priority` than `macos-metal` so Metal machines still pick metal first |
+| `requires_metal` | optional | If **true**, host must pass Metal probe. If **false**, no constraint—**therefore** `macos-fallback-*` rows **must** use higher `selection_priority` than matching **`macos-metal-*`** rows **for the same `bundle_tier`** so Metal Macs pick metal first |
 | `requires_no_metal` | optional | If **true**, host must **fail** Metal probe (CPU-only / software-render path)—use for explicit CPU bundles on macOS when you must exclude Metal-capable hosts |
 | `requires_cuda` | optional | If true, NVIDIA driver + capability probe passes |
 | `min_dropper_version` | optional | Reject if dropper too old to verify this profile’s format |
@@ -138,6 +139,25 @@ Each **`profiles[]`** entry:
 | `release_notes_url` | optional | Human-readable |
 
 **Key rotation:** dropper embeds a **fixed map** `pubkeys: Record<signing_key_id, ed25519_public_key_bytes>` (≤4 keys). Index `signing_key_id` selects the verify key. Revoke old keys by shipping new dropper before CDN stops signing with old key.
+
+#### 1.0.3 Bundle tiers — `S` | `M` | `L` | `XL`
+
+Tiers size **the default shipped model + runtime footprint** for a given OS/GPU path. Each **combination of GPU path + tier** is one **`profiles[]` row**: a unique **`profile_id`** (suffix **`-S`** … **`-XL`**) plus matching **`bundle_tier`**, each with its own URL, hashes, and `stage2_unpacked_min_bytes`.
+
+| Tier | **Target unpacked size** (install root, incl. vendored Python + default weights) | **Model class (guidance)** | Product intent |
+|------|-------------------------------------------------------------------------------------|----------------------------|------------------|
+| **`S`** | **≤ 300 MB** (hard product target; CI fails tier-S release candidates **>** 300 MB unpacked) | Sub-1B / tiny instruct or heavily quantized task head | Email/USB/quick try |
+| **`M`** | **≤ 3 GB** | ~1–3B instruct / Q4 or equivalent | Default consumer |
+| **`L`** | **≤ 12 GB** | ~7–8B / larger quant | Power user / better quality |
+| **`XL`** | **Unbounded** (document actual `stage2_unpacked_min_bytes` per row) | 13B+ / full weights | Workstation / “bring disk space” |
+
+**Rules:**
+
+- **`bundle_tier`** is required on **every** `profiles[]` row (literal **`S`**, **`M`**, **`L`**, or **`XL`**).
+- **`profiles[].profile_id`** is the **full** stable id including tier, e.g. **`macos-metal-S`**, **`windows-cuda-M`**, **`linux-cpu-XL`**. It **must** end with **`-S`**, **`-M`**, **`-L`**, or **`-XL`** (suffix is parseable for support tools).
+- **`manifest.distribution.profile_id`** after pack = **same string** as the installed row’s `profile_id`.
+- **Dropper / user input:** `--tier S` (or env **`AGENT_BUNDLE_TIER`**, default **`M`**). Selection algorithm (§A.3): **filter** rows where **`bundle_tier`** equals selected tier **and** host predicates pass, **then** sort by `selection_priority`. If **empty** → **GUI + exit 3** (“No **S** bundle for this computer. Try **M** or **L**.”).
+- **Spec server / generators:** accept **`bundleTier`** in API body (`S`|`M`|`L`|`XL`); emit manifest snippets and **recommended** `model.id` / memory defaults for that tier; final CDN row still built by release packer.
 
 #### 1.0.2 Dropper bootstrap URL (resolve chicken-and-egg)
 
@@ -176,7 +196,7 @@ If all missing → exit with **actionable** error (exit code documented). **No**
 | Component | Responsibility |
 |-----------|------------------|
 | **BundleSpec API** | Validate inputs; emit `manifest.json`, roles, prefixes, YAML |
-| **Build Orchestrator** (optional SaaS) | Build **droppers** (<5 MB) and **stage-2** archives per profile (`macos-metal`, `macos-fallback`, `windows-…`, `linux-…`); publish signed `bundles.json` + CDN objects |
+| **Build Orchestrator** (optional SaaS) | Build **droppers** (<5 MB) and **stage-2** `.tar.zst` per **`{os-gpu}-S|M|L|XL`** row; publish signed `bundles.json` + CDN objects |
 
 **Not required to run the agent:** Postgres, Redis, object storage—only if you operate a **build service** or CDN for downloads.
 
@@ -208,7 +228,7 @@ Postgres / object storage apply **only** if you host a remote bundle build regis
   - **`roles[]`**, **`apc`** / **`mtp`** policy ids.
   - **`memory`**: see §2.4 (required).
   - **`updates`** (optional): `{ "channel_url": "<https>" }` for support links only.
-  - **`distribution`** (required): `profile_id` (**exact** CDN `profiles[].profile_id`, or **`"draft"`** only from Next pre-pack); `stage2_archive_format` **`"tar.zst"`**; `dropper_min_version` (semver); `channel_url` (HTTPS URL of `bundles.json`).
+  - **`distribution`** (required): `profile_id` (**exact** CDN `profiles[].profile_id`, e.g. `macos-metal-M`, or **`"draft"`** from Next); **`bundle_tier`**: `S`|`M`|`L`|`XL` (must match `profile_id` suffix); `stage2_archive_format` **`"tar.zst"`**; `dropper_min_version` (semver); `channel_url` (HTTPS URL of `bundles.json`).
   - **`mtp`**: includes **`serialization_mode": "chat_messages"`** (v1 mandatory).
 
 #### Path resolution (must be specified in code + doc)
@@ -255,7 +275,7 @@ APC matches on **token-id prefixes**. v1 **always** builds **OpenAI-style `messa
 **Responsibilities:**
 
 1. **Probe**: OS version, arch (arm64 vs x86_64), Apple Silicon vs Intel (macOS), Metal API availability / GPU family (macOS), NVIDIA driver + CUDA capability (Windows/Linux if using CUDA bundles), minimum RAM/VRAM, free disk for declared install size.
-2. **Resolve**: fetch **signed** bundle index over HTTPS; select **exactly one** stage-2 profile (e.g. `macos-metal`, `macos-fallback`, `windows-cuda`, `windows-cpu`).
+2. **Resolve**: fetch **signed** bundle index; select **exactly one** row matching **host + `bundle_tier`** (e.g. `macos-metal-M`, `windows-cpu-S`).
 3. **Download**: chunked stream, **resume**, **SHA256** (and optional **sigstore** / detached sig) verification before unpack.
 4. **Install**: unpack to canonical user-writable location; atomic rename; record `installed_profile` + version for support.
 5. **Handoff**: **macOS:** `open -a "/path/to/Agent.app"` (or `NSWorkspace` launch). **Windows:** `ShellExecuteW` on `…\Agent\Agent.exe` if using bundled shell, else `CreateProcessW` on `agent-runtime.exe` with `cwd=install_root`. **Linux:** `execv` `install_root/agent-runtime`. **Never** hand off with **no UI** after fatal error—GUI first, then exit.
@@ -274,12 +294,7 @@ APC matches on **token-id prefixes**. v1 **always** builds **OpenAI-style `messa
 
 #### 2.3.1c Probe matrix (must be table-driven in code + tests)
 
-**Ill-defined** if probes are only prose. Ship a **`probe_matrix.json`** (or embedded table in dropper tests) listing: `(os, arch, metal?, cuda_driver?, free_disk?) → expected profile_id` where the expected id is the **winner after §A.3 selection algorithm** (not “any row that matches predicates”). Minimum rows:
-
-- macOS arm64, Metal yes, OS ≥ min → `macos-metal`
-- macOS arm64, Metal no or OS below min → `macos-fallback`
-- Windows x86_64, NVIDIA driver ≥ floor → `windows-cuda`
-- Windows x86_64, no NVIDIA → `windows-cpu` (**v1 index ships `windows-cpu` with higher `selection_priority` than `windows-cuda`** so CUDA wins when driver probe passes; both may appear in index)
+**Ill-defined** if probes are only prose. Ship **`probe_matrix.json`**: `(os, arch, metal?, cuda?, tier, free_disk?) → expected profile_id` (winner after §A.3). Minimum rows include **each tier** × primary OS branches, e.g. `macos-metal-M`, `macos-fallback-S`, `windows-cuda-L`, `windows-cpu-M`.
 
 **Rosetta:** if you ship **arm64-only** stage-2, dropper on **x86_64 Mac** must **fail fast** with “unsupported arch”—do not download arm64 bundle silently.
 
@@ -303,7 +318,7 @@ APC matches on **token-id prefixes**. v1 **always** builds **OpenAI-style `messa
 
 - CI: **size gate** on dropper (`< 5 * 1024 * 1024` bytes or product stricter).
 - CI: magic-byte gate on **both** dropper and `agent-runtime`.
-- Integration test: **mock** bundle index → dropper selects `macos-metal` vs `macos-fallback` based on injected probe results (table-driven).
+- Integration test: **mock** bundle index → dropper selects correct **tiered** `profile_id` (e.g. `macos-metal-M` vs `macos-fallback-M` for `tier=M`) per probe matrix (table-driven).
 - Docs: “Download 4 MB installer → run → it pulls the right big bundle”; alternate path “copy pre-downloaded stage-2 tree” for offline.
 
 #### 2.3.3 End-user experience (non-technical operators)
@@ -335,7 +350,7 @@ This subsystem is **first-class** in `manifest.json` and enforced by `agent-runt
 - **Predictable footprint**: user knows worst-case VRAM and RAM from manifest + machine profile.
 - **No silent OOM**: prefer **queue + backpressure** over crash.
 - **APC-friendly**: preserve hot prefix blocks for **high-priority roles** under pressure.
-- **Large-bundle friendly**: streaming download + bounded RAM (**`download_chunk_mb`**). **Default SKU targets ≤8 GB unpacked** (see Frozen table); **60 GB+** remains supported for **enterprise/heavy** profiles only—document expected wait and disk in the GUI wizard.
+- **Tier-aware sizing:** `memory` / model card must match **`distribution.bundle_tier`** (`S` = tight RAM/VRAM floors; `XL` allows large `min_vram_bytes`). Streaming download + **`download_chunk_mb`** for all tiers.
 
 #### 2.4.2 Manifest schema (`memory` block) — required fields (zod 1:1)
 
@@ -396,7 +411,8 @@ Use as CI or human gate before calling a milestone done:
 | Dropper bootstrap URL priority (§1.0.2) | User cannot install offline without docs |
 | `stage2_archive_sha256` + length verify before unpack | Malware / corrupted half-install |
 | Install lock + atomic unpack | Corrupted tree or race |
-| `distribution.profile_id` matches installed tree / binaries | Runtime SIGILL or wrong GPU path |
+| `distribution.profile_id` + **`bundle_tier`** match installed tree | Wrong SKU / tier skew |
+| **Tier S** unpacked **≤ 300 MB** on CI artifact | USB / S product promise broken |
 | `serialization_mode` is `chat_messages` only | APC never hits despite “same” English prompt |
 | `memory.device_class` conditional validation | CPU bundle with GPU-only fields crashes obscurely |
 | Loopback bind default secure | Accidental LAN exposure |
@@ -438,49 +454,78 @@ Use as CI or human gate before calling a milestone done:
 
 ## 3) HTTP API Surface (spec server)
 
-- `POST /api/bundle-spec` (or evolved `agent-spec`) emits portable bundle contract including `memory` defaults suggestion for common GPUs (optional helper, not blocking).
+- **`POST /api/bundle-spec`** body includes **`bundleTier`**: **`S`** | **`M`** | **`L`** | **`XL`** (default **`M`** if omitted). Response embeds **`distribution.bundle_tier`**, tier-appropriate **`model`** / **`memory`** suggestions, and documents which **`profile_id`** pattern the packer should produce (e.g. `*-M`).
+- All other limits unchanged (512 KiB body, 10s wall, `ApiErrorBody`).
 
 ---
 
-## 4) Milestone Plan (Phased)
+## 4) Implementation build-out — **four phases**
 
-| Phase | Scope | Exit criteria |
-|-------|--------|----------------|
-| **1** | `BundleSpec` + `memory` + `updates`/channel fields in schema | Types + validator |
-| **2** | Emit manifest + roles + MTP docs | Golden tests |
-| **3** | API zod + errors | 400 envelope |
-| **4** | **Dropper** per OS: probe + signed index + download verify + handoff | Size `< 5 MB`; selection tests |
-| **5** | Stage 2: `agent-runtime` + vLLM (Metal / Windows / … profiles) + APC | CI per profile; copy-run doc |
-| **6** | Memory governor + manifest-driven caps | Load test on stage 2 |
-| **7** | Release: signed droppers + signed `bundles.json` + stage-2 archives | End-to-end mock CDN test |
+Work is grouped so each phase is shippable and testable. **Tiers** (`S`/`M`/`L`/`XL`) cut across phases **3–4** (every shipped `profile_id` must declare `bundle_tier`).
+
+### Phase 1 — Contract, spec server, and authoring
+
+| Deliverable | Exit criteria |
+|-------------|----------------|
+| Zod **`BundleSpec`** / **`bundleTier`**, **`manifest.distribution.bundle_tier`**, memory rules per tier | `validate` rejects invalid tier / suffix mismatch |
+| **`POST /api/bundle-spec`**: zod input, `ApiErrorBody`, body cap, timeout | 400/413/504 tests green |
+| Typed YAML/JSON emit for roles, prefixes, MTP (`chat_messages`) | Round-trip + snapshot tests |
+| **`docs/mtp-prefix-v1.md`** + token golden tests | Merged |
+| **E2E (spec only):** replace stub script with contract smoke for **each tier** draft output | CI green |
+
+### Phase 2 — Dropper + `bundles.json` + install UX
+
+| Deliverable | Exit criteria |
+|-------------|----------------|
+| **`bundles.json`** schema: `bundle_tier` on every row; **tiered** `profile_id`s; signing unchanged | Golden `bundles.json` fixture verifies |
+| **Dropper** (Win/Mac/Linux): OS TLS stack, **`< 5 MB`**, **`--tier` / `AGENT_BUNDLE_TIER`**, selection §A.3, download/verify/unpack | Size gate + probe_matrix tests per tier |
+| **GUI** fatal/success paths, **Documents** junction + open folder, **`--headless`** | Manual test script or UI harness checklist signed off |
+| **Offline install** flags (incl. tier in `profile_id`) | Doc + one integration test |
+
+### Phase 3 — Stage-2 runtime, MTP, memory, first-run
+
+| Deliverable | Exit criteria |
+|-------------|----------------|
+| **`agent-runtime`**: install-root resolution (incl. **`Agent.app`**), vLLM child **`127.0.0.1:8000`**, router **`8765`**, metrics **`8766`**, **`FILES.sha256`** | `validate` + `run` smoke |
+| **MTP** `buildPrompt`, APC on, admission **`429`**, token **`413`**, preflight **exit 8** | Unit + HTTP tests |
+| **`/setup` wizard**, **`user_config.json`**, keychain integration | Browser opens; secrets not in plaintext |
+| **Windows** rename-in-place update pattern | Doc + test on locked exe rename path |
+| **macOS `Agent.app`**, **Windows `.ico`** | Artifact layout matches §A.2 |
+
+### Phase 4 — Release matrix, signing, and tier sizing CI
+
+| Deliverable | Exit criteria |
+|-------------|----------------|
+| **Packer** builds **`.tar.zst`** per **`{os-gpu-tier}`** cell you ship (minimum: **M** for each of macOS Metal/fallback, Windows cuda/cpu, Linux cuda/cpu; **S** and **L**/`XL` as product requires) | Each cell has signed row in index |
+| **CI unpacked-size gate:** **`S`** trees **≤ 300 MB** (measure after `tar -x` / equivalent); **`M`** ≤3 GB; **`L`** ≤12 GB; **`XL`** assert ≥ declared floor only | Fails build if **S** exceeds cap |
+| **Authenticode / notarization / Linux** signing policy §8 | Release checklist complete |
+| **GPU smoke** (optional): APC warm path on one **M** or **L** profile | Job green when GPU runner available |
 
 ---
 
 ## 5) Definition of Done (Strict)
 
-1. **Two-stage UX**: Tiny **dropper** (`< 5 MB`) probes and pulls the correct **stage-2** bundle (macOS **Metal** vLLM when supported; Windows/Linux profiles as defined); optional offline “pre-seeded” stage-2 copy remains portable.
-2. **Portable (stage 2)**: Materialized install tree is copyable; `agent-runtime` is native; no Docker.
-3. **One model load**, MTP roles, **vLLM APC enabled**; no weight reload on role switch.
-4. **Smart memory**: `manifest.json` `memory` policy enforced; queue/backpressure; documented VRAM floors; bounded download buffering for huge weights.
-5. No training/supernode in product contract.
-6. Spec server: strict validation + typed errors.
-7. Contract tests for YAML/JSON bundle outputs.
-8. CI: dropper size gate + native gates for dropper and `agent-runtime`.
+1. **Two-stage UX** + **tiers:** Dropper **< 5 MB**; **`--tier`** selects **`S`/`M`/`L`/`XL`**; correct **tiered** `profile_id` row; GUI on failure/success; Documents junction.
+2. **`S` tier:** unpacked install root **≤ 300 MB** (CI enforced); **`M`** ≤3 GB; **`L`** ≤12 GB; **`XL`** documented.
+3. **Portable stage 2:** `Agent.app` / `.exe` + icons; no Docker for users.
+4. **One model load**, MTP + APC; memory governor + `/setup` + `user_config.json`.
+5. No training/supernode; spec server hardened.
+6. Contract tests + **tier** row coverage in `bundles.json` tests.
 
 ---
 
-## 6) PR Breakdown (Suggested)
+## 6) PR Breakdown (maps to four phases)
 
-| PR | Content |
-|----|---------|
-| **A** | `BundleSpec` + `memory` + channel/update fields |
-| **B** | Manifest emission + memory defaults templates |
-| **C** | API hardening |
-| **D** | `docs/mtp-prefix-v1.md` + prefix builder tests |
-| **E** | **Dropper** (Win/Mac/Linux): probe, `bundles.json`, download, <5 MB gate |
-| **F** | Stage 2 `agent-runtime` + vLLM profiles (Metal macOS, Windows, …) |
-| **G** | Memory governor + tests |
-| **H** | Release pipeline: signed index + droppers + stage-2 archives |
+| PR | Phase | Content |
+|----|-------|---------|
+| **A** | 1 | `BundleSpec`, `bundleTier`, `distribution.bundle_tier`, validators |
+| **B** | 1 | `bundle-spec` route, YAML emit, MTP doc + tests |
+| **C** | 2 | Dropper: fetch, verify, tier filter, GUI, install UX |
+| **D** | 2 | `bundles.json` fixtures + `probe_matrix` per tier |
+| **E** | 3 | `agent-runtime` + vLLM + router + `/setup` + memory |
+| **F** | 3 | `Agent.app` / icons / Windows update rename |
+| **G** | 4 | Packer matrix `{profile_id}` cells + CI size gates (**S** 300MB) |
+| **H** | 4 | Signing, notarization, release CDN upload |
 
 ---
 
@@ -578,7 +623,8 @@ Agent.app/
   "index_signature_b64": "<base64-signature-over-canonical-json>",
   "profiles": [
     {
-      "profile_id": "macos-metal",
+      "profile_id": "macos-metal-M",
+      "bundle_tier": "M",
       "bundle_schema_version": "1.0.0",
       "selection_priority": 10,
       "cpu_arch": "arm64",
@@ -591,7 +637,8 @@ Agent.app/
       "stage2_detached_signature_b64": "<base64-ed25519-sig>"
     },
     {
-      "profile_id": "macos-fallback",
+      "profile_id": "macos-fallback-M",
+      "bundle_tier": "M",
       "bundle_schema_version": "1.0.0",
       "selection_priority": 100,
       "cpu_arch": "arm64",
@@ -609,12 +656,13 @@ Agent.app/
 
 **Profile selection algorithm (deterministic):**
 
-1. **Filter** `profiles[]` to rows where: `cpu_arch` matches host; OS version in `[min_os_version, max_os_version]`; free disk ≥ `stage2_unpacked_min_bytes`; `requires_metal` / `requires_no_metal` / `requires_cuda` satisfied.
-2. If **empty** → exit `3` with stderr table of each row and first failed predicate.
-3. **Sort** remaining by ascending `selection_priority`, then ascending `profile_id`.
-4. **Pick** first row in sorted list (winner).
+1. Read **`tier`** from **`--tier`** then **`AGENT_BUNDLE_TIER`**, else **`M`**.
+2. **Filter** `profiles[]` where: `bundle_tier === tier`; `cpu_arch` matches host; OS in `[min_os_version, max_os_version]`; free disk ≥ `stage2_unpacked_min_bytes`; `requires_metal` / `requires_no_metal` / `requires_cuda` satisfied; **`profile_id` suffix matches `bundle_tier`** (`…-S` ↔ `S`, etc.).
+3. If **empty** → **GUI + exit 3** (suggest trying another tier).
+4. **Sort** remaining by ascending `selection_priority`, then ascending `profile_id`.
+5. **Pick** first row.
 
-**Example:** `macos-metal` has `selection_priority: 10`, `requires_metal: true`. `macos-fallback` has `selection_priority: 100`, `requires_metal: false`. On a Metal Mac both pass filter → metal wins (10 < 100).
+**Example:** For `tier=M`, `macos-metal-M` (priority 10) wins over `macos-fallback-M` (100) on a Metal Mac when both match.
 
 **`cpu_arch` match:** host arch must equal row’s `cpu_arch`, except document **`universal`** if you ever ship fat binaries (then row matches both—rare).
 
@@ -626,7 +674,8 @@ Agent.app/
 {
   "bundle_schema_version": "1.0.0",
   "distribution": {
-    "profile_id": "macos-metal",
+    "profile_id": "macos-metal-M",
+    "bundle_tier": "M",
     "stage2_archive_format": "tar.zst",
     "dropper_min_version": "1.0.0",
     "channel_url": "https://cdn.example.com/nexus-agent/bundles.json"
@@ -684,14 +733,15 @@ agent-setup [global-options] <command>
 Global options:
   --index-url <https URL>     Override bundle index (highest priority)
   --install-parent <path>     Override default install_parent (§A.1)
+  --tier S|M|L|XL             Bundle size tier (default **M**, env **AGENT_BUNDLE_TIER**)
   --allow-downgrade           Skip semver downgrade block (§2.3.1)
   --headless                  No GUI (automation/CI); stderr + exit codes only
   --verbose                   Log probe + selection to stderr
 
 Commands:
   install                     Probe → fetch index → verify index sig + row sig → download stage2 → verify sha256+len → verify stage2 sig → unpack → update current → exec agent-runtime
-  install --bundle-path <path> --expected-sha256 <64-hex> --expected-bytes <int> --profile-id <id> --bundle-schema-version <semver> --stage2-signature-b64 <b64>
-                              Offline v1: no network; file must match sha256+bytes; Ed25519 verify message uses **`profile_id` + sha256 + bytes** from CLI args (must match post-unpack `manifest.json`); downgrade rule uses **`--bundle-schema-version`** as `V_new` vs disk `V_old`
+  install --bundle-path <path> --expected-sha256 <64-hex> --expected-bytes <int> --profile-id <id> --bundle-tier S|M|L|XL --bundle-schema-version <semver> --stage2-signature-b64 <b64>
+                              Offline v1: **`--bundle-tier` must match** `profile_id` suffix and post-unpack `manifest.distribution.bundle_tier`; same verify/downgrade rules as online
   doctor                      Print probe results + selected `profile_id` + disk paths (dry-run; fetches index unless `--offline`)
 
 Exit codes (each paired with **GUI** when not `--headless`): **0** success | **1** usage | **2** network/TLS | **3** no matching profile | **4** verify/hash/sig fail | **5** disk full | **6** install locked | **7** Windows exe replace failed (ACL) | **10** downgrade blocked | **11** / **12** reserved

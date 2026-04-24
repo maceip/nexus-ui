@@ -4,7 +4,7 @@
 
 The server architecture outputs a **self-sufficient, portable runtime contract**:
 
-- **Two-stage distribution:** a per-platform **dropper** native binary (**under 5 MB**) **probes** the machine and downloads the correct **full bundle**—e.g. on macOS a **Metal** build of the vLLM-backed runtime when hardware and OS support it, otherwise a documented **fallback** profile; on Windows a **Windows**-specific bundle (CUDA vs CPU profiles may follow the same probe pattern). Stage 2 is the large, copyable install tree (`agent-runtime`, vendored Python if needed, weights, manifest).
+- **Two-stage distribution:** a per-platform **dropper** (**under 5 MB**) **probes** the machine, reads **`bundle_tier`** (**`S` | `M` | `L` | `XL`** — user or generator picks tier; default **`M`**), and downloads the matching **`profiles[]`** row from **`bundles.json`** (e.g. `macos-metal-M`, `windows-cpu-S`). **S** targets **≤300 MB** unpacked; **M** ≤3 GB; **L** ≤12 GB; **XL** large/workstation. Stage 2 is the copyable install tree (`Agent.app` / `agent-runtime`, vendored Python, weights, manifest).
 - **No required third-party runtime** (Docker, Kubernetes, etc.). After stage 2 is materialized, the user may **copy that directory** (thumb drive, zip, rsync, large transfer) and run **native** binaries—same OS/arch expectations as any other shipped application. Large total size (e.g. **tens of GB** for weights) is explicitly allowed for stage 2.
 - **Vendored Python is allowed when required** (e.g. for vLLM): ship a **pinned** interpreter and dependencies **inside** the portable tree. The user does **not** install Python on the host; the **native launcher** is still the documented entrypoint and may invoke the vendored stack as a subprocess.
 - **One inference stack** on the machine: **one vLLM engine** with **Automatic Prefix Caching (APC)** enabled, **one model load**.
@@ -31,8 +31,8 @@ The schema should encode:
 - `roles[]`, prefix layer references
 - `artifacts.dropper_executable` — per-platform tiny installer (< 5 MB budget; CI size gate)
 - `artifacts.native_executable` — stage-2 launcher: **`Agent.app`** (macOS) or **`agent-runtime.exe`** / **`agent-runtime`** (Windows/Linux) per plan §A.2
-- **Channel index** — not emitted only by Next: build pipeline publishes **schema-versioned** `bundles.json` (see implementation plan §1.0.1): `profiles[]` with `stage2_archive_url`, `stage2_archive_sha256`, `stage2_archive_bytes`, predicates (`requires_metal`, etc.); dropper bootstrap URL priority (CLI → env → embedded → sidecar file)
-- **Install root** — stage-2 **`manifest.json` directory** is the canonical root for all relative paths; `bundle_schema_version` + **`distribution.profile_id`** must match the installed profile (same string as `bundles.json` `profiles[].profile_id`)
+- **Channel index** — build pipeline publishes **`bundles.json`** with **`bundle_tier`** on every row and **`profile_id`** ending in **`-S`**, **`-M`**, **`-L`**, or **`-XL`** (implementation plan §1.0.1–§1.0.3)
+- **Install root** — **`manifest.json` directory**; **`distribution.profile_id`** + **`distribution.bundle_tier`** must match the installed CDN row
 
 **Removed from target design:** training-first workflow, supernode / thin-client expansion.
 
@@ -40,8 +40,8 @@ The schema should encode:
 
 `generateBundleSpec(input)` should:
 
+- Accept **`bundleTier`** (`S`|`M`|`L`|`XL`) and emit **`distribution.bundle_tier`** + tier-appropriate **`model`** / **`memory`** hints
 - Infer roles and MTP prefix plan
-- Emit **default `memory` suggestions** where possible (documented as starting points, not guarantees across all GPUs)
 - **Not** emit Docker-first or container-required instructions
 
 ### C) YAML / JSON renderer (`lib/server/agent-spec/yaml.ts`)
@@ -54,7 +54,7 @@ Strict validation, typed errors, `requestId`.
 
 ## 3) Validation Target
 
-1. **Dropper** per OS: < 5 MB, correct **profile selection** (e.g. macOS Metal vs fallback, Windows bundle).
+1. **Dropper** per OS: < 5 MB, correct **tier + profile** selection (`macos-metal-M` vs `macos-fallback-M`, etc.).
 2. **Stage 2** portable tree + **native** `agent-runtime`; **no Docker** in user path.
 3. vLLM APC on; one model load; MTP role switches.
 4. **Memory governor** honors `manifest.memory` (admission control, caps, bounded download RAM).
