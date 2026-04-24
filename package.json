@@ -7,6 +7,10 @@
     "dev": "next dev",
     "dev:webpack": "next dev --webpack",
     "start": "next start",
+    "test": "npm run test:visual",
+    "test:visual": "playwright test",
+    "test:visual:update": "playwright test --update-snapshots",
+    "test:visual:install": "playwright install --with-deps chromium",
     "types:check": "fumadocs-mdx && next typegen && tsc --noEmit",
     "postinstall": "fumadocs-mdx",
     "lint": "eslint",
@@ -56,6 +60,7 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@playwright/test": "^1.59.1",
     "@tailwindcss/postcss": "^4.1.18",
     "@types/mdx": "^2.0.13",
     "@types/node": "^25.2.3",

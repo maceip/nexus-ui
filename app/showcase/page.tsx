@@ -1,7 +1,5 @@
 "use client";
 
-import * as React from "react";
-
 import { ActivityGraph } from "@/components/nexus-ui/activity-graph";
 import { CommitGraph, type Commit } from "@/components/nexus-ui/commit-graph";
 import { FileTree, type FileTreeNode } from "@/components/nexus-ui/file-tree";
@@ -36,7 +34,7 @@ const repoCards = [
       ],
       archived: false,
       fork: false,
-      updated_at: new Date().toISOString(),
+      updated_at: "2026-04-23T10:30:00.000Z",
       license: {
         key: "mit",
         name: "MIT License",
@@ -78,7 +76,7 @@ const repoCards = [
       ],
       archived: false,
       fork: false,
-      updated_at: new Date().toISOString(),
+      updated_at: "2026-04-23T10:30:00.000Z",
       license: {
         key: "mit",
         name: "MIT License",
@@ -96,7 +94,7 @@ const commits: Commit[] = [
     hash: "a1b2c3d",
     message: "feat(auth): add OAuth2 support",
     author: { name: "Sarah Chen" },
-    date: new Date(Date.now() - 2 * 3600_000).toISOString(),
+    date: "2026-04-23T10:00:00.000Z",
     parents: ["m1e2r3g"],
     refs: ["main", "HEAD"],
     tag: "v2.1.0",
@@ -105,14 +103,14 @@ const commits: Commit[] = [
     hash: "m1e2r3g",
     message: "Merge branch 'feat/dashboard' into main",
     author: { name: "Sarah Chen" },
-    date: new Date(Date.now() - 6 * 3600_000).toISOString(),
+    date: "2026-04-23T06:00:00.000Z",
     parents: ["f6e5d4c", "d4a5s6h"],
   },
   {
     hash: "d4a5s6h",
     message: "feat: add analytics chart component",
     author: { name: "Jordan Lee" },
-    date: new Date(Date.now() - 8 * 3600_000).toISOString(),
+    date: "2026-04-23T04:00:00.000Z",
     parents: ["w1i2p3"],
     refs: ["feat/dashboard"],
   },
@@ -120,21 +118,21 @@ const commits: Commit[] = [
     hash: "f6e5d4c",
     message: "fix(api): handle rate limit headers",
     author: { name: "Alex Rivera" },
-    date: new Date(Date.now() - 18 * 3600_000).toISOString(),
+    date: "2026-04-22T18:00:00.000Z",
     parents: ["4d5e6f1"],
   },
   {
     hash: "w1i2p3",
     message: "wip: dashboard layout skeleton",
     author: { name: "Jordan Lee" },
-    date: new Date(Date.now() - 2 * 86400_000).toISOString(),
+    date: "2026-04-21T12:00:00.000Z",
     parents: ["4d5e6f1"],
   },
   {
     hash: "4d5e6f1",
     message: "chore(deps): upgrade next to 15.5",
     author: { name: "Sarah Chen" },
-    date: new Date(Date.now() - 5 * 86400_000).toISOString(),
+    date: "2026-04-18T12:00:00.000Z",
     parents: ["0a1b2c3"],
     tag: "v2.0.0",
   },
@@ -142,7 +140,7 @@ const commits: Commit[] = [
     hash: "0a1b2c3",
     message: "Initial commit",
     author: { name: "Sarah Chen" },
-    date: new Date(Date.now() - 14 * 86400_000).toISOString(),
+    date: "2026-04-09T12:00:00.000Z",
     parents: [],
   },
 ];
@@ -187,10 +185,17 @@ const activityData = Array.from({ length: 364 }, (_, index) => {
 });
 
 export default function GalleryPage() {
+  const component =
+    typeof window !== "undefined"
+      ? new URLSearchParams(window.location.search).get("component")
+      : null;
+  const showAll = !component;
+
   return (
     <main className="min-h-screen bg-[#050505] px-6 py-14 text-white sm:px-8 lg:px-12">
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-14">
-        <header className="space-y-3">
+        {showAll ? (
+          <header className="space-y-3">
           <p className="text-sm font-medium uppercase tracking-[0.22em] text-white/45">
             Nexus UI Gallery
           </p>
@@ -201,14 +206,19 @@ export default function GalleryPage() {
             A deploy-friendly gallery page for the repository insights components
             and the rest of the Nexus UI component set.
           </p>
-        </header>
+          </header>
+        ) : null}
 
-        <section className="space-y-6">
+        {showAll || component === "repo-card" ? (
+          <section className="space-y-6">
           <SectionTitle
             title="Repo cards"
             description="Dark GitHub-style repository previews with compact metadata rows."
           />
-          <div className="grid gap-5 lg:grid-cols-2">
+            <div
+              data-testid="repo-card-preview"
+              className="grid gap-5 lg:grid-cols-2"
+            >
             {repoCards.map((card) => (
               <RepoCard
                 key={card.data.full_name}
@@ -219,33 +229,44 @@ export default function GalleryPage() {
               />
             ))}
           </div>
-        </section>
+          </section>
+        ) : null}
 
-        <section className="space-y-6">
+        {showAll || component === "commit-graph" ? (
+          <section className="space-y-6">
           <SectionTitle
             title="Commit graph"
             description="Compact topology-first commit list with rails, refs, avatars, and relative timestamps."
           />
-          <CommitGraph commits={commits} />
-        </section>
+            <div data-testid="commit-graph-preview">
+              <CommitGraph commits={commits} />
+            </div>
+          </section>
+        ) : null}
 
-        <section className="space-y-6">
+        {showAll || component === "activity-graph" ? (
+          <section className="space-y-6">
           <SectionTitle
             title="Activity graph"
             description="GitHub-like contribution heatmap plus the side-scrolling loading mode."
           />
-          <div className="space-y-6">
+            <div
+              data-testid="activity-graph-preview"
+              className="space-y-6"
+            >
             <ActivityGraph data={activityData} />
             <ActivityGraph data={[]} loading className="max-w-[1000px]" />
           </div>
-        </section>
+          </section>
+        ) : null}
 
-        <section className="space-y-6">
+        {showAll || component === "file-tree" ? (
+          <section className="space-y-6">
           <SectionTitle
             title="File tree"
             description="Tighter, darker file-tree presentation for repository layouts."
           />
-          <div className="max-w-xl">
+            <div data-testid="file-tree-preview" className="max-w-xl">
             <FileTree
               tree={fileTree}
               iconStyle="colored"
@@ -253,7 +274,8 @@ export default function GalleryPage() {
               defaultExpanded={["src", "src/app", "src/lib"]}
             />
           </div>
-        </section>
+          </section>
+        ) : null}
       </div>
     </main>
   );
