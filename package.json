@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "build": "npm run registry:build && next build",
+    "build:pages": "rm -rf out .next && GITHUB_PAGES=true next build && mkdir -p out && cp -R .next/static out/_next && cp -R .next/server/app/* out && touch out/.nojekyll",
     "dev": "next dev",
     "dev:webpack": "next dev --webpack",
     "start": "next start",
