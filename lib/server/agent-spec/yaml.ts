@@ -1,135 +1,115 @@
+import YAML from "yaml";
+
 import type { AgentSpec } from "@/lib/server/agent-spec/schema";
 
-function yamlQuote(value: string): string {
-  return JSON.stringify(value);
-}
+type NormalizedAgentSpec = Omit<AgentSpec, "contexts"> & {
+  contexts: {
+    github_repo: string;
+    huggingface_repo: string;
+  };
+};
 
-function yamlList(values: string[], indent = "  "): string {
-  if (values.length === 0) return `${indent}[]`;
-  return values.map((value) => `${indent}- ${yamlQuote(value)}`).join("\n");
+function normalizeForYaml(spec: AgentSpec): NormalizedAgentSpec {
+  return {
+    ...spec,
+    contexts: {
+      github_repo: spec.contexts.github_repo ?? "",
+      huggingface_repo: spec.contexts.huggingface_repo ?? "",
+    },
+  };
 }
 
 export function toAgentSpecYaml(spec: AgentSpec): string {
-  const lines = [
-    `schema_version: ${yamlQuote(spec.schema_version)}`,
-    "agent:",
-    `  name: ${yamlQuote(spec.agent.name)}`,
-    `  objective: ${yamlQuote(spec.agent.objective)}`,
-    `  trigger: ${yamlQuote(spec.agent.trigger)}`,
-    `  profile_id: ${yamlQuote(spec.agent.profile_id)}`,
-    "artifacts:",
-    `  executable: ${yamlQuote(spec.artifacts.executable)}`,
-    `  requires_training: ${String(spec.artifacts.requires_training)}`,
-    `  training_flag: ${yamlQuote(spec.artifacts.training_flag)}`,
-    `  expansion_mode: ${yamlQuote(spec.artifacts.expansion_mode)}`,
-    "runtime:",
-    "  target_platforms:",
-    ...spec.runtime.target_platforms.map((platform) => `    - ${yamlQuote(platform)}`),
-    `  runtime_stack: ${yamlQuote(spec.runtime.runtime_stack)}`,
-    "  embedded_llm:",
-    `    required: ${String(spec.runtime.embedded_llm.required)}`,
-    "    candidate_models:",
-    ...spec.runtime.embedded_llm.candidate_models.map((model) => `      - ${yamlQuote(model)}`),
-    `    selected_model: ${yamlQuote(spec.runtime.embedded_llm.selected_model)}`,
-    "  serving_layer:",
-    `    required: ${String(spec.runtime.serving_layer.required)}`,
-    `    api_style: ${yamlQuote(spec.runtime.serving_layer.api_style)}`,
-    "  lite_llm_router:",
-    `    required: ${String(spec.runtime.lite_llm_router.required)}`,
-    `    cache_enabled: ${String(spec.runtime.lite_llm_router.cache_enabled)}`,
-    `    circuit_breaker_enabled: ${String(spec.runtime.lite_llm_router.circuit_breaker_enabled)}`,
-    `    openai_compatible_fallback: ${String(spec.runtime.lite_llm_router.openai_compatible_fallback)}`,
-    "tuning:",
-    "  kv_cache_update_api:",
-    `    required: ${String(spec.tuning.kv_cache_update_api.required)}`,
-    "    endpoints:",
-    ...spec.tuning.kv_cache_update_api.endpoints.map((endpoint) => `      - ${yamlQuote(endpoint)}`),
-    `  qlora_ready: ${String(spec.tuning.qlora_ready)}`,
-    "  generated_fine_tuning_data:",
-    `    required: ${String(spec.tuning.generated_fine_tuning_data.required)}`,
-    `    strategy: ${yamlQuote(spec.tuning.generated_fine_tuning_data.strategy)}`,
-    "    source_datasets:",
-    ...spec.tuning.generated_fine_tuning_data.source_datasets.map((dataset) => `      - ${yamlQuote(dataset)}`),
-    "tools:",
-    `  tool_calling_required: ${String(spec.tools.tool_calling_required)}`,
-    "  jina_template_api:",
-    `    mutable: ${String(spec.tools.jina_template_api.mutable)}`,
-    `    retrain_supported: ${String(spec.tools.jina_template_api.retrain_supported)}`,
-    "deployment:",
-    `  supernode_enabled: ${String(spec.deployment.supernode_enabled)}`,
-    `  thin_client_command: ${yamlQuote(spec.deployment.thin_client_command)}`,
-    `  multi_agent_growth_command: ${yamlQuote(spec.deployment.multi_agent_growth_command)}`,
-    "delivery:",
-    `  end_state: ${yamlQuote(spec.delivery.end_state)}`,
-    "  validations:",
-    ...spec.delivery.validations.map((validation) => `    - ${yamlQuote(validation)}`),
-    "contexts:",
-    `  github_repo: ${yamlQuote(spec.contexts.github_repo ?? "")}`,
-    `  huggingface_repo: ${yamlQuote(spec.contexts.huggingface_repo ?? "")}`,
-    "unresolved_questions:",
-    yamlList(spec.unresolved_questions, "  "),
-  ];
-
-  return lines.join("\n");
+  const normalized = normalizeForYaml(spec);
+  return YAML.stringify(normalized, {
+    lineWidth: 0,
+    defaultStringType: "QUOTE_DOUBLE",
+    defaultKeyType: "PLAIN",
+  });
 }
 
+const RESPONSE_CONTRACT_TEMPLATE: NormalizedAgentSpec = {
+  schema_version: "1.2",
+  agent: {
+    name: "",
+    objective: "",
+    trigger: "",
+    profile_id: "",
+  },
+  artifacts: {
+    executable: "agent.exe",
+    requires_training: true,
+    training_flag: "--train",
+    expansion_mode: "multi-agent-in-bundle",
+  },
+  runtime: {
+    target_platforms: ["windows", "macos", "linux"],
+    runtime_stack: "",
+    embedded_llm: {
+      required: true,
+      candidate_models: [],
+      selected_model: "",
+    },
+    serving_layer: {
+      required: true,
+      api_style: "local-http",
+    },
+    lite_llm_router: {
+      required: true,
+      cache_enabled: false,
+      circuit_breaker_enabled: true,
+      openai_compatible_fallback: false,
+    },
+  },
+  tuning: {
+    kv_cache_update_api: {
+      required: true,
+      endpoints: [],
+    },
+    qlora_ready: true,
+    generated_fine_tuning_data: {
+      required: true,
+      strategy: "",
+      source_datasets: [],
+    },
+  },
+  tools: {
+    tool_calling_required: true,
+    jina_template_api: {
+      mutable: true,
+      retrain_supported: true,
+    },
+  },
+  deployment: {
+    supernode_enabled: false,
+    thin_client_command: "",
+    multi_agent_growth_command: "",
+  },
+  delivery: {
+    end_state: "Single binary agent is trained via --train and reused for growth.",
+    validations: [],
+  },
+  contexts: {
+    github_repo: "",
+    huggingface_repo: "",
+  },
+  unresolved_questions: [],
+};
+
 export function buildAgentSpecResponseContract(): string {
-  return [
-    'Respond with valid YAML only.',
-    'Fill every field you can infer.',
-    'Use empty string for unknown strings and [] for unknown arrays.',
-    'Do not omit required keys.',
-    'Schema:',
-    'schema_version: "1.2"',
-    'agent:',
-    '  name: ""',
-    '  objective: ""',
-    '  trigger: ""',
-    '  profile_id: ""',
-    'artifacts:',
-    '  executable: "agent.exe"',
-    '  requires_training: true',
-    '  training_flag: "--train"',
-    '  expansion_mode: "multi-agent-in-bundle"',
-    'runtime:',
-    '  target_platforms: ["windows", "macos", "linux"]',
-    '  runtime_stack: ""',
-    '  embedded_llm:',
-    '    required: true',
-    '    candidate_models: []',
-    '    selected_model: ""',
-    '  serving_layer:',
-    '    required: true',
-    '    api_style: "local-http"',
-    '  lite_llm_router:',
-    '    required: true',
-    '    cache_enabled: false',
-    '    circuit_breaker_enabled: true',
-    '    openai_compatible_fallback: false',
-    'tuning:',
-    '  kv_cache_update_api:',
-    '    required: true',
-    '    endpoints: []',
-    '  qlora_ready: true',
-    '  generated_fine_tuning_data:',
-    '    required: true',
-    '    strategy: ""',
-    '    source_datasets: []',
-    'tools:',
-    '  tool_calling_required: true',
-    '  jina_template_api:',
-    '    mutable: true',
-    '    retrain_supported: true',
-    'deployment:',
-    '  supernode_enabled: false',
-    '  thin_client_command: ""',
-    '  multi_agent_growth_command: ""',
-    'delivery:',
-    '  end_state: "Single binary agent is trained via --train and reused for growth."',
-    '  validations: []',
-    'contexts:',
-    '  github_repo: ""',
-    '  huggingface_repo: ""',
-    'unresolved_questions: []',
-  ].join('\n');
+  const preamble = [
+    "# Respond with valid YAML only.",
+    "# Fill every field you can infer.",
+    "# Use empty string for unknown strings and [] for unknown arrays.",
+    "# Do not omit required keys.",
+    "",
+  ].join("\n");
+
+  const schemaYaml = YAML.stringify(RESPONSE_CONTRACT_TEMPLATE, {
+    lineWidth: 0,
+    defaultStringType: "QUOTE_DOUBLE",
+    defaultKeyType: "PLAIN",
+  });
+
+  return `${preamble}${schemaYaml}`;
 }

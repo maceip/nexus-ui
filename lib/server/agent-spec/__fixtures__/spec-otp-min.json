@@ -1,0 +1,76 @@
+{
+  "schema_version": "1.2",
+  "agent": {
+    "name": "otp-mail-bridge-agent",
+    "objective": "Forward email one-time passwords to SMS as they arrive.",
+    "trigger": "on_new_message",
+    "profile_id": "otp-mail-bridge-agent-v1"
+  },
+  "artifacts": {
+    "executable": "agent.exe",
+    "requires_training": true,
+    "training_flag": "--train",
+    "expansion_mode": "multi-agent-in-bundle"
+  },
+  "runtime": {
+    "target_platforms": ["windows", "macos", "linux"],
+    "runtime_stack": "litert-lm",
+    "embedded_llm": {
+      "required": true,
+      "candidate_models": ["google/gemma-3-4b", "qwen/qwen3-4b"],
+      "selected_model": "google/gemma-3-4b"
+    },
+    "serving_layer": {
+      "required": true,
+      "api_style": "local-http"
+    },
+    "lite_llm_router": {
+      "required": true,
+      "cache_enabled": false,
+      "circuit_breaker_enabled": true,
+      "openai_compatible_fallback": false
+    }
+  },
+  "tuning": {
+    "kv_cache_update_api": {
+      "required": true,
+      "endpoints": ["POST /v1/kv-cache/patch", "POST /v1/kv-cache/reset"]
+    },
+    "qlora_ready": true,
+    "generated_fine_tuning_data": {
+      "required": true,
+      "strategy": "Synthesize task-specific instruction/output pairs from user stories and execution traces.",
+      "source_datasets": []
+    }
+  },
+  "tools": {
+    "tool_calling_required": true,
+    "jina_template_api": {
+      "mutable": true,
+      "retrain_supported": true
+    }
+  },
+  "deployment": {
+    "supernode_enabled": false,
+    "thin_client_command": "agent.exe --mode thin-client --connect supernode",
+    "multi_agent_growth_command": "agent.exe --agent add --profile <profile-id>"
+  },
+  "delivery": {
+    "end_state": "A single cross-platform binary is produced and trained via --train before runtime execution.",
+    "validations": [
+      "agent.exe --train must complete successfully before agent.exe runtime mode is allowed to start.",
+      "The same binary must support agent growth without producing another fat executable.",
+      "Expansion must use either thin-client-to-supernode mode or multi-agent-in-bundle mode.",
+      "Packaging must emit binaries for windows, macos, and linux."
+    ]
+  },
+  "contexts": {
+    "github_repo": "",
+    "huggingface_repo": ""
+  },
+  "unresolved_questions": [
+    "Which email provider and auth method should the agent use?",
+    "What is the delivery latency target and polling strategy?",
+    "Which dataset should be used to generate and refine training data?"
+  ]
+}

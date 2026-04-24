@@ -71,12 +71,3 @@ export const agentSpecSchema = z.object({
 });
 
 export type AgentSpec = z.infer<typeof agentSpecSchema>;
-
-export type AgentSpecInput = {
-  userRequest: string;
-  llmResponse: string;
-  contexts?: {
-    github?: string;
-    huggingface?: string;
-  };
-};

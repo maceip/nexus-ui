@@ -1,10 +1,7 @@
 import "server-only";
 
-import {
-  type AgentSpec,
-  type AgentSpecInput,
-  agentSpecSchema,
-} from "@/lib/server/agent-spec/schema";
+import { type AgentSpec, agentSpecSchema } from "@/lib/server/agent-spec/schema";
+import type { AgentSpecInput } from "@/lib/server/agent-spec/input-schema";
 import {
   buildAgentSpecResponseContract,
   toAgentSpecYaml,
