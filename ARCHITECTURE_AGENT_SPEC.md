@@ -2,58 +2,57 @@
 
 ## 1) Restated Request
 
-The server architecture outputs a **self-sufficient local bundle** contract:
+The server architecture outputs a **self-sufficient, portable runtime contract**:
 
-- **One inference stack** on the machine: typically **one vLLM process** with **Automatic Prefix Caching (APC)** enabled, loading **one** base model (weights loaded once).
-- **Multiple roles** (orchestrator, retriever, executor, etc.) run as **multi-tenant prefixes (MTP)**: each role uses a **structured, stable prefix layout** so shared prompt layers hash-identically and APC reuses KV across roles—**without reloading model weights** when switching roles.
-- The bundle ships **manifest**, **role definitions**, **frozen prefix files**, **tool policies**, and **launchers** per OS (or an OCI image). There is **no** bundled “train this model” step and **no** supernode / thin-client remote control plane in this architecture.
+- **No required third-party runtime** (Docker, Kubernetes, etc.). The user experience is: **copy a directory** (thumb drive, zip, rsync, large email attachment link) and **run a native binary** on Windows, macOS, or Linux—same OS/arch expectations as any other shipped application. Large total size (e.g. **tens of GB** for weights) is explicitly allowed.
+- **One inference stack** on the machine: **one vLLM engine** with **Automatic Prefix Caching (APC)** enabled, **one model load**.
+- **Multiple roles** use **Multi-Tenant Prefix (MTP)** layout: stable shared prompt layers + role-specific tails so APC reuses KV blocks across roles **without reloading weights**.
+- The bundle ships **manifest** (including a **memory management policy**), **roles**, **frozen prefixes**, **tool policies**, and the **native launcher binary**. Optional: weights ship beside the binary or download on first run with hash verification.
 
-vLLM APC is the standard mechanism for prefix reuse; see upstream docs: https://docs.vllm.ai/en/latest/features/automatic_prefix_caching/
+vLLM APC: https://docs.vllm.ai/en/latest/features/automatic_prefix_caching/
+
+There is **no** bundled training step, **no** supernode, and **no** thin-client control plane in the target design.
 
 ## 2) Server Components
 
-### A) Contract schema (`lib/server/agent-spec/schema.ts` — evolving to bundle contract)
+### A) Contract schema (`lib/server/agent-spec/schema.ts` — evolving to `BundleSpec`)
 
-The schema should encode a **bundle-first** workflow (names may shift to `bundle-spec` / `BundleSpec`):
+The schema should encode:
 
-- `manifest`: vLLM version pin, `enable_prefix_caching`, model id + **pinned revision**
-- `roles[]`: role id, definition path, prefix layer ids
-- `artifacts`: launcher executable(s) per platform, bundle layout version
-- **Removed from target design**: `training_flag`, `requires_training` as product requirements; `expansion_mode` thin-client/supernode; `supernode_enabled`, `thin_client_command`
+- `manifest.vllm` — version pin, `enable_prefix_caching`, allowlisted args
+- `manifest.model` — pinned revision, layout / download spec
+- `manifest.memory` — **required** smart memory block (GPU caps, concurrency, APC priority roles, download chunking, optional spill paths)
+- `roles[]`, prefix layer references
+- `artifacts.native_executable` — per-platform names or single binary + platform detection policy
 
-Legacy fields may remain temporarily behind a `schema_version` bump for migration.
+**Removed from target design:** training-first workflow, supernode / thin-client expansion.
 
 ### B) Spec service (`lib/server/agent-spec/service.ts`)
 
-`generateBundleSpec(input)` (or renamed pipeline) should:
+`generateBundleSpec(input)` should:
 
-- Infer **roles** and shared vs role-specific context needs from user + LLM text
-- Emit **MTP prefix plan** references (layer ids, content-addressed prefix files)
-- Emit **vLLM launch fragment** (args compatible with APC)
-- **Not** emit supernode URLs or training-before-run narratives
+- Infer roles and MTP prefix plan
+- Emit **default `memory` suggestions** where possible (documented as starting points, not guarantees across all GPUs)
+- **Not** emit Docker-first or container-required instructions
 
 ### C) YAML / JSON renderer (`lib/server/agent-spec/yaml.ts`)
 
-Generated artifacts should include bundle manifest fragments and per-role YAML aligned with the MTP layout so downstream orchestration and RSC stay consistent.
+Emit bundle fragments consistent with portable layout and `memory` policy.
 
 ### D) API boundary (`app/api/agent-spec/route.ts` or `/api/bundle-spec`)
 
-POST continues to return server-normalized outputs for RSC/server-side callers, with strict validation and typed errors.
+Strict validation, typed errors, `requestId`.
 
 ## 3) Validation Target
 
-Done criteria focus on **one model load, many roles, APC-friendly prefixes**:
-
-1. vLLM starts once with APC enabled per `manifest`.
-2. Role switches reuse shared prefix layers; no second weight load.
-3. Tool and policy boundaries are defined per role in the bundle.
-4. Packaging emits launchable artifacts for Windows, macOS, and Linux (or documented container-only path).
+1. Portable tree + **native** launcher; **no Docker** in user path.
+2. vLLM APC on; one model load; MTP role switches.
+3. **Memory governor** honors `manifest.memory` (admission control, caps, bounded download RAM).
+4. Tier-1 OS coverage (Windows, macOS, Linux) for the shipped binary story.
 
 ## 4) E2E Demonstration Shape
 
-The E2E harness should validate:
-
-- bundle directory or image contains `manifest.json` and `roles/`
-- launcher starts vLLM + controller smoke
-- alternating requests across two roles show **prefix-stable** composition (token-prefix tests) and, on GPU CI, optional APC warm-path metrics
-- **no** stub “training” loop and **no** supernode registration
+- Bundle contains `manifest.json` (with `memory`), `roles/`, `prefixes/`
+- Native binary passes format gate in CI
+- Optional GPU: prefill / APC regression
+- **No** stub training; **no** supernode
