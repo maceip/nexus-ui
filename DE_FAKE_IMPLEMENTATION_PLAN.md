@@ -8,9 +8,10 @@ This plan replaces prototype behavior with a **production-grade, self-sufficient
 
 ### Portability invariant (non-negotiable)
 
-- **One native executable** (PE / Mach-O / ELF) per supported OS, or a **documented equivalent** (e.g. signed `.app` bundle on macOS) that the user treats as a single artifact—the **user-facing** command to start the agent is this binary (it may spawn vendored Python + vLLM under the hood).
-- The user can **copy the install directory to a thumb drive**, **rsync it**, **zip it**, or **email a link** to a large archive—the distribution model explicitly allows **tens of GB** (model weights + vendored runtime + tools); portability means **behavior**, not small download size.
-- On a fresh machine: **extract → run** (or double-click where applicable) with **no** `docker pull`, **no** daemon, **no** admin-only dependency beyond what the OS already needs for GPU drivers.
+- **Stage 1 — Dropper** (per OS): a **native** binary **under 5 MB** (release budget; CI should assert size) that **probes** OS version, CPU arch, GPU/Metal availability (macOS), CUDA/driver floor (Windows/Linux where applicable), and free disk space. It then **downloads and verifies** (TLS, signatures, SHA256, resume) the **Stage 2** artifact for that profile—e.g. on macOS: **Metal-capable vLLM/runtime bundle** when probes pass; otherwise a **fallback** bundle (CPU or older macOS) documented in the bundle index.
+- **Stage 2 — Full bundle**: large portable tree (weights + vendored Python + `agent-runtime` + manifest, etc.). Same copy-anywhere semantics **after** materialized under a stable install dir (e.g. `%LOCALAPPDATA%\...` / `~/Library/Application Support/...` / `$XDG_DATA_HOME/...`—exact paths in product doc).
+- The user may **email only the dropper** or host a **small** link; the **60 GB+** payload arrives in stage 2 only when needed. They can still **thumb-drive the fully materialized** stage-2 tree for air-gapped machines (dropper optional there if offline install path exists).
+- **No** `docker pull`, **no** user-installed Python for either stage.
 - **Optional**: developers may use Docker **internally** for CI; that must never appear in end-user documentation as a requirement.
 
 The core runtime idea is the **Multi-Tenant Prefix (MTP) architecture**: several **roles** share **one loaded model** and are distinguished by **structured, stable prompt prefixes** per role. That maximizes **Automatic Prefix Caching (APC)** in **vLLM** so switching roles reuses KV for shared prefixes—**without reloading weights**.
@@ -22,12 +23,13 @@ References (external, for implementers):
 
 This document explicitly addresses:
 
-1. **Portable native binary** + **self-sufficient bundle** (manifest, roles, prefixes, tools, model pin).
-2. **MTP + vLLM APC** — prefix design, router/skill model, observability, APC security notes.
-3. **Smart memory management** — GPU/CPU budget, cache pools, backpressure, spill/eviction, graceful degradation.
-4. **Hardened API contract** for the **spec server** (this Next app) that emits bundle manifests.
-5. **Typed YAML serialization** + contract tests.
-6. **Integration tests** proving native binaries (not script stubs) and, where CI has a GPU, APC-friendly behavior.
+1. **Two-stage distribution** — per-platform **dropper** binary (**< 5 MB**) that probes the machine, then downloads the correct **full runtime bundle** (e.g. macOS **Metal** vLLM build when supported; otherwise a documented fallback; **Windows** bundle on Windows; Linux variant on Linux).
+2. **Portable full bundle** + **self-sufficient runtime** (manifest, roles, prefixes, tools, model pin, optional vendored Python).
+3. **MTP + vLLM APC** — prefix design, router/skill model, observability, APC security notes.
+4. **Smart memory management** — GPU/CPU budget, cache pools, backpressure, spill/eviction, graceful degradation.
+5. **Hardened API contract** for the **spec server** (this Next app) that emits bundle manifests.
+6. **Typed YAML serialization** + contract tests.
+7. **Integration tests** proving droppers and full bundles (not script stubs) and, where CI has a GPU, APC-friendly behavior.
 
 ---
 
@@ -55,26 +57,39 @@ This document explicitly addresses:
 
 ## 1) Target Architecture
 
-### 1.1 Conceptual model
+### 1.0 Two-stage distribution (dropper → full bundle)
+
+| Stage | Artifact | Size (target) | Role |
+|-------|-----------|---------------|------|
+| **1** | `agent-setup.exe` / `Agent Setup` / `agent-setup` | **< 5 MB** per platform | Probe machine; resolve **bundle channel** (macOS Metal vs fallback, Windows, Linux); HTTPS download with verify + resume; unpack; optionally register shortcut / PATH; launch or delegate to stage 2 |
+| **2** | Full portable directory or signed archive | Large (GB–60 GB+) | Self-sufficient runtime: `agent-runtime`, vendored Python if needed, vLLM build **matched to probe** (Metal on Apple GPU path, etc.), manifest, roles, weights per product policy |
+
+**macOS branch (required behavior in plan):** if probes determine **Metal-capable** hardware + **supported macOS version** + **Metal build of vLLM** is available for this product pin, download **`bundle-macos-metal-…`** (name illustrative). Else download the documented **`bundle-macos-fallback-…`** (e.g. CPU-only or older OS).
+
+**Windows branch:** download **`bundle-windows-…`** (CUDA variant vs CPU-only may use the same probe pattern: NVIDIA driver present → CUDA bundle; else CPU or fail with clear message).
+
+**Bundle index:** dropper fetches a **signed** `bundles.json` (or equivalent) listing `{ profile_id, url, sha256, min_os, signatures }` so selection logic is versioned server-side without redeploying the dropper for every hotfix (only index + CDN).
+
+### 1.1 Conceptual model (after stage 2 is installed)
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
-│  Portable install (directory you can copy anywhere)               │
-│  ├── agent-runtime          # single native binary (per OS)        │
+│  Full portable install (stage 2 — copy anywhere once materialized)│
+│  ├── agent-runtime          # native launcher / router             │
 │  ├── manifest.json         # pins model, vLLM args, memory policy │
 │  ├── roles/  prefixes/  tools/                                   │
-│  └── models/               # weights (optional: fetch on first run) │
+│  └── models/               # weights (+ optional further downloads)│
 └──────────────────────────────────────────────────────────────────┘
          │
          │  agent-runtime: Skill Router + memory governor + tool host
          ▼
 ┌────────────────────────────┐
-│  vLLM (in-process or       │  enable_prefix_caching = true
-│   child process you own)   │  one model load for MTP roles
+│  vLLM (build matched to    │  enable_prefix_caching = true
+│   probe: Metal / CUDA /…)  │  one model load for MTP roles
 └────────────────────────────┘
 ```
 
-- **Skill Router** (inside the portable binary): maps events (file alert, CLI question, etc.) to `role_id`, composes MTP prompts, applies **memory policy** before calling vLLM.
+- **Skill Router** (inside `agent-runtime`): maps events to `role_id`, composes MTP prompts, applies **memory policy** before calling vLLM.
 - **One weight load**; role changes are **prefix changes**, not model swaps.
 
 ### 1.2 Control plane (server-side, this repo)
@@ -82,17 +97,18 @@ This document explicitly addresses:
 | Component | Responsibility |
 |-----------|------------------|
 | **BundleSpec API** | Validate inputs; emit `manifest.json`, roles, prefixes, YAML |
-| **Build Orchestrator** (optional SaaS) | Reproducible tarball/zip of **portable directory** + signed binary |
+| **Build Orchestrator** (optional SaaS) | Build **droppers** (<5 MB) and **stage-2** archives per profile (`macos-metal`, `macos-fallback`, `windows-…`, `linux-…`); publish signed `bundles.json` + CDN objects |
 
-**Not required to run the agent:** Postgres, Redis, object storage—only if you operate a **build service**.
+**Not required to run the agent:** Postgres, Redis, object storage—only if you operate a **build service** or CDN for downloads.
 
 ### 1.3 Data plane (portable runtime)
 
 | Piece | Responsibility |
 |-------|----------------|
-| **Native `agent-runtime` binary** | Router, memory governor, optional embedded HTTP for local “watcher” clients |
-| **vLLM** | Linked or shipped as **pinned** dependency of the binary distribution (exact legal/shipping strategy is an open decision—see §8) |
-| **Tool host** | Sandboxing via OS primitives (chroot, seccomp, Windows job objects, minimal privileges)—**Docker not assumed** |
+| **Dropper** (stage 1) | Tiny signed binary: probe, select bundle, download, verify, install dir, hand off |
+| **Native `agent-runtime` binary** (stage 2) | Router, memory governor, optional embedded HTTP for local “watcher” clients |
+| **vLLM** | Build **selected by dropper** (Metal / CUDA / CPU per profile); pinned inside stage 2 (see §8) |
+| **Tool host** | Sandboxing via OS primitives—**Docker not assumed** |
 
 ### 1.4 Storage (optional SaaS only)
 
@@ -107,10 +123,11 @@ Postgres / object storage apply **only** if you host a remote bundle build regis
 #### Deliverables
 
 - **`manifest.json`** includes:
-  - `vllm`: version pin, `enable_prefix_caching: true`, allowlisted CLI/engine args.
+  - `vllm`: version pin, `enable_prefix_caching: true`, allowlisted CLI/engine args; optional `build_profile` (`metal` | `cuda` | `cpu`, …) echoing what the dropper installed.
   - `model`: id + **pinned revision** + on-disk layout or first-run download spec.
   - `roles[]`, `apc` / `mtp` policy id.
   - **`memory`**: see §2.4 (required block—no silent defaults).
+  - **`updates`** (optional but recommended): base URL or channel id for **dropper** to check for stage-2 updates (same trust model as initial download).
 
 #### Acceptance
 
@@ -130,30 +147,44 @@ Security: APC side-channel note for shared-host multi-tenant; default product is
 
 ---
 
-### 2.3 Packaging: portable native binary (no Docker)
+### 2.3 Packaging: dropper (stage 1) + full portable bundle (stage 2) — no Docker
 
-#### Deliverables
+#### 2.3.1 Dropper binary (per platform)
 
-- **Native binary** per tier-1 OS (Windows, macOS, Linux) that:
-  - Locates `manifest.json` **relative to the executable** or via `AGENT_BUNDLE_DIR` (document one canonical rule, e.g. “manifest in cwd or next to binary”).
-  - Verifies optional code signature / manifest hashes.
-  - Ensures model weights exist (ship in `models/` or **first-run download** with hash verify + resume).
-  - Starts or connects to **one** vLLM engine with APC per manifest.
-  - Exposes a **local** loopback control channel (stdin/CLI, named pipe, or `127.0.0.1` HTTP) for watcher scripts—**lightweight on CPU** when idle (blocking I/O or event loop, no busy wait).
+**Hard budget:** release binary **< 5 MB** (compressed segment / linked deps included—define measurement: on-disk size after strip for CI gate).
+
+**Responsibilities:**
+
+1. **Probe**: OS version, arch (arm64 vs x86_64), Apple Silicon vs Intel (macOS), Metal API availability / GPU family (macOS), NVIDIA driver + CUDA capability (Windows/Linux if using CUDA bundles), minimum RAM/VRAM, free disk for declared install size.
+2. **Resolve**: fetch **signed** bundle index over HTTPS; select **exactly one** stage-2 profile (e.g. `macos-metal`, `macos-fallback`, `windows-cuda`, `windows-cpu`).
+3. **Download**: chunked stream, **resume**, **SHA256** (and optional **sigstore** / detached sig) verification before unpack.
+4. **Install**: unpack to canonical user-writable location; atomic rename; record `installed_profile` + version for support.
+5. **Handoff**: exec `agent-runtime` from stage 2 (or spawn installer MSI/exe on Windows if product uses that layout—still no Docker).
+
+**Security:** TLS pinning or trust-on-first-use policy documented; index signature verified with **embedded** public key in dropper (small); reject downgrades if manifest requires minimum stage-2 version.
+
+#### 2.3.2 Stage 2 — `agent-runtime` + bundle (unchanged semantics)
+
+- Locates `manifest.json` per documented rule relative to install root.
+- Verifies hashes; ensures weights (ship or download per manifest).
+- Starts **one** vLLM build **matching** the installed profile (Metal build on Metal path, etc.).
+- Local loopback control for watchers.
 
 #### Explicit non-goals
 
 - **No** `Dockerfile` in the user-facing quickstart.
-- **No** requirement to install **system** Python/pip/pyenv for end users—the default is a **fully packaged** tree including **vendored Python** whenever the inference stack (e.g. vLLM) needs it.
+- **No** requirement to install **system** Python/pip/pyenv—stage 2 includes **vendored Python** when needed.
 
-#### Build / registry (narrowed)
+#### Build / registry
 
-- `build_artifacts` store **zip/tar of portable tree** + detached signatures—not OCI as the primary artifact.
+- `build_artifacts`: **dropper** artifacts (per OS, <5 MB) **and** **stage-2** zip/tar per profile **and** signed `bundles.json` (+ detached signatures for large blobs).
 
 #### Acceptance
 
-- CI builds native binary; `file` / magic-byte gate rejects script stubs.
-- Docs: “Copy this folder to another machine, same OS/arch, run `./agent-runtime`”—no container steps.
+- CI: **size gate** on dropper (`< 5 * 1024 * 1024` bytes or product stricter).
+- CI: magic-byte gate on **both** dropper and `agent-runtime`.
+- Integration test: **mock** bundle index → dropper selects `macos-metal` vs `macos-fallback` based on injected probe results (table-driven).
+- Docs: “Download 4 MB installer → run → it pulls the right big bundle”; alternate path “copy pre-downloaded stage-2 tree” for offline.
 
 ---
 
@@ -223,10 +254,12 @@ Illustrative fields (exact names in zod when implemented):
 
 | Test | Purpose |
 |------|---------|
-| Native binary gate | Magic bytes; reject Node-as-`.exe` |
+| Dropper size gate | `< 5 MB` per OS release binary |
+| Native binary gate | Magic bytes on dropper + `agent-runtime`; reject stubs |
+| Bundle index + selection | Probe fixtures → correct profile URL chosen |
 | Bundle validator | manifest + `memory` + role refs |
 | MTP prefix golden | Stable shared prefixes |
-| Optional GPU | APC warm-path or prefill timing |
+| Optional GPU | APC warm-path or prefill timing (stage 2) |
 
 ---
 
@@ -240,24 +273,26 @@ Illustrative fields (exact names in zod when implemented):
 
 | Phase | Scope | Exit criteria |
 |-------|--------|----------------|
-| **1** | `BundleSpec` + `memory` block in schema | Types + validator |
+| **1** | `BundleSpec` + `memory` + `updates`/channel fields in schema | Types + validator |
 | **2** | Emit manifest + roles + MTP docs | Golden tests |
 | **3** | API zod + errors | 400 envelope |
-| **4** | Native `agent-runtime` + vLLM APC wiring | CI native artifact; copy-run doc |
-| **5** | Memory governor + admission control + manifest-driven caps | Load test passes threshold |
-| **6** | Signed portable zip/tar releases | Verify + checksum publish |
+| **4** | **Dropper** per OS: probe + signed index + download verify + handoff | Size `< 5 MB`; selection tests |
+| **5** | Stage 2: `agent-runtime` + vLLM (Metal / Windows / … profiles) + APC | CI per profile; copy-run doc |
+| **6** | Memory governor + manifest-driven caps | Load test on stage 2 |
+| **7** | Release: signed droppers + signed `bundles.json` + stage-2 archives | End-to-end mock CDN test |
 
 ---
 
 ## 5) Definition of Done (Strict)
 
-1. **Portable**: User can copy the install tree to another machine (same OS/arch), run **one native binary**, no Docker.
-2. **One model load**, MTP roles, **vLLM APC enabled**; no weight reload on role switch.
-3. **Smart memory**: `manifest.json` `memory` policy enforced; queue/backpressure; documented VRAM floors; bounded download buffering for huge weights.
-4. No training/supernode in product contract.
-5. Spec server: strict validation + typed errors.
-6. Contract tests for YAML/JSON bundle outputs.
-7. CI rejects non-native stub binaries.
+1. **Two-stage UX**: Tiny **dropper** (`< 5 MB`) probes and pulls the correct **stage-2** bundle (macOS **Metal** vLLM when supported; Windows/Linux profiles as defined); optional offline “pre-seeded” stage-2 copy remains portable.
+2. **Portable (stage 2)**: Materialized install tree is copyable; `agent-runtime` is native; no Docker.
+3. **One model load**, MTP roles, **vLLM APC enabled**; no weight reload on role switch.
+4. **Smart memory**: `manifest.json` `memory` policy enforced; queue/backpressure; documented VRAM floors; bounded download buffering for huge weights.
+5. No training/supernode in product contract.
+6. Spec server: strict validation + typed errors.
+7. Contract tests for YAML/JSON bundle outputs.
+8. CI: dropper size gate + native gates for dropper and `agent-runtime`.
 
 ---
 
@@ -265,18 +300,20 @@ Illustrative fields (exact names in zod when implemented):
 
 | PR | Content |
 |----|---------|
-| **A** | `BundleSpec` + `memory` zod + remove container-first wording |
+| **A** | `BundleSpec` + `memory` + channel/update fields |
 | **B** | Manifest emission + memory defaults templates |
 | **C** | API hardening |
 | **D** | `docs/mtp-prefix-v1.md` + prefix builder tests |
-| **E** | Native `agent-runtime` + vLLM integration (no Docker in user path) |
-| **F** | Memory governor + integration tests |
-| **G** | Release: signed portable archive + checksums |
+| **E** | **Dropper** (Win/Mac/Linux): probe, `bundles.json`, download, <5 MB gate |
+| **F** | Stage 2 `agent-runtime` + vLLM profiles (Metal macOS, Windows, …) |
+| **G** | Memory governor + tests |
+| **H** | Release pipeline: signed index + droppers + stage-2 archives |
 
 ---
 
 ## 7) Security and Operations
 
+- **Dropper**: TLS, signed bundle index, hash/signature verify on every stage-2 byte; mitigate CDN swap; document upgrade policy.
 - Model hash verify on first run; **resume** partial downloads.
 - Tool execution: least privilege; **no Docker required**—use OS sandbox primitives.
 - APC timing: documented for multi-user edge case; sovereign default is single-user.
@@ -286,11 +323,11 @@ Illustrative fields (exact names in zod when implemented):
 
 ## 8) Open Engineering Decisions
 
-1. **vLLM distribution** (pick one primary per platform; document in README):
-   - **Recommended default:** **vendored Python** + pinned `vllm`/torch/cuda wheels inside the portable tree, launched by the native entrypoint (no host `pip install`).
-   - Alternatives only if proven for your pin: static link, bundled `.so` only—do not block shipping on exotic layouts if vendored Python is reliable.
-2. **Apple / Windows signing** and notarization lanes (sign **both** the native launcher and, where required, the vendored runtime layout).
-3. **Exact vLLM memory knobs** available at the pinned version (map `memory` manifest → engine args).
-4. **Single binary vs thin directory** (binary + `python/` + `lib/`): both satisfy portability if documented as **one copyable unit**; vendored Python implies a **multi-file tree**—that is still “portable.”
+1. **vLLM distribution** (per **stage-2 profile**): vendored Python + wheels inside each large bundle; **Metal** macOS build vs **CUDA/CPU** others—separate CI matrices per profile.
+2. **Metal on macOS**: confirm upstream/build pipeline for a **pinned** vLLM (or supported fork) for Apple GPU; define exact `macos-metal` vs `macos-fallback` probe matrix (OS version, chip, driver).
+3. **Apple / Windows signing**: sign **dropper** and **stage-2** layout; notarization for macOS dropper (stapling policy).
+4. **Exact vLLM memory knobs** at pinned version (map `memory` manifest → engine args).
+5. **Dropper implementation language** (Rust/Go/C++) vs size budget—must stay **< 5 MB** with HTTPS + verify deps.
+6. **Offline**: whether dropper supports `--bundle-path ./preseed.zip` to skip network (product choice).
 
 Link ADRs after resolution.
